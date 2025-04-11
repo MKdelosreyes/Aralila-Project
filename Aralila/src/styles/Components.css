@@ -1,0 +1,29 @@
+.custom-input-container {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.custom-input-text {
+    color: black !important;
+    font-size: 15px;
+    /* margin-bottom: 15px; */
+}
+
+.custom-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.error-message {
+    color: red;
+    font-size: 11px;
+}
+
+/* .form-control:not(active){
+    color:white;
+ }
+
+ .form-control:focus{
+    color:black;
+ } */

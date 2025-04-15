@@ -18,7 +18,7 @@ const SidePanel = ({
   const navigate = useNavigate();
   return (
     <div className="custom-side-panel-container">
-      <img src="/full-logo.png" alt="logo-icon" width="85%" height="auto" />
+      <img src="/full-logo.png" alt="logo-icon" width="65%" height="auto" />
       <div className="custom-tab-group-container">
         <SideTabs
           tabName="Learn"

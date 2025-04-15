@@ -40,13 +40,22 @@ const Header = () => {
 
   return (
     <div className="custom-header-container">
+      <div className="custom-user-points-styles">
+        <img src="/points.png" alt="star-icon" width="40px" height="auto" />
+        <span>23425</span>
+      </div>
+      <div className="custom-user-life-styles">
+        <img src="/life.png" alt="heart-icon" width="30px" height="auto" />
+        <span>5</span>
+      </div>
+      <div className="custom-user-role-styles">STUDENT</div>
       <div className="custom-user-icon-container">
         <img src="/panda.png" alt="owl-icon" width="50px" height="auto" />
         <div className="m1-user-name-email-flex">
           <span className="username fs-6">
             <strong>{user?.username}</strong>
           </span>
-          <span className="email fs-6">{user?.email}</span>
+          <span className="email">{user?.email}</span>
         </div>
       </div>
     </div>

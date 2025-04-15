@@ -3,7 +3,7 @@ import SidePanel from "../components/SidePanel";
 
 const LeaderBoards = () => {
   return (
-    <div>
+    <div className="custom-leaderboards-container">
       <SidePanel
         tab_1_isActive={false}
         tab_2_isActive={false}

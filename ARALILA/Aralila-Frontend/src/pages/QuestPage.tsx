@@ -3,7 +3,7 @@ import SidePanel from "../components/SidePanel";
 
 const QuestPage = () => {
   return (
-    <div>
+    <div className="custom-questpage-container">
       <SidePanel
         tab_1_isActive={false}
         tab_2_isActive={true}

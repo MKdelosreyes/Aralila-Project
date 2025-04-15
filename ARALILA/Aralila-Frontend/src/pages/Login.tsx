@@ -69,7 +69,7 @@ const Login = ({ route }: LoginProps) => {
     <>
       <div className="custom-login-container">
         <div className="child-container">
-          <img src="/full-logo.png" alt="Logo" width="85%" height="auto" />
+          <img src="/full-logo.png" alt="Logo" width="35%" height="auto" />
           <span className="span-heading">Pagsulat, Pag-unlad, Pagwawagi!</span>
           <form onSubmit={formik.handleSubmit} className="login-form">
             <Input

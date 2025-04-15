@@ -1,0 +1,10 @@
+.custom-homepage-container {
+    display: flex;
+    flex-direction: row;
+    padding: 10px;
+    height: 100vh;
+}
+
+.custom-page-container {
+    width: 85%;
+}

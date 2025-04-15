@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Yatra+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://online-fonts.com/fonts/gotham-rounded');
+
+* {
+    font-family: "Figtree", sans-serif;
+}
+
+.custom-input-container {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.custom-input-text {
+    color: black !important;
+    font-size: 15px;
+    /* margin-bottom: 15px; */
+}
+
+.custom-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.error-message {
+    color: red;
+    font-size: 11px;
+}
+
+.custom-tab-group-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.custom-tab-container {
+    display: flex;
+    border: 1px solid rgb(223, 223, 223);
+    border-radius: 10px;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    align-items: center;
+    padding: 12px 20px;
+}
+
+.custom-tab-icon-style {
+    width: 15%;
+    height: auto;
+    /* box-shadow: inset; */
+}
+
+.custom-side-panel-container {
+    display: flex; 
+    flex-direction: column;
+    width: 15%;
+    height: 100%;  
+    border-right: 3px solid rgb(204, 202, 202);
+    border-radius: 15px;
+    align-items: center;
+    padding: 10px 20px 65px 10px; 
+}
+
+.custom-side-panel-container > img {
+    padding: 12px 0;
+}
+
+.selected {
+    border: 2px solid rgb(231, 228, 228);
+    border-radius: 10px;
+    color: #f8f7f6 !important;
+    background: #C085E9;
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
+}
+
+.custom-header-container {
+    padding: 10px 25px;
+}
+
+.custom-user-icon-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.m1-user-name-email-flex{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+}
+
+.custom-user-icon-container > img {
+    border: 3px solid gray;
+    border-radius: 50%;
+}
+
+/* .form-control:not(active){
+    color:white;
+ }
+
+ .form-control:focus{
+    color:black;
+ } */
+
+ /* Loading Indicator Styles */
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+  
+.loader {
+    border: 5px solid #f3f3f3; /* Light grey */
+    border-top: 5px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite;
+}
+  
+@keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+}

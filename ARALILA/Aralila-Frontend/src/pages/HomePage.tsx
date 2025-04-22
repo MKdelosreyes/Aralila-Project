@@ -18,7 +18,13 @@ const HomePage = () => {
           MODULE 1: Enhancing Writing Mechanics in Filipino
         </div>
         <div className="custom-page-main-body">
-          <Task />
+          <Task imagePath="/task-point.svg" marginLeft="150px" />
+          <Task imagePath="/inactive-task-point.svg" marginLeft="100px" />
+          <Task imagePath="/inactive-task-point.svg" marginLeft="50px" />
+          <Task imagePath="/inactive-task-point.svg" marginLeft="100px" />
+          <Task imagePath="/inactive-task-point.svg" marginLeft="150px" />
+          <Task imagePath="/inactive-task-point.svg" marginLeft="200px" />
+          {/* <Task imagePath="/inactive-task-point.svg" marginLeft="250px" /> */}
         </div>
       </div>
       <div className="custom-right-side-panel">

@@ -1,10 +1,20 @@
 import React from "react";
 
-const Task = () => {
+interface TaskProps {
+  imagePath: string;
+  marginLeft: string;
+}
+
+const Task = ({ imagePath, marginLeft }: TaskProps) => {
   return (
     <div>
       <button className="custom-task-point-button">
-        <img src="/task-point.svg" alt="" width="60px" />
+        <img
+          src={imagePath}
+          alt=""
+          width="70px"
+          style={{ marginLeft: marginLeft }}
+        />
       </button>
     </div>
   );

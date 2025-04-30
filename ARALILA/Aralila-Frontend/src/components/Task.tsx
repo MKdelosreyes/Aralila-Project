@@ -2,10 +2,10 @@ import React from "react";
 
 interface TaskProps {
   imagePath: string;
-  marginLeft: string;
+  // marginLeft: string;
 }
 
-const Task = ({ imagePath, marginLeft }: TaskProps) => {
+const Task = ({ imagePath }: TaskProps) => {
   return (
     <div>
       <button className="custom-task-point-button">
@@ -13,7 +13,7 @@ const Task = ({ imagePath, marginLeft }: TaskProps) => {
           src={imagePath}
           alt=""
           width="70px"
-          style={{ marginLeft: marginLeft }}
+          // style={{ marginLeft: marginLeft }}
         />
       </button>
     </div>

@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SidePanel from "../components/SidePanel";
 import "../styles/MainPage.css";
 import Header from "../components/Header";
 import Task from "../components/Task";
+import SpellingGame from "../components/games/SpellingGame";
 
 const HomePage = () => {
+  const navigate = useNavigate();
   return (
     <div className="custom-homepage-container">
       <SidePanel
@@ -18,12 +21,28 @@ const HomePage = () => {
           MODULE 1: Enhancing Writing Mechanics in Filipino
         </div>
         <div className="custom-page-main-body">
-          <Task imagePath="/task-point.svg" marginLeft="150px" />
-          <Task imagePath="/inactive-task-point.svg" marginLeft="100px" />
-          <Task imagePath="/inactive-task-point.svg" marginLeft="50px" />
-          <Task imagePath="/inactive-task-point.svg" marginLeft="100px" />
-          <Task imagePath="/inactive-task-point.svg" marginLeft="150px" />
-          <Task imagePath="/inactive-task-point.svg" marginLeft="200px" />
+          <button
+            onClick={() => navigate("/game/1")}
+            style={{ marginLeft: 250 }}
+          >
+            <Task imagePath="/task-point.svg" />
+          </button>
+          <button onClick={SpellingGame} style={{ marginLeft: 200 }}>
+            <Task imagePath="/inactive-task-point.svg" />
+          </button>
+          <button onClick={SpellingGame} style={{ marginLeft: 150 }}>
+            <Task imagePath="/inactive-task-point.svg" />
+          </button>
+          <button style={{ marginLeft: 200 }}>
+            <Task imagePath="/inactive-task-point.svg" />
+          </button>
+          <button style={{ marginLeft: 250 }}>
+            <Task imagePath="/inactive-task-point.svg" />
+          </button>
+          <button style={{ marginLeft: 300 }}>
+            <Task imagePath="/inactive-task-point.svg" />
+          </button>
+
           {/* <Task imagePath="/inactive-task-point.svg" marginLeft="250px" /> */}
         </div>
       </div>

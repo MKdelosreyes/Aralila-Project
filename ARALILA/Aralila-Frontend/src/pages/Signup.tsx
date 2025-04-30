@@ -86,12 +86,26 @@ const Signup = ({ route }: SignupProps) => {
           <img
             src="/logo.png"
             alt="Logo"
-            width="180px"
-            height="150px"
+            width="150px"
+            height="120px"
             className="custom-logo-signup"
           />
           <h1>Sign up</h1>
           <span>Welcome to Filiphonics - Let's create an account!</span>
+          {/* <div className="register-status-bar">
+            <div className="status-1">
+              <span>Role</span>
+              <div className="status-bar-1"></div>
+            </div>
+            <div className="status-2">
+              <span>Personal</span>
+              <div className="status-bar-2"></div>
+            </div>
+            <div className="status-3">
+              <span>Account</span>
+              <div className="status-bar-3"></div>
+            </div>
+          </div> */}
           <form onSubmit={formik.handleSubmit}>
             <Input
               htmlFor="email"
@@ -158,3 +172,29 @@ const Signup = ({ route }: SignupProps) => {
 };
 
 export default Signup;
+
+// const [step, setStep] = useState(1);
+//   const [formData, setFormData] = useState({
+//     role: "",
+//     first_name: "",
+//     last_name: "",
+//     school_name: "",
+//     email: "",
+//     password: "",
+//   });
+
+//   const next = () => setStep((prev) => prev + 1);
+//   const prev = () => setStep((prev) => prev - 1);
+
+//   const updateField = (field, value) => {
+//     setFormData((prev) => ({ ...prev, [field]: value }));
+//   };
+
+//   return (
+//     <div className="max-w-md mx-auto mt-10">
+//       {step === 1 && <StepRole next={next} updateField={updateField} />}
+//       {step === 2 && <StepDetails next={next} prev={prev} updateField={updateField} />}
+//       {step === 3 && <StepAccount formData={formData} updateField={updateField} prev={prev} />}
+//     </div>
+//   );
+// };

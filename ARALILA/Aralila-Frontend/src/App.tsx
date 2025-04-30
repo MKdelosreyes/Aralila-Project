@@ -14,6 +14,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import QuestPage from "./pages/QuestPage";
 import LeaderBoards from "./pages/LeaderBoards";
 import ProfilePage from "./pages/ProfilePage";
+import GameLevel from "./pages/GameLevel";
+import Classroom from "./pages/Classroom";
 
 function Logout() {
   localStorage.clear();
@@ -29,6 +31,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/classroom" element={<Classroom />} />
         <Route path="/login" element={<Login route="api/token/" />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/signup" element={<RegisterAndLogout />} />
@@ -62,6 +65,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/game/:levelId"
+          element={
+            <ProtectedRoute>
+              <GameLevel />
             </ProtectedRoute>
           }
         />

@@ -35,6 +35,12 @@
     gap: 20px;
 }
 
+.custom-page-main-body > button {
+    border: none;
+    background: none;
+    width: max-content;
+}
+
 .custom-right-side-panel {
     width: 40%;
     display: flex;

@@ -99,14 +99,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Aralila_db',   
-        'USER': 'postgres',          
-        'PASSWORD': 'postgresqlroot', 
-        'HOST': 'localhost',         
-        'PORT': '5432', 
+        'NAME': 'postgres',  
+        'USER': 'postgres.pgnxvqohkznrmathwwrk',  
+        'PASSWORD': 'postgresqlrootf1-04',  
+        'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',
+        'PORT': '6543',
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
+# DATABASES['default']['OPTIONS'] = {
+#     'sslmode': 'require'
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

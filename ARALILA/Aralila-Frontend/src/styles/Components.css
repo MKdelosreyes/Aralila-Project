@@ -93,7 +93,16 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
+    border-radius: 10px;
     gap: 10px;
+}
+
+.custom-user-icon-container:hover {
+    background-color: rgb(243, 243, 243);
+}
+
+.custom-user-icon-container:active {
+    background-color: rgb(214, 214, 214);
 }
 
 .m1-user-name-email-flex{
@@ -179,4 +188,68 @@
     100% {
       transform: rotate(360deg);
     }
+}
+
+.register-status-bar {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 0 15%;
+}
+
+.register-status-bar > div {
+    height: 100%;
+    width: 40%;
+} 
+
+.status-div-active {
+    border-radius: 10px;
+    background-color: #A637F3;
+    height: 6px;
+    width: 100%;
+}
+
+.status-span-active {
+    font-size: 14px;
+    font-weight: bold;
+    color: #A637F3;
+}
+
+.status-span-inactive {
+    color: rgb(170, 170, 170); /* Light gray for inactive text */
+    font-weight: normal; 
+}
+
+.status-div-inactive {
+    border-radius: 10px;
+    background-color: rgb(178, 178, 178);
+    height: 6px;
+    width: 100%;
+}
+
+.custom-user-role-btn {
+    font-weight: bold;
+    font-size: 14px;
+    width: 120px;
+    height: 120px;
+    border-radius: 15px;
+    background-color: #ffffff;
+    padding: 20px;
+    border: 3px solid #ece9ee;
+    /* box-shadow: 0 0 10px #A637F3, 0 0 20px #A637F3; */
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.custom-user-role-btn:hover {
+    box-shadow: 0 0 5px #A637F3, 0 0 20px #d3bbe4;
+}
+
+.user-role-btn-active {
+    font-size: 15px;
+    color: #A637F3 !important;
+    background-color: #e1d3ec;
+    box-shadow: 0 0 5px #A637F3, 0 0 20px #d3bbe4;
 }

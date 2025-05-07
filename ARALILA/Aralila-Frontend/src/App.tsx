@@ -8,14 +8,14 @@ import {
 } from "react-router-dom";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
-import HomePage from "./pages/HomePage";
+import StudentMainPage from "./pages/StudentMainPage";
+import TeacherMainPage from "./pages/TeacherMainPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import QuestPage from "./pages/QuestPage";
 import LeaderBoards from "./pages/LeaderBoards";
 import ProfilePage from "./pages/ProfilePage";
 import GameLevel from "./pages/GameLevel";
-import Classroom from "./pages/Classroom";
 
 function Logout() {
   localStorage.clear();
@@ -31,16 +31,23 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/classroom" element={<Classroom />} />
         <Route path="/login" element={<Login route="api/token/" />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/signup" element={<RegisterAndLogout />} />
         {/* <Route path="/signup" element={<Signup route="api/user/register/" />} /> */}
         <Route
-          path="/homepage"
+          path="/homepage/student-view"
           element={
             <ProtectedRoute>
-              <HomePage />
+              <StudentMainPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/homepage/teacher-view"
+          element={
+            <ProtectedRoute>
+              <TeacherMainPage />
             </ProtectedRoute>
           }
         />

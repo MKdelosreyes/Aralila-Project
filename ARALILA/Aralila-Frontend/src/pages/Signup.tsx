@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/Signup.css";
 import api from "../api";
@@ -9,12 +9,17 @@ import ErrorMessage from "../components/ErrorMessage";
 import Login from "./Login";
 import LoadingIndicator from "../components/LoadingIndicator";
 import axios, { AxiosError } from "axios";
+import UserRoleButton from "../components/UserRoleButton";
+import Stepper from "../components/Stepper";
 
 interface SignupProps {
   route: string;
 }
 
 interface Props {
+  role: string;
+  first_name: string;
+  last_name: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -24,6 +29,18 @@ const validate = (values: Props) => {
   let errors: Partial<Props> = {};
 
   console.log("Validation errors:", errors);
+
+  if (!values.role) {
+    errors.role = "Required";
+  }
+
+  if (!values.first_name) {
+    errors.first_name = "Required";
+  }
+
+  if (!values.last_name) {
+    errors.last_name = "Required";
+  }
 
   if (!values.password) {
     errors.password = "Required";
@@ -46,9 +63,13 @@ const validate = (values: Props) => {
 
 const Signup = ({ route }: SignupProps) => {
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
   const navigate = useNavigate();
 
   const initialValues = {
+    role: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -64,10 +85,13 @@ const Signup = ({ route }: SignupProps) => {
       console.log("Printing this line...");
       try {
         const res = await api.post(route, {
+          role: values.role,
+          first_name: values.first_name,
+          last_name: values.last_name,
           email: values.email,
           password: values.password,
         });
-        navigate("/homepage");
+        navigate("/login");
       } catch (error: any) {
         console.error(error);
         alert("Something went wrong!");
@@ -79,34 +103,74 @@ const Signup = ({ route }: SignupProps) => {
     validate,
   });
 
-  return (
-    <>
-      <div className="custom-signup-container">
-        <div className="left-flex-container">
-          <img
-            src="/logo.png"
-            alt="Logo"
-            width="150px"
-            height="120px"
-            className="custom-logo-signup"
-          />
-          <h1>Sign up</h1>
-          <span>Welcome to Filiphonics - Let's create an account!</span>
-          {/* <div className="register-status-bar">
-            <div className="status-1">
-              <span>Role</span>
-              <div className="status-bar-1"></div>
+  const renderStepFields = () => {
+    switch (step) {
+      case 1:
+        return (
+          <div className="custom-user-role-container">
+            {/* <h1 className="text-3xl font-bold text-black-500 mb-4">
+              Choose your role
+            </h1> */}
+            <h6 className="text-xs text-black-500 mb-4 addinter">
+              Are you a teacher or a student?
+            </h6>
+            <div className="custom-user-role-btn-container">
+              <UserRoleButton
+                onClick={() => {
+                  formik.setFieldValue("role", "student");
+                  console.log("Student is clicked.");
+                }}
+                className={`${
+                  formik.values.role === "student"
+                    ? "user-role-btn-active "
+                    : ""
+                } `}
+              >
+                Student
+              </UserRoleButton>
+              <UserRoleButton
+                onClick={() => {
+                  formik.setFieldValue("role", "teacher");
+                  console.log("Teacher is clicked.");
+                }}
+                className={`${
+                  formik.values.role === "teacher" ? "user-role-btn-active" : ""
+                }`}
+              >
+                Teacher
+              </UserRoleButton>
             </div>
-            <div className="status-2">
-              <span>Personal</span>
-              <div className="status-bar-2"></div>
-            </div>
-            <div className="status-3">
-              <span>Account</span>
-              <div className="status-bar-3"></div>
-            </div>
-          </div> */}
-          <form onSubmit={formik.handleSubmit}>
+          </div>
+        );
+      case 2:
+        return (
+          <>
+            <Input
+              htmlFor="first_name"
+              inputLabel="First Name"
+              placeholder="Enter first name"
+              id="first_name"
+              name="first_name"
+              type="text"
+              onChange={formik.handleChange}
+              value={formik.values.first_name}
+            />
+            {formik.errors.first_name ? (
+              <ErrorMessage message={formik.errors.first_name} />
+            ) : null}
+            <Input
+              htmlFor="last_name"
+              inputLabel="Last Name"
+              placeholder="Enter last name"
+              id="last_name"
+              name="last_name"
+              type="text"
+              onChange={formik.handleChange}
+              value={formik.values.last_name}
+            />
+            {formik.errors.last_name ? (
+              <ErrorMessage message={formik.errors.last_name} />
+            ) : null}
             <Input
               htmlFor="email"
               inputLabel="Email"
@@ -120,7 +184,11 @@ const Signup = ({ route }: SignupProps) => {
             {formik.errors.email ? (
               <ErrorMessage message={formik.errors.email} />
             ) : null}
-
+          </>
+        );
+      case 3:
+        return (
+          <>
             <Input
               htmlFor="password"
               inputLabel="Password"
@@ -148,23 +216,97 @@ const Signup = ({ route }: SignupProps) => {
             {formik.errors.confirmPassword ? (
               <ErrorMessage message={formik.errors.confirmPassword} />
             ) : null}
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
-            {loading && <LoadingIndicator />}
-            <button
-              type="submit"
-              className="custom-signin-button"
-              disabled={formik.isSubmitting}
-            >
-              Sign up
-            </button>
+  return (
+    <>
+      <div className="custom-signup-container">
+        <div className="left-flex-container">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            width="150px"
+            height="120px"
+            className="custom-logo-signup"
+          />
+          <h2>Sign up</h2>
+          <span>Welcome to Filiphonics - Let's create an account!</span>
+          <Stepper step={step} />
+          <form onSubmit={formik.handleSubmit}>
+            {renderStepFields()}
+            {/* {loading && <LoadingIndicator />} */}
+            <div className="custom-prev-next-btn-container">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep(step - 1)}
+                  className="custom-prev-step-register-btn"
+                >
+                  Previous
+                </button>
+              )}
+              <button
+                type={step === 3 ? "submit" : "button"}
+                className={
+                  step === 3
+                    ? "custom-submit-register-btn"
+                    : "custom-next-step-register-btn"
+                }
+                disabled={formik.isSubmitting}
+                onClick={() => {
+                  if (step < 3) {
+                    // Validate current step before proceeding
+                    const errors = validate(formik.values);
+
+                    if (step === 1 && !formik.values.role) {
+                      alert("Please select a role to proceed.");
+                      return;
+                    }
+
+                    if (step === 2) {
+                      if (
+                        !formik.values.first_name ||
+                        !formik.values.last_name ||
+                        !formik.values.email
+                      ) {
+                        alert("Please complete all fields before continuing.");
+                        return;
+                      }
+                      if (
+                        errors.first_name ||
+                        errors.last_name ||
+                        errors.email
+                      ) {
+                        formik.setTouched({
+                          first_name: true,
+                          last_name: true,
+                          email: true,
+                        });
+                        alert("Please fix the errors before continuing.");
+                        return;
+                      }
+                    }
+
+                    setStep(step + 1);
+                  }
+                }}
+              >
+                {step === 3 ? "Submit" : "Next"}
+              </button>
+            </div>
           </form>
-          <div>
+          <div className="custom-prompt-existing-account">
             <span>Already have an account? </span>
             <Link to="/login">Sign in</Link>
           </div>
         </div>
         <div className="right-flex-container">
-          <img src="/poster.png" alt="" width="100%" height="100%" />
+          <img src="/poster.png" alt="" width="87%" height="auto" />
         </div>
       </div>
     </>

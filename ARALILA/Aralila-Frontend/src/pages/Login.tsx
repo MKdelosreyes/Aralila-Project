@@ -52,8 +52,9 @@ const Login = ({ route }: LoginProps) => {
         localStorage.setItem(ACCESS_TOKEN, res.data.access);
         localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
         console.log("Navigating to homepage....");
+        // if (values.role === "student") navigate("/homepage/student-view");
+        // else navigate("/homepage/teacher-view");
         navigate("/homepage");
-        // navigate("/homepage");
       } catch (error: any) {
         console.error(error);
         alert("Something went wrong!");

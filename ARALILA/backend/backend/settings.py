@@ -110,6 +110,9 @@ DATABASES = {
     }
 }
 
+# DATABASES['default']['OPTIONS'] = {
+#     'sslmode': 'require'
+# }
 
 # DATABASES['default']['OPTIONS'] = {
 #     'sslmode': 'require'

@@ -3,28 +3,25 @@ from rest_framework import serializers
 from .models import CustomUser
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.ReadOnlyField()  # Since it's a @property and not a model field
+
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'full_name', 'password', 'role']
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'school_name', 'password', 'role', 'full_name'
+        ]
         extra_kwargs = {
             'password': {'write_only': True},
-            'full_name': {'required': False, 'allow_blank': True},
-            'role': {'required': False, 'allow_blank': True},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
+            'school_name': {'required': False},
+            'role': {'required': False},
         }
 
     def create(self, validated_data):
-        email = validated_data.get("email")
-        password = validated_data.get("password")
-        full_name = validated_data.get("full_name", "")
-        role = validated_data.get("role", "")
-
-        username = email.split("@")[0] # Just to be sure
-
-        user = CustomUser.objects.create_user(
-            email=email,
-            username=username,
-            password=password,
-            full_name=full_name,
-            role=role
-        )
+        password = validated_data.pop("password")
+        user = CustomUser(**validated_data)
+        user.set_password(password)
+        user.save()
         return user

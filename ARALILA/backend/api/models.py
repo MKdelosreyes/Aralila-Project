@@ -4,13 +4,15 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.conf import settings
 import string, random
 
+def generate_class_key():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
         
-        # Set default username if not provided
         if not extra_fields.get('username'):
             if email.endswith('@gmail.com'):
                 extra_fields['username'] = email.replace('@gmail.com', '')
@@ -27,6 +29,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True, blank=True, null=True)
@@ -36,6 +39,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=[('teacher', 'Teacher'), ('student', 'Student')], blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+
+    classroom = models.ForeignKey('ClassRoom', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []  # Required for superuser creation
@@ -50,8 +56,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()
 
 
-def generate_class_key():
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 class ClassRoom(models.Model):
     teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='classes')
@@ -61,11 +65,3 @@ class ClassRoom(models.Model):
     def __str__(self):
         # teacher: 'CustomUser' = self.teacher 
         return f"{self.name} created by teacher"
-
-class StudentClassMembership(models.Model):
-    student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='student_classes')
-    classroom = models.ForeignKey(ClassRoom, on_delete=models.CASCADE)
-    joined_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.student} joined {self.classroom.name}"

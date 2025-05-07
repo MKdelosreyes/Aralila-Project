@@ -18,6 +18,7 @@ interface User {
 }
 
 const Header = () => {
+  const [visible, setVisibility] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const fetchProfile = async () => {
     try {
@@ -48,12 +49,14 @@ const Header = () => {
         <img src="/life.png" alt="heart-icon" width="30px" height="auto" />
         <span>5</span>
       </div>
-      <div className="custom-user-role-styles">STUDENT</div>
+      <div className="custom-user-role-styles">
+        {user?.role === "student" ? "STUDENT" : "TEACHER"}
+      </div>
       <div className="custom-user-icon-container">
         <img src="/panda.png" alt="owl-icon" width="50px" height="auto" />
         <div className="m1-user-name-email-flex">
           <span className="username fs-6">
-            <strong>{user?.username}</strong>
+            <strong>{user?.full_name}</strong>
           </span>
           <span className="email">{user?.email}</span>
         </div>

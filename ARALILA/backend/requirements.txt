@@ -1,5 +1,6 @@
 asgiref
 Django
+django-extensions
 django-cors-headers
 djangorestframework
 djangorestframework-simplejwt

@@ -54,7 +54,7 @@ const Login = ({ route }: LoginProps) => {
         console.log("Navigating to homepage....");
         // if (values.role === "student") navigate("/homepage/student-view");
         // else navigate("/homepage/teacher-view");
-        navigate("/homepage");
+        navigate("/homepage/teacher-view");
       } catch (error: any) {
         console.error(error);
         alert("Something went wrong!");

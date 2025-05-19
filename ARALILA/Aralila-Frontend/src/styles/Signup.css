@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Yatra+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://online-fonts.com/fonts/gotham-rounded');
+
+/* font-family: "Figtree", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal; */
+
+* {
+    font-family: "Figtree", sans-serif;
+}
+
+h2 {
+    font-family: "Yatra One", system-ui;
+    /* font-size: 40px; */
+    font-weight: 400;
+    font-style: normal;
+    color: #A637F3;
+}
+
+.custom-signup-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh; 
+    max-height: 100vh;   
+    /* border: 2px solid black; */
+}
+
+.left-flex-container  {
+    width: 60%;
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 55px;
+}
+.right-flex-container {
+    width: 40%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 20px;
+}
+
+.custom-logo-signup {
+    /* align-self: center; */
+    border-radius: 20px;
+}
+
+form {
+    /* top right bottom left */
+    min-height: 55%;
+    max-height: 55%;
+    margin: 0 0 25px 0; 
+    padding: 0 25px;
+    display: flex;
+    width: 80%;
+    flex-direction: column;
+}
+
+.custom-signin-button {
+    border-radius: 15px;
+    background-color: #af4bf6;
+    color: white;
+    font-weight: bold;
+    border: none;
+    height: 45px;
+    margin-top: 20px;
+}
+
+.custom-user-role-container {
+    /* width: 1000px; */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    margin: 25px 0;
+}
+
+.custom-user-role-btn-container {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+}
+
+.custom-prev-next-btn-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 70%;
+    width: 100%;
+}
+
+.custom-prev-next-btn-container > button {
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    width: 100px;
+    height: 35px;
+    border: 2px solid rgb(202, 202, 202);
+} 
+
+.custom-prev-step-register-btn {
+    color: rgb(84, 84, 84);
+}
+
+.custom-next-step-register-btn {
+    color: rgb(63, 63, 63);
+    background-color: #f2e1ff;
+}
+
+.custom-submit-register-btn {
+    color: rgb(231, 231, 231);
+    background-color: #715688;
+}

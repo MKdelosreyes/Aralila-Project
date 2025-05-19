@@ -11,18 +11,18 @@ export default function LoginPage() {
         src="/images/login-art.svg"
         alt="Login Art"
         fill
-        className="absolute object-cover z-0"
+        className="absolute z-0"
         priority
       />
 
       <div className="relative z-10 w-full max-w-[630px] bg-white rounded-2xl shadow-md p-8 flex flex-col justify-between">
         <div className="flex flex-col items-center space-y-2">
           <Image
-            src="/images/aralila-logo-exp.svg"
+            src="/images/aralila-logo-tr.svg"
             alt="Aralila Logo"
-            width={250}
+            width={150}
             height={200}
-            className="object-contain -mt-5"
+            className="object-contain"
           />
           <h1 className="text-xl font-bold text-center text-purple-500">
             Pagsulat, Pag-unlad, Pagwawagi!

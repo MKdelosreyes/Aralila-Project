@@ -4,9 +4,11 @@ import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+
 // import { Label } from "@/components/ui/label";
 import {
   Form,
@@ -23,6 +25,8 @@ const formSchema = z.object({
 });
 
 export default function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,7 +41,7 @@ export default function LoginForm() {
   }
 
   return (
-    <Form {...form}> 
+    <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-4 m-10"
@@ -49,7 +53,11 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel className="text-md font-bold">Email</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your email" {...field} className="h-14 font-medium"/>
+                <Input
+                  placeholder="Enter your email"
+                  {...field}
+                  className="h-14 font-medium"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -63,7 +71,22 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel className="text-md font-bold">Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Enter your password" {...field} className="h-14 font-medium"/>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    {...field}
+                    className="h-14 font-medium pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,7 +97,10 @@ export default function LoginForm() {
           <Link href="">Forgot Password?</Link>
         </h1>
 
-        <Button type="submit" className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md">
+        <Button
+          type="submit"
+          className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md"
+        >
           Login
         </Button>
       </form>

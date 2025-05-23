@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
 import { GraduationCap, User, Eye, EyeOff } from "lucide-react";
+import { authAPI } from "@/lib/api/auth";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,37 +21,39 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+// import { useRouter } from "next/router";
 
 // Define validation schemas for each step
 // Define the schema types for better TypeScript integration
-const stepOneSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters" }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const stepOneSchema = z
+  .object({
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 // Create type from schema
 type StepOneFormValues = z.infer<typeof stepOneSchema>;
 
-const stepTwoSchema = z.object({
-  role: z.enum(["student", "teacher"], {
-    required_error: "Please select a role",
-  }),
-  firstName: z.string().min(1, { message: "First name is required" }),
-  lastName: z.string().min(1, { message: "Last name is required" }),
-  university: z.string().optional(),
-}).refine(
-  (data) => !(data.role === "teacher" && !data.university),
-  {
+const stepTwoSchema = z
+  .object({
+    role: z.enum(["student", "teacher"], {
+      required_error: "Please select a role",
+    }),
+    first_name: z.string().min(1, { message: "First name is required" }),
+    last_name: z.string().min(1, { message: "Last name is required" }),
+    school_name: z.string().optional(),
+  })
+  .refine((data) => !(data.role === "teacher" && !data.school_name), {
     message: "University is required for teachers",
     path: ["university"],
-  }
-);
+  });
 
 // Create type from schema
 type StepTwoFormValues = z.infer<typeof stepTwoSchema>;
@@ -58,6 +62,7 @@ export default function SignupForm() {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const router = useRouter();
 
   // Form for step 1
   const stepOneForm = useForm<StepOneFormValues>({
@@ -74,9 +79,9 @@ export default function SignupForm() {
     resolver: zodResolver(stepTwoSchema),
     defaultValues: {
       role: undefined,
-      firstName: "",
-      lastName: "",
-      university: "",
+      first_name: "",
+      last_name: "",
+      school_name: "",
     },
   });
 
@@ -85,14 +90,20 @@ export default function SignupForm() {
     setStep(2);
   };
 
-  const handleStepTwoSubmit = (data: StepTwoFormValues) => {
+  const handleStepTwoSubmit = async (data: StepTwoFormValues) => {
     // Combine data from both forms for final submission
     const formData = {
       ...stepOneForm.getValues(),
       ...data,
     };
     console.log("Form submitted with data:", formData);
-    // Here you would typically send the data to your API
+    try {
+      const response = await authAPI.register(formData);
+      console.log("User registered successfully:", response);
+      router.push("/login");
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
   };
 
   return (
@@ -120,13 +131,18 @@ export default function SignupForm() {
             </div>
 
             <Form {...stepOneForm}>
-              <form onSubmit={stepOneForm.handleSubmit(handleStepOneSubmit)} className="space-y-4">
+              <form
+                onSubmit={stepOneForm.handleSubmit(handleStepOneSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={stepOneForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold">Email</FormLabel>
+                      <FormLabel className="text-md font-semibold">
+                        Email
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -145,7 +161,9 @@ export default function SignupForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold">Password</FormLabel>
+                      <FormLabel className="text-md font-semibold">
+                        Password
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -160,7 +178,11 @@ export default function SignupForm() {
                             className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400"
                             tabIndex={-1}
                           >
-                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            {showPassword ? (
+                              <EyeOff size={20} />
+                            ) : (
+                              <Eye size={20} />
+                            )}
                           </button>
                         </div>
                       </FormControl>
@@ -174,7 +196,9 @@ export default function SignupForm() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold">Confirm Password</FormLabel>
+                      <FormLabel className="text-md font-semibold">
+                        Confirm Password
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -185,11 +209,17 @@ export default function SignupForm() {
                           />
                           <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400"
                             tabIndex={-1}
                           >
-                            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            {showConfirmPassword ? (
+                              <EyeOff size={20} />
+                            ) : (
+                              <Eye size={20} />
+                            )}
                           </button>
                         </div>
                       </FormControl>
@@ -237,7 +267,10 @@ export default function SignupForm() {
             </div>
 
             <Form {...stepTwoForm}>
-              <form onSubmit={stepTwoForm.handleSubmit(handleStepTwoSubmit)} className="space-y-4">
+              <form
+                onSubmit={stepTwoForm.handleSubmit(handleStepTwoSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={stepTwoForm.control}
                   name="role"
@@ -246,7 +279,9 @@ export default function SignupForm() {
                       <div className="flex justify-center gap-4 mb-4">
                         <Button
                           type="button"
-                          onClick={() => stepTwoForm.setValue("role", "student")}
+                          onClick={() =>
+                            stepTwoForm.setValue("role", "student")
+                          }
                           variant="ghost"
                           className={`h-20 w-52 text-xl font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer
                             ${
@@ -261,7 +296,9 @@ export default function SignupForm() {
 
                         <Button
                           type="button"
-                          onClick={() => stepTwoForm.setValue("role", "teacher")}
+                          onClick={() =>
+                            stepTwoForm.setValue("role", "teacher")
+                          }
                           variant="ghost"
                           className={`h-20 w-52 text-xl font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer
                             ${
@@ -283,10 +320,12 @@ export default function SignupForm() {
                   <>
                     <FormField
                       control={stepTwoForm.control}
-                      name="firstName"
+                      name="first_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-md font-semibold">First Name</FormLabel>
+                          <FormLabel className="text-md font-semibold">
+                            First Name
+                          </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -302,10 +341,12 @@ export default function SignupForm() {
 
                     <FormField
                       control={stepTwoForm.control}
-                      name="lastName"
+                      name="last_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-md font-semibold">Last Name</FormLabel>
+                          <FormLabel className="text-md font-semibold">
+                            Last Name
+                          </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -322,10 +363,12 @@ export default function SignupForm() {
                     {stepTwoForm.watch("role") === "teacher" && (
                       <FormField
                         control={stepTwoForm.control}
-                        name="university"
+                        name="school_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-md font-semibold">University</FormLabel>
+                            <FormLabel className="text-md font-semibold">
+                              University
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}

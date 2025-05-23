@@ -170,10 +170,7 @@ export default function StudentDashboard() {
               priority
             />
           ) : (
-            <div className="w-full flex justify-center">
-
-
-            </div>
+            <div className="w-full flex justify-center"></div>
           )}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -333,7 +330,8 @@ export default function StudentDashboard() {
   );
 }
 
-function NavItem({ icon, label, isOpen, isActive = false }) { //ma run rani error ra tungod sa safety issues ni typescript
+function NavItem({ icon, label, isOpen, isActive = false }) {
+  //ma run rani error ra tungod sa safety issues ni typescript
   return (
     <div
       className={`flex items-center p-2 cursor-pointer rounded-lg ${
@@ -348,7 +346,8 @@ function NavItem({ icon, label, isOpen, isActive = false }) { //ma run rani erro
   );
 }
 
-function ExerciseCard({ exercise }) { //ma run rani error ra tungod sa safety issues ni typescript
+function ExerciseCard({ exercise }) {
+  //ma run rani error ra tungod sa safety issues ni typescript
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       <div className="p-6">

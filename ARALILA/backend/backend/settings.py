@@ -100,8 +100,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',  
-        'USER': 'postgres.pgnxvqohkznrmathwwrk',  
-        'PASSWORD': 'postgresqlrootf1-04',  
+        'USER': 'postgres.nkpshqbciarqanwymmkv',  
+        # 'PASSWORD': 'postgresqlrootf1-04', 
+        'PASSWORD': 'postgreSQLARALILA04',
         'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',
         'PORT': '6543',
         'OPTIONS': {
@@ -159,6 +160,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ALLOWS_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "http://localhost:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True

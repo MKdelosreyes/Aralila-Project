@@ -8,6 +8,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authAPI } from "@/lib/api/auth";
 
 // import { Label } from "@/components/ui/label";
 import {
@@ -26,6 +28,7 @@ const formSchema = z.object({
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -35,9 +38,21 @@ export default function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     // Handle login logic here (e.g., call Supabase auth)
+    try {
+      const response = await authAPI.login(values);
+      console.log("User logged in successfully:", response);
+      localStorage.setItem("ACCESS_TOKEN", response.access);
+      const profile = await authAPI.getProfile();
+      console.log("User profile:", profile);
+      console.log(profile.role);
+      if (profile.role === "teacher") router.push("/teacher");
+      else router.push("/student/dashboard");
+    } catch (error) {
+      console.log("Error logging in...", error);
+    }
   }
 
   return (
@@ -97,15 +112,12 @@ export default function LoginForm() {
           <Link href="">Forgot Password?</Link>
         </h1>
 
-        <Link href="/student/dashboard">
-                <Button
+        <Button
           type="submit"
           className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md"
         >
           Login
         </Button>
-        </Link>
-
       </form>
     </Form>
   );

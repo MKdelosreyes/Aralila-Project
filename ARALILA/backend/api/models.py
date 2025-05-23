@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
@@ -12,12 +13,6 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
-        
-        if not extra_fields.get('username'):
-            if email.endswith('@gmail.com'):
-                extra_fields['username'] = email.replace('@gmail.com', '')
-            else:
-                extra_fields['username'] = email.split('@')[0]
 
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -32,36 +27,45 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
     school_name = models.CharField(max_length=255, blank=True)
     role = models.CharField(max_length=20, choices=[('teacher', 'Teacher'), ('student', 'Student')], blank=True, null=True)
+    profile_pic = models.CharField(max_length=255, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    classroom = models.ForeignKey('ClassRoom', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
-
-
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []  # Required for superuser creation
+    REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
 
     def __str__(self):
         return f"{self.email} ({self.role})"
-    
+
     @property
     def full_name(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()
 
 
+class Student(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    classroom = models.ForeignKey('ClassRoom', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+
 
 class ClassRoom(models.Model):
     teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='classes')
-    name = models.CharField(max_length=255)
+    class_name = models.CharField(max_length=255)
+    grade_level = models.PositiveIntegerField()
+    subject = models.CharField(max_length=255, blank=True)
+    semester = models.CharField(max_length=255, blank=True)
     class_key = models.CharField(max_length=10, unique=True, default=generate_class_key)
+    created_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        # teacher: 'CustomUser' = self.teacher 
-        return f"{self.name} created by teacher"
+        return f"{self.class_name} created by {self.teacher.full_name}"
+    
+    def save(self, *args, **kwargs):
+        if self.teacher.role != 'teacher':
+            raise ValidationError("Assigned user must have the role 'teacher'.")
+        super().save(*args, **kwargs)

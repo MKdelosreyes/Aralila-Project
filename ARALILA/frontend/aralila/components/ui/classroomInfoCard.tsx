@@ -3,28 +3,27 @@
 import React from "react";
 import { Users } from "lucide-react";
 
-const ClassroomInfoCard = ({
-  className = "",
-  classInfo = {
-    name: "Filipino 101",
-    grade: "Grade 8",
-    studentCount: 32,
-    isActive: true,
-    overallScore: 68,
-    workAssigned: 36,
-    bannerImage: "/images/forestbg.jpg", // Path to your banner image
-  },
-}) => {
+// classInfo = {
+//     name: "Filipino 101",
+//     grade: "Grade 8",
+//     studentCount: 32,
+//     isActive: true,
+//     overallScore: 68,
+//     workAssigned: 36,
+//     bannerImage: "/images/forestbg.jpg", // Path to your banner image
+//   },
+
+const ClassroomInfoCard = ({ classInfo, studentSize }) => {
   return (
     <div
-      className={`flex-1/2 pr-3 bg-white rounded-lg shadow-xl overflow-hidden ${className}`}
+      className={`flex-1/2 pr-3 bg-white rounded-lg shadow-xl overflow-hidden`}
     >
       <div className="flex items-center">
         {/* Left side - Banner image */}
         <div className="w-1/5 h-48 relative">
           <img
-            src={classInfo.bannerImage}
-            alt={`${classInfo.name} banner`}
+            src="/images/forestbg.jpg"
+            alt={`${classInfo?.class_name} banner`}
             className="h-full w-full object-cover"
           />
         </div>
@@ -34,9 +33,9 @@ const ClassroomInfoCard = ({
           {/* Header with class name and status */}
           <div className="flex justify-between items-center mb-1">
             <h2 className="text-2xl font-bold text-gray-900">
-              {classInfo.name}
+              {classInfo?.class_name}
             </h2>
-            {classInfo.isActive ? (
+            {classInfo?.isActive ? (
               <div className="px-4 py-0 bg-green-100 text-green-800 rounded-full font-medium text-sm">
                 ACTIVE
               </div>
@@ -49,15 +48,24 @@ const ClassroomInfoCard = ({
 
           {/* Class details */}
           <div className="flex items-center gap-8 mb-2">
-            <span className="text-base text-gray-500">{classInfo.grade}</span>
+            <span className="text-base text-gray-500">
+              {`Section ${classInfo?.section}`}
+            </span>
             <div className="flex items-center gap-2">
               <Users className="text-gray-500" size={24} />
-              <span className="text-base text-gray-500">
-                {classInfo.studentCount} students
-              </span>
+              {studentSize === 0 ? (
+                <span className="text-base text-gray-500">
+                  No students enrolled in this class
+                </span>
+              ) : (
+                <span className="text-base text-gray-500">
+                  {studentSize}
+                  {studentSize === 1 ? " student" : " students"}
+                </span>
+              )}
             </div>
             <div className="ml-auto">
-              <button className="font-medium text-xl text-black">
+              <button className="font-medium text-base text-black">
                 Class Key
               </button>
             </div>
@@ -73,9 +81,7 @@ const ClassroomInfoCard = ({
                   <br />
                   Class Score
                 </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {classInfo.overallScore}%
-                </div>
+                <div className="text-xl font-bold text-gray-900">72%</div>
               </div>
               <div className="relative h-20 w-20">
                 {/* Trophy SVG with fill level */}
@@ -103,9 +109,9 @@ const ClassroomInfoCard = ({
                   <path
                     d="M70,20 H30 v10 c-10,0 -10,10 -10,20 c0,15 10,20 20,20 c5,0 5,10 5,10 h20 c0,0 0,-10 5,-10 c10,0 20,-5 20,-20 c0,-10 0,-20 -10,-20 v-10"
                     fill="url(#fillGradient)"
-                    transform={`scale(1, ${
-                      classInfo.overallScore / 100
-                    }) translate(0, ${100 - classInfo.overallScore})`}
+                    // transform={`scale(1, ${
+                    //   classInfo.overallScore / 100
+                    // }) translate(0, ${100 - classInfo.overallScore})`}
                   />
                 </svg>
               </div>
@@ -119,8 +125,8 @@ const ClassroomInfoCard = ({
                   <br />
                   Assigned
                 </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {classInfo.workAssigned}
+                <div className="text-xl font-bold text-gray-900">
+                  {/* {classInfo.workAssigned} */}20
                 </div>
               </div>
               <div className="relative h-20 w-20">

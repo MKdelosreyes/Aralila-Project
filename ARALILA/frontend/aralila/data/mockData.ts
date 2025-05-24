@@ -167,3 +167,45 @@ export const classes = [
     ]
   },
 ];
+
+export const students = [
+    {
+      id: 1,
+      name: "Student 1",
+      avatar: "👤",
+      scores: {
+        pangalan: 95,
+        kabuhuan: 88,
+        pagusad: 86,
+        hekaniks: 92,
+        bokabularyo: 89
+      },
+      overallProgress: 86
+    },
+    {
+      id: 2,
+      name: "Student 2", 
+      avatar: "👤",
+      scores: {
+        pangalan: 45,
+        kabuhuan: 35,
+        pagusad: 31,
+        hekaniks: 38,
+        bokabularyo: 42
+      },
+      overallProgress: 31
+    },
+    {
+      id: 3,
+      name: "Student 3",
+      avatar: "👤", 
+      scores: {
+        pangalan: 25,
+        kabuhuan: 20,
+        pagusad: 18,
+        hekaniks: 22,
+        bokabularyo: 28
+      },
+      overallProgress: 18
+    }
+  ];

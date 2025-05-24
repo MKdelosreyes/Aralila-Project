@@ -1,9 +1,9 @@
 "use client";
 
 import Layout from "@/components/layout/layout";
-import React from "react";
+import React, { ReactNode } from "react";
 import { useState, useEffect } from "react";
-import { student, teacher, classes } from "@/data/mockData";
+import { student, teacher } from "@/data/mockData";
 import { ClassCard } from "@/components/ui/classCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { authAPI } from "@/lib/api/auth";
+import { classroomAPI } from "@/lib/api/classroom";
 
 interface User {
   id: number;
@@ -19,37 +20,61 @@ interface User {
   first_name: string;
   last_name: string;
   school_name: string;
+  profile_pic: string;
   role: string;
+}
+
+interface Classroom {
+  id: number;
+  teacher: ReactNode;
+  class_name: string;
+  section: string;
+  subject: string;
+  semester: string;
+  class_key: string;
+  created_at: Date;
+  isActive: boolean;
 }
 
 export default function TeacherHomePage() {
   const [filterStatus, setFilterStatus] = useState("all"); // "all", "active", "inactive"
   const [searchTerm, setSearchTerm] = useState("");
   const [user, setUser] = useState<User | null>(null);
-  const fetchProfile = async () => {
-    try {
-      const res = await authAPI.getProfile();
-      console.log("Retrieved user data successfully...");
-      setUser(res);
-    } catch (error) {
-      console.error("Failed to fetch profile", error);
-    }
-  };
+  const [classes, setClasses] = useState<Classroom[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProfile();
+    const loadData = async () => {
+      try {
+        const userData = await authAPI.getProfile();
+        console.log("Retrieved user profile successfully...");
+        setUser(userData);
+
+        const classroomData = await classroomAPI.getAllClassrooms();
+        console.log("Retrieved classes successfully!");
+        setClasses(classroomData);
+      } catch (err) {
+        console.log(error);
+        setError("Failed to load data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   // Filter classes based on status and search term
-  const filteredClasses = classes.filter((classItem) => {
+  const filteredClasses = classes?.filter((classItem) => {
     const matchesStatus =
       filterStatus === "all" ||
       (filterStatus === "active" && classItem.isActive) ||
       (filterStatus === "inactive" && !classItem.isActive);
 
     const matchesSearch =
-      classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      classItem.grade.toLowerCase().includes(searchTerm.toLowerCase());
+      classItem.class_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classItem.section;
 
     return matchesStatus && matchesSearch;
   });
@@ -58,13 +83,13 @@ export default function TeacherHomePage() {
     <Layout sidebar={false} user={user}>
       {/* Teacher Info Card */}
       <Card className="mb-8">
-        <CardContent className="p-6">
+        <CardContent className="px-6 py-2">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <img
-                src={teacher.avatar}
+                src={user?.profile_pic}
                 alt="Teacher avatar"
-                className="h-16 w-16 rounded-full"
+                className="h-20 w-20 rounded-full"
               />
               <div>
                 <h2 className="text-2xl font-bold">
@@ -74,9 +99,12 @@ export default function TeacherHomePage() {
                 <div className="mt-2 flex items-center space-x-6">
                   <div className="flex items-center">
                     <div className="text-purple-500 mr-1">📚</div>
-                    <span className="text-sm font-medium">
-                      {teacher.totalClasses} classes
-                    </span>
+                    {classes && (
+                      <span className="text-sm font-medium">
+                        {classes?.length} class
+                        {classes?.length !== 1 ? "es" : ""}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center">
                     <div className="text-blue-500 mr-1">👥</div>
@@ -144,14 +172,14 @@ export default function TeacherHomePage() {
       </div>
 
       {/* Classes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredClasses.map((classItem) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {filteredClasses?.map((classItem) => (
           <ClassCard key={classItem.id} classInfo={classItem} />
         ))}
       </div>
 
       {/* Empty state */}
-      {filteredClasses.length === 0 && (
+      {filteredClasses?.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">📚</div>
           <h3 className="text-lg font-medium text-gray-700">

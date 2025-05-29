@@ -14,6 +14,12 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import QuestPage from "./pages/QuestPage";
 import LeaderBoards from "./pages/LeaderBoards";
 import ProfilePage from "./pages/ProfilePage";
+<<<<<<< Updated upstream
+=======
+import GameLevel from "./pages/GameLevel";
+import Classroom from "./pages/Classroom";
+import ClassroomView from "./pages/ClassroomView";
+>>>>>>> Stashed changes
 
 function Logout() {
   localStorage.clear();
@@ -29,6 +35,11 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+<<<<<<< Updated upstream
+=======
+        <Route path="/classroom" element={<Classroom />} />
+        <Route path="/classroom/:classId" element={<ClassroomView />} />
+>>>>>>> Stashed changes
         <Route path="/login" element={<Login route="api/token/" />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/signup" element={<RegisterAndLogout />} />

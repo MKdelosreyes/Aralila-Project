@@ -1,0 +1,206 @@
+/* Add this to your existing CSS file or create a new one */
+
+.classroom-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #A637F3;
+    padding-left: 1rem;
+  }
+  
+  .classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+  
+  .class-card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .class-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .class-card-bg {
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .class-logo {
+    max-width: 80px;
+    max-height: 80px;
+  }
+  
+  .class-card-content {
+    padding: 1rem;
+    background-color: white;
+  }
+  
+  .class-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: #333;
+  }
+  
+  .class-card-subtitle {
+    font-size: 0.85rem;
+    color: #666;
+  }
+  
+  .join-card {
+    border: 2px dashed #ccc;
+    background-color: #f9f9f9;
+    height: 100%;
+    min-height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .join-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  
+  .join-icon {
+    font-size: 2rem;
+    color: #777;
+    margin-bottom: 0.5rem;
+  }
+  
+  .join-text {
+    font-size: 1.1rem;
+    color: #777;
+    font-weight: 500;
+  }
+  
+  /* Modal styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background-color: #C085E9;
+    border-radius: 20px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .modal-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #A637F3;
+  }
+  
+  .modal-content p {
+    color: #666;
+    margin-bottom: 1.5rem;
+  }
+  
+  .class-code-input {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+  }
+  
+  .error-message {
+    color: #e53e3e;
+    font-size: 0.9rem;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+  
+  .cancel-button, .join-button {
+    padding: 0.7rem 1.5rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .cancel-button {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: none;
+  }
+  
+  .cancel-button:hover {
+    background-color: #e5e7eb;
+  }
+  
+  .join-button {
+    background-color: #C085E9;
+    color: white;
+    border: none;
+  }
+  
+  .join-button:hover {
+    background-color: #C085E9;
+  }
+
+  .toast-notification {
+    background-color: #eceaf1; /* Light blue-green background */
+    color: #9938df; /* Dark blue text */
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center; /* Vertically align icon and text */
+    justify-content: space-between; /* Space out text and close button */
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  .toast-icon {
+    margin-right: 10px; /* Space between icon and text */
+    font-size: 1rem; /* Adjust icon size as needed */
+  }
+
+  .toast-close-button {
+    background: none;
+    border: none;
+    color: #9938df;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease-in-out;
+  }
+  
+  .toast-close-button:hover {
+    opacity: 1;
+  }

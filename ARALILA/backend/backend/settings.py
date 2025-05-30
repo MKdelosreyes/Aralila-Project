@@ -102,14 +102,23 @@ DATABASES = {
         'NAME': 'postgres',  
         'USER': 'postgres.nkpshqbciarqanwymmkv',  
         # 'PASSWORD': 'postgresqlrootf1-04', 
-        'PASSWORD': 'postgreSQLARALILA04',
+        'PASSWORD': 'postgreARALILA04F1',
         'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',
         'PORT': '6543',
         'OPTIONS': {
             'sslmode': 'require',
+            'connect_timeout': 10,
         },
+        'CONN_MAX_AGE': 0,
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 # DATABASES['default']['OPTIONS'] = {
 #     'sslmode': 'require'

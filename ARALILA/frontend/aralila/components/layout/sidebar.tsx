@@ -1,11 +1,23 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
-import { X, Menu, Home, Book, User, Settings, LogOut } from "lucide-react";
+import {
+  X,
+  Menu,
+  Home,
+  Book,
+  User,
+  Settings,
+  LogOut,
+  LayoutDashboard,
+  BarChart,
+  ListTodo,
+  FileClock,
+} from "lucide-react";
 import NavItem from "../ui/navItem";
 
 export default function Sidebar() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div
@@ -24,9 +36,19 @@ export default function Sidebar() {
       </div>
 
       <div className="flex flex-col flex-grow p-4 space-y-6">
-        <NavItem icon={<Home />} label="Ulat" isOpen={isOpen} isActive={true} />
-        <NavItem icon={<Book />} label="Aralin" isOpen={isOpen} />
-        <NavItem icon={<User />} label="Pagsusulit" isOpen={isOpen} />
+        <NavItem
+          icon={<BarChart />}
+          label="Ulat"
+          isOpen={isOpen}
+          isActive={true}
+        />
+        <NavItem icon={<ListTodo />} label="Pagsusulit" isOpen={isOpen} />
+        <NavItem
+          icon={<FileClock />}
+          label="Pending Requests"
+          isOpen={isOpen}
+        />
+        <NavItem icon={<Book />} label="Mga Modyulo" isOpen={isOpen} />
       </div>
 
       <div className="p-4 border-t">

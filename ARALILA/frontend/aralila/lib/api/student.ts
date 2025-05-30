@@ -7,7 +7,7 @@ export const studentAPI = {
   },
 
   createStudent: async (studentData: any) => {
-    const response = await api.post('/api/students/', studentData);
+    const response = await api.post('/api/student/create/', studentData);
     return response.data;
   }
   // ... more student-related calls

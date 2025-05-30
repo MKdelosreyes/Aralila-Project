@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Users } from "lucide-react";
+import { Users, Trophy, BookOpen } from "lucide-react";
 
 // classInfo = {
 //     name: "Filipino 101",
@@ -76,96 +76,32 @@ const ClassroomInfoCard = ({ classInfo, studentSize }) => {
             {/* Overall score */}
             <div className="flex items-center gap-4">
               <div>
+                {/* <img src="/images/trophy.svg" alt="trophy-icon" /> */}
+                <Trophy className="w-12 h-12 text-yellow-600" />
+              </div>
+              <div>
                 <div className="text-gray-600 font-medium">
-                  Overall
-                  <br />
-                  Class Score
+                  Overall Class Score
                 </div>
                 <div className="text-xl font-bold text-gray-900">72%</div>
-              </div>
-              <div className="relative h-20 w-20">
-                {/* Trophy SVG with fill level */}
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  <defs>
-                    <linearGradient
-                      id="fillGradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="0%"
-                      y2="100%"
-                    >
-                      <stop offset="0%" stopColor="#a3e635" />
-                      <stop offset="100%" stopColor="#65a30d" />
-                    </linearGradient>
-                  </defs>
-                  {/* Trophy outline */}
-                  <path
-                    d="M70,20 H30 v10 c-10,0 -10,10 -10,20 c0,15 10,20 20,20 c5,0 5,10 5,10 h20 c0,0 0,-10 5,-10 c10,0 20,-5 20,-20 c0,-10 0,-20 -10,-20 v-10"
-                    fill="none"
-                    stroke="#fecaca"
-                    strokeWidth="8"
-                  />
-                  {/* Trophy fill based on score */}
-                  <path
-                    d="M70,20 H30 v10 c-10,0 -10,10 -10,20 c0,15 10,20 20,20 c5,0 5,10 5,10 h20 c0,0 0,-10 5,-10 c10,0 20,-5 20,-20 c0,-10 0,-20 -10,-20 v-10"
-                    fill="url(#fillGradient)"
-                    // transform={`scale(1, ${
-                    //   classInfo.overallScore / 100
-                    // }) translate(0, ${100 - classInfo.overallScore})`}
-                  />
-                </svg>
               </div>
             </div>
 
             {/* Work assigned */}
             <div className="flex items-center gap-4">
               <div>
-                <div className="text-gray-600 font-medium">
-                  Work
-                  <br />
-                  Assigned
-                </div>
+                {/* <img
+                  src="/images/assigned-activities.svg"
+                  alt="assigned-activities-icon"
+                  className="h-full w-full object-cover"
+                /> */}
+                <BookOpen className="w-12 h-12 text-purple-900" />
+              </div>
+              <div>
+                <div className="text-gray-600 font-medium">Work Assigned</div>
                 <div className="text-xl font-bold text-gray-900">
                   {/* {classInfo.workAssigned} */}20
                 </div>
-              </div>
-              <div className="relative h-20 w-20">
-                {/* Circular progress indicator */}
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#f0fdf4"
-                    strokeWidth="10"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="#a3e635"
-                    strokeWidth="10"
-                    strokeDasharray="251.2"
-                    strokeDashoffset={251.2 - 251.2 * 0.75}
-                    transform="rotate(-90 50 50)"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="32"
-                    fill="none"
-                    stroke="#f0fdf4"
-                    strokeWidth="8"
-                  />
-                  <circle cx="35" cy="42" r="8" fill="#a3e635" />
-                  <circle cx="65" cy="42" r="8" fill="#a3e635" />
-                  <circle cx="50" cy="28" r="6" fill="#a3e635" />
-                  <circle cx="70" cy="58" r="10" fill="#facc15" />
-                  <circle cx="30" cy="58" r="10" fill="#facc15" />
-                  <circle cx="50" cy="72" r="12" fill="#fbbf24" />
-                </svg>
               </div>
             </div>
           </div>

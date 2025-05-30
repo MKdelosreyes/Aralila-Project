@@ -57,3 +57,8 @@ class ClassroomStudentListView(generics.ListAPIView):
     def get_queryset(self):
         classroom_id = self.kwargs['pk']
         return Student.objects.filter(classroom_id=classroom_id)
+    
+class CreateStudentView(generics.CreateAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    permission_classes = [AllowAny]

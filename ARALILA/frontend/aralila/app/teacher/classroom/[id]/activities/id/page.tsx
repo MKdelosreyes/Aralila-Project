@@ -18,17 +18,17 @@ import {
   Settings,
   User,
   X,
+  Plus,
 } from "lucide-react";
 import { student, exercises } from "@/data/mockData";
-import ExerciseCard from "@/components/ui/exerciseCard";
-import NavItem from "@/components/ui/navItem";
 import Layout from "@/components/layout/layout";
 import ClassroomInfoCard from "@/components/ui/classroomInfoCard";
-import CategoryFilter from "@/components/ui/categoryFilter";
 import ProficiencyDistribution from "@/components/ui/proficiencyDistribution";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { classroomAPI } from "@/lib/api/classroom";
 import { authAPI } from "@/lib/api/auth";
+import Filters from "@/components/ui/filter";
+import { Button } from "@/components/ui/button";
 
 interface User {
   id: number;
@@ -54,11 +54,11 @@ interface Classroom {
 
 const categories = [
   "Pangalan ng Mag-aaral",
-  "Kabuuang Iskor",
-  "Pag-usad",
-  "Mekaniks ng Pagsulat",
-  "Bokabularyo",
-  "Gramatika sa Pagsulat",
+  "Petsa at Oras ng Pagsumite",
+  //   "Oras ng Pagsumite",
+  "Katayuan",
+  "Iskor",
+  "Aksyon",
 ];
 
 const getProgressColor = (score) => {
@@ -71,22 +71,16 @@ const getProgressWidth = (score) => {
   return `${Math.max(score, 10)}%`;
 };
 
-// const getOverallScore = (student) => {
-//   student.scores.
-// };
-
 export default function StudentDashboard() {
-  // const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All Exercises");
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [students, setStudents] = useState<User[] | null>(null);
-  // const router = useRouter();
-  // const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const params = useParams();
   const classId = params.id;
+  const [sortBy, setSortBy] = useState("date");
 
   useEffect(() => {
     if (classId && !isNaN(Number(classId))) {
@@ -122,6 +116,23 @@ export default function StudentDashboard() {
 
   return (
     <Layout sidebar={true} user={user}>
+      <div className="flex flex-row justify-between mb-5">
+        <div className="flex flex-row justify-start gap-5 items-center">
+          <img
+            src="/images/back-arrow.png"
+            alt="back-arrow icon"
+            className="w-7 h-7"
+          />
+          <h2 className="text-3xl font-bold text-purple-900">
+            Pagsulat ng Sanaysay
+          </h2>
+        </div>
+        <button className="flex items-center gap-3 bg-purple-600 hover:bg-purple-700 text-white text-sm px-5 py-2 rounded-md font-semibold transition-colors shadow-lg hover:shadow-xl">
+          <Plus className="w-5 h-5" />
+          I-edit and gawain
+        </button>
+      </div>
+
       <div className="flex flex-row mb-5 h-48 gap-5">
         {/* {classroom?.class_name} */}
         <ClassroomInfoCard
@@ -131,6 +142,10 @@ export default function StudentDashboard() {
         <ProficiencyDistribution />
       </div>
 
+      <div className="flex flex-row items-center justify-between mb-4">
+        <h2 className="text-lg font-medium">Mga Isinumiteng Gawain</h2>
+        <Filters sortBy={sortBy} setSortBy={setSortBy} />
+      </div>
       <div className="flex bg-white rounded-lg border items-center justify-center">
         {students?.length === 0 ? (
           <span className="m-10 text-black text-center">
@@ -139,7 +154,7 @@ export default function StudentDashboard() {
         ) : (
           <div className="w-full p-4">
             {/* Header */}
-            <div className="grid grid-cols-6 gap-4 mb-6 text-sm font-medium text-gray-600">
+            <div className="grid grid-cols-5 gap-4 mb-6 text-sm font-medium text-gray-600">
               {categories.map((category, index) => (
                 <div key={index} className="text-center">
                   {category}
@@ -152,9 +167,9 @@ export default function StudentDashboard() {
               {students?.map((student) => (
                 <div
                   key={student.id}
-                  className="border border-purple-300 rounded-2xl p-2"
+                  className="border border-purple-300 rounded-2xl p-2 bg-gray-50"
                 >
-                  <div className="grid grid-cols-6 gap-4 items-center">
+                  <div className="grid grid-cols-5 gap-4 items-center">
                     {/* Student Name & Avatar */}
                     <div className="flex items-center space-x-3">
                       <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-lg border-3 border-purple-400">
@@ -177,30 +192,20 @@ export default function StudentDashboard() {
                     {/* Kabuuang Iskor */}
                     <div className="flex items-center justify-center space-x-2">
                       {/* <div className="w-8 h-6 bg-black"></div> */}
-                      <div className="text-sm font-medium">
-                        {/* {student.scores.kabuhuan} */}45
+                      <div className="text-sm font-medium text-gray-600">
+                        25/04/2025 - 12:30:54
                       </div>
                     </div>
 
                     {/* Pag-usad with percentage */}
                     <div className="flex items-center justify-center">
                       <div className="relative flex items-center justify-center">
-                        <div
-                          className={`rounded-full flex items-center justify-center text-center text-white font-bold ${getProgressColor(
-                            90 // student.overallProgress
-                          )}`}
-                          style={{
-                            width: `${Math.max(71 * 0.4, 28)}px`,
-                            height: `${Math.max(88 * 0.4, 28)}px`,
-                            fontSize: `12px`,
-                          }}
-                        >
-                          {/* {student.overallProgress} */}95
+                        <div className="px-4 py-1 bg-red-100 text-red-800 rounded-full font-medium text-sm">
+                          Huli ang Pagsumite
                         </div>
                       </div>
                     </div>
 
-                    {/* Mekaniks ng Pagsulat */}
                     <div className="flex items-center space-x-2">
                       <div className="flex-1 relative">
                         <div className="w-full bg-gray-200 rounded h-2"></div>
@@ -211,25 +216,15 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
-                    {/* Bokabularyo */}
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 relative">
-                        <div className="w-full bg-gray-200 rounded h-2"></div>
-                        <div
-                          className="bg-purple-300 h-2 rounded absolute top-0 left-0"
-                          style={{ width: `80%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Gramatika sa Pagsulat */}
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 relative">
-                        <div className="w-full bg-gray-200 rounded h-2"></div>
-                        <div
-                          className="bg-purple-300 h-2 rounded absolute top-0 left-0"
-                          style={{ width: `80%` }}
-                        ></div>
+                    <div className="flex items-center justify-center">
+                      <div className="relative flex items-center justify-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 rounded-full hover:bg-purple-200"
+                        >
+                          <MoreHorizontal className="w-5 h-5" />
+                        </Button>
                       </div>
                     </div>
                   </div>

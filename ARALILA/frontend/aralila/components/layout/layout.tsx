@@ -1,13 +1,28 @@
 "use client";
 import Sidebar from "./sidebar";
 import Header from "./header";
+import { ReactNode } from "react";
 
-export default function Layout({ sidebar, user, children }) {
+interface LayoutProps {
+  sidebar: ReactNode;
+  id: number;
+  user: ReactNode;
+  children: ReactNode;
+  activeTab?: number;
+}
+
+export default function Layout({
+  sidebar,
+  id,
+  user,
+  children,
+  activeTab,
+}: LayoutProps) {
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-y-auto">
       <Header user={user} />
       <div className="flex flex-1 overflow-hidden">
-        {sidebar && <Sidebar />}
+        {sidebar && <Sidebar id={id} />}
         <main className="flex-1 overflow-y-auto p-6 bg-purple-50">
           {children}
         </main>

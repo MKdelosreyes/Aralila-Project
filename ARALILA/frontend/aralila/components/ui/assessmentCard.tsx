@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+// import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Icon,
   MoreHorizontal,
@@ -8,7 +10,13 @@ import {
   Eye,
 } from "lucide-react";
 
-const AssessmentCard = ({ assessment, Icon }) => {
+const AssessmentCard = ({ classID, assessment, Icon }) => {
+  const router = useRouter();
+  const handleClick = () => {
+    router.push(
+      `/teacher/classroom/${classID}/activities/activity/${assessment?.id}`
+    );
+  };
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
@@ -87,7 +95,10 @@ const AssessmentCard = ({ assessment, Icon }) => {
           </div>
         </div>
 
-        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+        <button
+          onClick={handleClick}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+        >
           <Eye className="w-4 h-4" />
           View Details
         </button>

@@ -210,8 +210,12 @@ const page = () => {
     if (percentage >= 60) return "bg-yellow-500";
     return "bg-red-500";
   };
+  const sideTabClick = () => {
+    console.log("");
+  };
+
   return (
-    <Layout sidebar={true} user={user}>
+    <Layout sidebar={true} user={user} id={Number(classId)}>
       <div className="rounded-2xl bg-white p-6 h-fit">
         {/* max-w-7xl mx-auto */}
         <div className="">
@@ -270,6 +274,7 @@ const page = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAssessments.map((assessment) => (
               <AssessmentCard
+                classID={Number(classId)}
                 key={assessment.id}
                 assessment={assessment}
                 Icon={assessment.icon}

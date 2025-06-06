@@ -199,10 +199,9 @@ export default function StudentDashboard() {
         <div className="bg-gradient-to-r from-purple-100 to-purple-400 text-purple-950 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button className="p-2 hover:bg-purple-300 rounded-full transition-colors">
-                {/* <ArrowLeft className="w-6 h-6" /> */}
+              {/* <button className="p-2 hover:bg-purple-300 rounded-full transition-colors">
                 <img src="/images/back-arrow.png" alt="" className="w-6 h-6" />
-              </button>
+              </button> */}
               <div>
                 <h1 className="text-2xl font-bold">Student List</h1>
                 <p className="text-purple-950">
@@ -218,10 +217,9 @@ export default function StudentDashboard() {
         <div className="bg-gradient-to-r from-purple-100 to-purple-400 text-purple-950 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button className="p-2 hover:bg-purple-300 rounded-full transition-colors">
-                {/* <ArrowLeft className="w-6 h-6" /> */}
+              {/* <button className="p-2 hover:bg-purple-300 rounded-full transition-colors">
                 <img src="/images/back-arrow.png" alt="" className="w-6 h-6" />
-              </button>
+              </button> */}
               <div>
                 <h1 className="text-2xl font-bold">Pending Requests</h1>
                 <p className="text-purple-950">
@@ -488,7 +486,7 @@ export default function StudentDashboard() {
   );
 
   return (
-    <Layout sidebar={true} user={user}>
+    <Layout sidebar={true} user={user} id={Number(classId)}>
       <div className="rounded-2xl bg-gray-50">
         {/* Dynamic Header */}
         {renderHeader()}

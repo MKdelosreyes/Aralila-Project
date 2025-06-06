@@ -6,17 +6,25 @@ import {
   Menu,
   Home,
   Book,
-  User,
+  BookOpen,
   Settings,
   LogOut,
   LayoutDashboard,
   BarChart,
   ListTodo,
   FileClock,
+  IdCard,
+  PanelTop,
+  Grid,
+  LayoutGrid,
 } from "lucide-react";
 import NavItem from "../ui/navItem";
 
-export default function Sidebar() {
+interface SidebarProps {
+  id: number;
+}
+
+export default function Sidebar({ id }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -35,25 +43,52 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <div className="flex flex-col flex-grow p-4 space-y-6">
+      <div className="flex flex-col flex-grow p-4 space-y-3">
         <NavItem
-          icon={<BarChart />}
+          icon={<LayoutGrid />}
           label="Ulat"
           isOpen={isOpen}
-          isActive={true}
+          href={`/teacher/classroom/${id}/dashboard`}
+          matchPath="/dashboard"
         />
-        <NavItem icon={<ListTodo />} label="Pagsusulit" isOpen={isOpen} />
         <NavItem
-          icon={<FileClock />}
+          icon={<ListTodo />}
+          label="Pagsusulit"
+          isOpen={isOpen}
+          href={`/teacher/classroom/${id}/activities`}
+          matchPath="/activities"
+        />
+        <NavItem
+          icon={<IdCard />}
           label="Pending Requests"
           isOpen={isOpen}
+          href={`/teacher/classroom/${id}/students-record`}
+          matchPath="/students-record"
         />
-        <NavItem icon={<Book />} label="Mga Modyulo" isOpen={isOpen} />
+        <NavItem
+          icon={<BookOpen />}
+          label="Mga Modyulo"
+          isOpen={isOpen}
+          href={`/teacher/classroom/${id}/modyulo`}
+          matchPath="/modyulo"
+        />
       </div>
 
       <div className="p-4 border-t">
-        <NavItem icon={<Settings />} label="Settings" isOpen={isOpen} />
-        <NavItem icon={<LogOut />} label="Logout" isOpen={isOpen} />
+        <NavItem
+          icon={<Settings />}
+          label="Settings"
+          isOpen={isOpen}
+          href={`/teacher/classroom/${id}/settings`}
+          matchPath="/settings"
+        />
+        <NavItem
+          icon={<LogOut />}
+          label="Logout"
+          isOpen={isOpen}
+          href={`/teacher/classroom/${id}/logout`}
+          matchPath="/logout"
+        />
       </div>
     </div>
   );

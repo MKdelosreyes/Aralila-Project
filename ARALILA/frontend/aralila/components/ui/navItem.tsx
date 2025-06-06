@@ -1,16 +1,42 @@
 "use client";
+import { ReactNode } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
-export default function NavItem({ icon, label, isOpen, isActive = false }) {
+interface NavItemProps {
+  label: string;
+  isOpen: boolean;
+  icon: ReactNode;
+  href: string;
+  matchPath?: string;
+}
+
+export default function NavItem({
+  label,
+  isOpen,
+  icon,
+  href,
+  matchPath,
+}: NavItemProps) {
+  const router = useRouter();
+
+  // Match either the exact href or a custom match string
+
+  const pathname = usePathname(); // returns string like "/teacher/classroom/123/dashboard"
+  const isActive = matchPath ? pathname.includes(matchPath) : pathname === href;
+
   return (
-    <div
-      className={`flex items-center p-2 cursor-pointer rounded-lg ${
-        isActive
-          ? "bg-purple-100 text-purple-700"
-          : "text-gray-600 hover:bg-gray-100"
-      }`}
-    >
-      <div className="w-5 h-5 mr-3">{icon}</div>
-      {isOpen && <span className="font-medium">{label}</span>}
-    </div>
+    <Link href={href}>
+      <div
+        className={`flex items-center justify-center cursor-pointer transition rounded-lg gap-3  ${
+          isActive
+            ? "bg-purple-100 text-purple-700"
+            : "text-gray-600 hover:bg-gray-100"
+        } ${isOpen ? "justify-start pl-3" : ""}`}
+      >
+        <div className="py-2 ">{icon}</div>
+        {isOpen && <span className="font-medium">{label}</span>}
+      </div>
+    </Link>
   );
 }

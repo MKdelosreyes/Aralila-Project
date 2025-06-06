@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Users, Trophy, BookOpen } from "lucide-react";
 
 // classInfo = {
@@ -14,9 +14,20 @@ import { Users, Trophy, BookOpen } from "lucide-react";
 //   },
 
 const ClassroomInfoCard = ({ classInfo, studentSize }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(classInfo?.class_key);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
     <div
-      className={`flex-1/2 pr-3 bg-white rounded-lg shadow-xl overflow-hidden`}
+      className={`flex-2/3 pr-3 bg-white rounded-lg shadow-xl overflow-hidden border border-purple-200`}
     >
       <div className="flex items-center">
         {/* Left side - Banner image */}
@@ -65,9 +76,20 @@ const ClassroomInfoCard = ({ classInfo, studentSize }) => {
               )}
             </div>
             <div className="ml-auto">
-              <button className="font-medium text-base text-black">
-                Class Key
-              </button>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Class Key:</span>
+                <button
+                  onClick={handleCopy}
+                  className="group relative inline-flex items-center px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 font-mono font-semibold text-sm border border-purple-200 hover:border-purple-300 rounded-full transition-all duration-200 ease-out"
+                >
+                  <span className="tracking-wider">{classInfo?.class_key}</span>
+                  {copied && (
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-purple-600 text-white text-xs rounded shadow-lg whitespace-nowrap animate-fade-in">
+                      Copied to clipboard!
+                    </div>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 

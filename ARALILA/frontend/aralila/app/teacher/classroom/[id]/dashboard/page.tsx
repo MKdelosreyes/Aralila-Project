@@ -60,6 +60,7 @@ const categories = [
   "Mekaniks ng Pagsulat",
   "Bokabularyo",
   "Gramatika sa Pagsulat",
+  "Kayarian ng Pangungusap",
 ];
 
 const getProgressColor = (score) => {
@@ -141,9 +142,9 @@ export default function StudentDashboard() {
           ) : (
             <div className="w-full p-4 ">
               {/* Header */}
-              <div className="grid grid-cols-[80px_repeat(6,1fr)] p-2 items-center justify-center mb-2 py-4 text-sm font-medium text-shadow-2xs text-white bg-purple-500 rounded-t-lg rounded-b-sm shadow-2xsl">
+              <div className="grid grid-cols-[80px_repeat(7,1fr)] p-2 items-center justify-center mb-2 py-4 text-sm font-medium text-shadow-2xs text-white bg-purple-500 rounded-t-lg rounded-b-sm">
                 {categories.map((category, index) => (
-                  <div key={index} className="text-center">
+                  <div key={index} className="text-center px-2">
                     {category}
                   </div>
                 ))}
@@ -156,7 +157,7 @@ export default function StudentDashboard() {
                     key={student.id}
                     className="border border-purple-200 rounded-sm p-2"
                   >
-                    <div className="grid grid-cols-[60px_repeat(6,1fr)] gap-6">
+                    <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-6">
                       <div className="flex items-center justify-center">
                         <img
                           src="/images/first-rank.png"
@@ -234,6 +235,17 @@ export default function StudentDashboard() {
                       </div>
 
                       {/* Gramatika sa Pagsulat */}
+                      <div className="flex items-center space-x-2">
+                        <div className="flex-1 relative">
+                          <div className="w-full bg-gray-200 rounded h-2"></div>
+                          <div
+                            className="bg-purple-300 h-2 rounded absolute top-0 left-0"
+                            style={{ width: `80%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Kayarian ng Pangungusap */}
                       <div className="flex items-center space-x-2">
                         <div className="flex-1 relative">
                           <div className="w-full bg-gray-200 rounded h-2"></div>

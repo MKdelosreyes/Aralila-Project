@@ -51,7 +51,7 @@ export default function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-md font-bold">Email</FormLabel>
+              <FormLabel className="text-md font-semibold text-gray-800">Email</FormLabel>
               <FormControl>
                 <Input
                   placeholder="Enter your email"
@@ -69,7 +69,7 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-md font-bold">Password</FormLabel>
+              <FormLabel className="text-md font-semibold text-gray-800">Password</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
@@ -97,12 +97,15 @@ export default function LoginForm() {
           <Link href="">Forgot Password?</Link>
         </h1>
 
-        <Button
+        <Link href="/student/dashboard">
+                <Button
           type="submit"
-          className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md"
+          className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md cursor-pointer"
         >
           Login
         </Button>
+        </Link>
+
       </form>
     </Form>
   );

@@ -24,7 +24,7 @@ export default function LoginPage() {
             height={200}
             className="object-contain"
           />
-          <h1 className="text-xl font-bold text-center text-purple-500">
+          <h1 className="text-xl font-bold text-center text-gray-800 te">
             Pagsulat, Pag-unlad, Pagwawagi!
           </h1>
         </div>

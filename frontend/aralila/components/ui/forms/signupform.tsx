@@ -111,7 +111,7 @@ export default function SignupForm() {
                 />
               </div>
 
-              <h2 className="text-3xl font-bold text-center text-purple-500 mb-1">
+              <h2 className="text-3xl font-bold text-center text-gray-800 mb-1">
                 Create your account
               </h2>
               <p className="text-sm text-center text-gray-500 mb-4 font-medium">
@@ -126,7 +126,7 @@ export default function SignupForm() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold">Email</FormLabel>
+                      <FormLabel className="text-md font-semibold text-gray-800 ">Email</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -145,7 +145,7 @@ export default function SignupForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold">Password</FormLabel>
+                      <FormLabel className="text-md font-semibold text-gray-800">Password</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -174,7 +174,7 @@ export default function SignupForm() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold">Confirm Password</FormLabel>
+                      <FormLabel className="text-md font-semibold text-gray-800">Confirm Password</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -228,7 +228,7 @@ export default function SignupForm() {
                   className="object-contain"
                 />
               </div>
-              <h2 className="text-3xl font-black text-center text-purple-500 mb-1">
+              <h2 className="text-3xl font-bold text-center text-gray-800 mb-1">
                 Just a few more things...
               </h2>
               <p className="text-sm text-center text-gray-500 mb-4 font-medium">
@@ -251,8 +251,8 @@ export default function SignupForm() {
                           className={`h-20 w-52 text-xl font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer
                             ${
                               field.value === "student"
-                                ? "bg-purple-500 text-white"
-                                : "text-purple-500 border-2 border-purple-500 hover:text-purple-500 hover:bg-purple-100"
+                                ? "bg-purple-600 text-white pointer-events-none"
+                                : "text-purple-500 border-2 border-purple-500 hover:text-purple-500 hover:bg-purple-100 hover:shadow-lg hover:scale-105 transition-transform duration-300 ease-in-out"
                             }`}
                         >
                           <User size={32} />
@@ -266,8 +266,8 @@ export default function SignupForm() {
                           className={`h-20 w-52 text-xl font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer
                             ${
                               field.value === "teacher"
-                                ? "bg-purple-500 text-white"
-                                : "text-purple-500 border-2 border-purple-500 hover:text-purple-500 hover:bg-purple-100"
+                                ? "bg-purple-600 text-white pointer-events-none"
+                                : "text-purple-500 border-2 border-purple-500 hover:text-purple-500 hover:bg-purple-100 hover:shadow-lg hover:scale-105 transition-transform duration-300 ease-in-out"
                             }`}
                         >
                           <GraduationCap size={32} />
@@ -286,7 +286,7 @@ export default function SignupForm() {
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-md font-semibold">First Name</FormLabel>
+                          <FormLabel className="text-md font-semibold text-gray-800">First Name</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -305,7 +305,7 @@ export default function SignupForm() {
                       name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-md font-semibold">Last Name</FormLabel>
+                          <FormLabel className="text-md font-semibold text-gray-800">Last Name</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -325,7 +325,7 @@ export default function SignupForm() {
                         name="university"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-md font-semibold">University</FormLabel>
+                            <FormLabel className="text-md font-semibold text-gray-800">University</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}

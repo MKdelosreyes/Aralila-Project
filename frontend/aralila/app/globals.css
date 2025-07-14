@@ -111,3 +111,27 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.bg-fancy-gradient {
+  background: radial-gradient(
+      circle at 30% 30%,
+      rgba(99, 102, 241, 0.3),
+      transparent 70%
+    ),
+    radial-gradient(circle at 70% 70%, rgba(236, 72, 153, 0.3), transparent 70%),
+    linear-gradient(135deg, #1e1e2f, #111122);
+  background-size: 400% 400%;
+  animation: gradientMotion 15s ease infinite;
+}
+
+@keyframes gradientMotion {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+ 

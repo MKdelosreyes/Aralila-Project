@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button"
-import Navbar from "@/components/ui/navbar/navbar-home";
+import Navbar from "@/components/navbar/navbar-home";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
       <Navbar />
       <main className="text-white">
         <section
-        className="min-h-screen bg-[url('/images/forestbg.jpg')] bg-no-repeat bg-center bg-cover flex flex-col items-center justify-center text-center px-4"
+        className="min-h-screen bg-[url('/images/bg/forestbg.jpg')] bg-no-repeat bg-center bg-cover flex flex-col items-center justify-center text-center px-4"
         id="getting-started"
       >
         <h1 className="text-5xl font-bold mb-6">Welcome to Aralila</h1>

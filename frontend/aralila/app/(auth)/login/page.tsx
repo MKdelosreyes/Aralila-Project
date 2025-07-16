@@ -3,8 +3,8 @@
 import LoginForm from "@/components/forms/loginform";
 import Link from "next/link";
 import Image from "next/image";
-
 export default function LoginPage() {
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-purple-300 px-4 overflow-hidden">
       <Image

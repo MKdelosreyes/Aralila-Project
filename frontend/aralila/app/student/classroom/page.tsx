@@ -547,7 +547,7 @@ const ClassInfoModal = ({ isOpen, onClose }) => {
                   Details
                 </h3>
                 <p>
-                  <strong className="font-medium text-slate-600 dark:text-slate-300">
+                  <strong className="font-medium text-slate-800 dark:text-slate-600">
                     Class Name:
                   </strong>{" "}
                   {classroomData.name}

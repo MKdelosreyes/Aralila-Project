@@ -20,7 +20,6 @@ interface Question {
 }
 
 
-
 export default function FilipinoGrammarGame() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedErrors, setSelectedErrors] = useState<string[]>([]);
@@ -68,7 +67,6 @@ export default function FilipinoGrammarGame() {
     let timer: number;
 
     if (gameStarted && !gameComplete && timeLeft > 0) {
-      // Removed timeLeft from dependencies to prevent infinite loop
       timer = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -91,7 +89,7 @@ export default function FilipinoGrammarGame() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [gameStarted, gameComplete]); // Dependencies: gameStarted, gameComplete
+  }, [gameStarted, gameComplete]);
 
   // Auto-submit timer when user makes selections
   useEffect(() => {
@@ -102,14 +100,13 @@ export default function FilipinoGrammarGame() {
         submitAnswer();
       }, 2500);
 
-      // Removed autoSubmitTimer from dependencies to prevent infinite loop
       setAutoSubmitTimer(timer);
     }
 
     return () => {
       if (autoSubmitTimer) clearTimeout(autoSubmitTimer);
     };
-  }, [selectedErrors, gameStarted, gameComplete]); // Dependencies: selectedErrors, gameStarted, gameComplete
+  }, [selectedErrors, gameStarted, gameComplete]);
 
   // Handle background music playback
   useEffect(() => {
@@ -163,7 +160,7 @@ export default function FilipinoGrammarGame() {
   };
 
   const getStreakMessage = (streak: number) => {
-    if (streak >= 10) return "� HINDI MAPIGILAN! 🔥";
+    if (streak >= 10) return "🔥 HINDI MAPIGILAN! 🔥";
     if (streak >= 7) return "⚡ NAGLALAGABLAB! ⚡";
     if (streak >= 5) return "🚀 KAGILA-GILALAS! 🚀";
     if (streak >= 3) return "✨ MAHUSAY! ✨";
@@ -435,7 +432,8 @@ export default function FilipinoGrammarGame() {
     <div className="min-h-screen bg-gradient-to-br from-purple-800 to-indigo-950 p-4">
       {/* Background Music Audio Element */}
       <audio ref={audioRef} loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+        {/* Changed background music to a more chill track */}
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3" type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
 
@@ -471,7 +469,7 @@ export default function FilipinoGrammarGame() {
             <div className="bg-purple-900 bg-opacity-70 backdrop-blur-md rounded-3xl shadow-xl p-8 text-center border border-purple-700">
               <div className="flex items-center justify-center mb-6">
                 {/* <Flame className="w-12 h-12 text-orange-400 mr-3" />
-                <BookOpen className="w-12 h-12 text-purple-300" /> can insert LOGO HERE
+                <BookOpen className="w-12 h-12 text-purple-300" /> CAN ADD LOGO INSTEAD
                 <Target className="w-12 h-12 text-green-400 ml-3" /> */}
               </div>
               <h1 className="text-4xl font-bold text-white mb-4">Gramatika</h1>

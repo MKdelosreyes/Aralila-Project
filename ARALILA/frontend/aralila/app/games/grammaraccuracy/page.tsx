@@ -768,24 +768,28 @@ export default function FilipinoGrammarGame() {
       {/* Grammar Lesson Modal */}
       {showGrammarLessonModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-purple-900 bg-opacity-90 backdrop-blur-md rounded-3xl shadow-2xl p-8 text-center border border-purple-700 max-w-lg w-full">
+            <div className="bg-purple-900 bg-opacity-90 backdrop-blur-md rounded-3xl shadow-2xl p-8 text-center border border-purple-700 max-w-lg w-full">
             <h3 className="text-2xl font-bold text-white mb-4">Ano ang Gramatika?</h3>
             <p className="text-purple-200 mb-4 text-justify">
-              Ang gramatika ay ang sistema o hanay ng mga alituntunin na namamahala sa istruktura ng isang wika. Ito ang nagtatakda kung paano nabubuo ang mga salita, parirala, sugnay, at pangungusap upang magkaroon ng malinaw at tamang kahulugan.
+                Ang gramatika ay ang mga tuntunin na tumutulong sa atin na bumuo ng malinaw, maayos, at tamang pangungusap. Ito ay tumutukoy sa wastong gamit ng salita, baybay, bantas, at ayos ng pangungusap upang maipahayag nang tama ang ating ideya.
             </p>
-            <h3 className="text-2xl font-bold text-white mb-4">Bakit Mahalaga Itong Matutunan?</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Bakit Mahalaga Ito sa Pagsusulat?</h3>
+            <p className="text-purple-200 mb-4 text-justify">
+                Sa pagsusulat, ang maling gramatika ay maaaring magdulot ng kalituhan o maling pagkaunawa sa mambabasa. Ang mga simpleng pagkakamali tulad ng maling gamit ng pandiwa, panghalip, o bantas ay maaaring magbago ng kahulugan ng buong pangungusap.
+            </p>
             <p className="text-purple-200 mb-6 text-justify">
-              Mahalaga ang gramatika dahil ito ang pundasyon ng epektibong komunikasyon. Sa pamamagitan ng tamang paggamit ng gramatika, mas malinaw nating naipapahayag ang ating mga ideya at naiintindihan ang mensahe ng iba. Nakakatulong din ito upang maging mas propesyonal at kapani-paniwala sa pagsusulat at pagsasalita.
+                Sa larong ito, matututo kang kilalanin at itama ang mga gramatikal na pagkakamali. Layunin nitong hasain ang iyong mata sa mga maliliit na detalye na malaki ang epekto sa kahusayan ng iyong pagsulat. Tandaan, ang tamang gramatika ay susi sa epektibong komunikasyon!
             </p>
             <button
-              onClick={() => setShowGrammarLessonModal(false)}
-              className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-lg font-bold rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg border-b-4 border-purple-900 hover:border-b-2"
+                onClick={() => setShowGrammarLessonModal(false)}
+                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-lg font-bold rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg border-b-4 border-purple-900 hover:border-b-2"
             >
-              Nakuha Ko!
+                Nakuha Ko!
             </button>
-          </div>
+            </div>
         </div>
-      )}
+        )}
+
     </div>
   );
 }

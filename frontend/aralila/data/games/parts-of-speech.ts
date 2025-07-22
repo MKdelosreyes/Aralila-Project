@@ -5,51 +5,51 @@ import { PartsOfSpeechQuestion } from "@/types/games";
 export const partsOfSpeechData: PartsOfSpeechQuestion[] = [
   {
     id: 'pos-1',
-    sentence: "The **quick** brown fox jumps over the lazy dog.",
-    word: "quick",
-    options: ["Noun", "Verb", "Adjective", "Adverb"],
-    correctAnswer: "Adjective",
-    hint: "This word describes the fox.",
-    explanation: "An adjective describes a noun or pronoun. 'Quick' describes the noun 'fox'."
+    sentence: "Ang mabilis na kayumangging soro ay tumalon sa ibabaw ng tamad na aso.",
+    word: "mabilis",
+    options: ["Pangngalan", "Pandiwa", "Pang-uri", "Pang-abay"],
+    correctAnswer: "Pang-uri",
+    hint: "Naglalarawan ito sa soro.",
+    explanation: "Ang pang-uri ay naglalarawan ng pangngalan o panghalip. Inilalarawan ng 'mabilis' ang soro."
   },
   {
     id: 'pos-2',
-    sentence: "She **runs** every morning.",
-    word: "runs",
-    options: ["Noun", "Verb", "Adjective", "Preposition"],
-    correctAnswer: "Verb",
-    hint: "This word shows an action.",
-    explanation: "A verb expresses an action, existence, or occurrence. 'Runs' is the action she performs."
+    sentence: "Tumakbo siya tuwing umaga.",
+    word: "Tumakbo",
+    options: ["Pangngalan", "Pandiwa", "Pang-uri", "Pang-ukol"],
+    correctAnswer: "Pandiwa",
+    hint: "Ito ay kilos na ginagawa niya.",
+    explanation: "Ang pandiwa ay nagsasaad ng kilos o galaw. Ang 'tumakbo' ay kilos na ginagawa ng simuno."
   },
   {
     id: 'pos-3',
-    sentence: "The book is **on** the table.",
-    word: "on",
-    options: ["Noun", "Verb", "Adverb", "Preposition"],
-    correctAnswer: "Preposition",
-    hint: "This word shows the relationship between the book and the table.",
-    explanation: "A preposition shows the relationship of a noun or pronoun to other words in the sentence, often indicating position or direction."
+    sentence: "Ang aklat ay nasa ibabaw ng mesa.",
+    word: "nasa",
+    options: ["Pangngalan", "Pandiwa", "Pang-abay", "Pang-ukol"],
+    correctAnswer: "Pang-ukol",
+    hint: "Nagpapakita ng relasyon ng aklat at mesa.",
+    explanation: "Ang pang-ukol ay nag-uugnay ng pangngalan sa iba pang salita sa pangungusap. Ang 'nasa' ay nagpapakita ng lokasyon."
   },
   {
     id: 'pos-4',
-    sentence: "**Happiness** is a state of mind.",
-    word: "Happiness",
-    options: ["Noun", "Adjective", "Adverb", "Interjection"],
-    correctAnswer: "Noun",
-    hint: "This is a thing or concept.",
-    explanation: "A noun is a person, place, thing, or idea. 'Happiness' is an abstract noun."
+    sentence: "Ang kaligayahan ay isang estado ng isipan.",
+    word: "kaligayahan",
+    options: ["Pangngalan", "Pang-uri", "Pang-abay", "Padamdam"],
+    correctAnswer: "Pangngalan",
+    hint: "Ito ay isang ideya o damdamin.",
+    explanation: "Ang pangngalan ay ngalan ng tao, hayop, bagay, pook, o ideya. Ang 'kaligayahan' ay abstraktong pangngalan."
   },
   {
     id: 'pos-5',
-    sentence: "He spoke **softly** to the child.",
-    word: "softly",
-    options: ["Adjective", "Adverb", "Verb", "Conjunction"],
-    correctAnswer: "Adverb",
-    hint: "This word describes how he spoke.",
-    explanation: "An adverb modifies a verb, an adjective, or another adverb. 'Softly' describes the verb 'spoke'."
-  },
-  // Add more questions for different difficulties
+    sentence: "Maingat siyang nagsalita sa bata.",
+    word: "maingat",
+    options: ["Pang-uri", "Pang-abay", "Pandiwa", "Pangatnig"],
+    correctAnswer: "Pang-abay",
+    hint: "Ipinapakita kung paano siya nagsalita.",
+    explanation: "Ang pang-abay ay nagbibigay turing sa pandiwa, pang-uri, o kapwa pang-abay. Ang 'maingat' ay naglalarawan sa kilos na 'nagsalita'."
+  }
 ];
+
 
 export const PARTS_OF_SPEECH_DIFFICULTY_SETTINGS = {
   easy: {

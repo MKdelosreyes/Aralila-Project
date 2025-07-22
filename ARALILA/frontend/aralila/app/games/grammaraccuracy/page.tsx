@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, XCircle, Star, RotateCcw, Trophy, BookOpen, Eye, EyeOff, Clock, Zap, Heart, Target, Flame, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
+import { CheckCircle, XCircle, Star, RotateCcw, Trophy, BookOpen, Eye, EyeOff, Clock, Zap, Heart, Target, Flame, Volume2, VolumeX, ArrowLeft, HelpCircle } from 'lucide-react';
+import { grammarAccuracyQuestions } from '@/data/GrammarAccuracyData';
 
 interface GrammarError {
   word: string;
@@ -18,199 +19,7 @@ interface Question {
   difficulty: 'Easy' | 'Medium' | 'Hard';
 }
 
-const grammarQuestions: Question[] = [
-  {
-    id: 1,
-    sentence: "Ang mga bata ay naglalaro sa hardin kahapon.",
-    errors: [
-      {
-        word: "naglalaro",
-        errorType: "Verb Tense",
-        explanation: "Dapat gamitin ang 'naglaro' para sa nakaraang pangyayari (past tense).",
-        correct: "naglaro"
-      }
-    ],
-    category: "Verb Usage",
-    difficulty: "Easy"
-  },
-  {
-    id: 2,
-    sentence: "Si Maria at ako ay pumunta sa palengke, at bumili ng gulay.",
-    errors: [
-      {
-        word: ",",
-        errorType: "Punctuation",
-        explanation: "Hindi kailangan ng kuwit bago ang 'at' sa compound sentence.",
-        correct: ""
-      }
-    ],
-    category: "Punctuation",
-    difficulty: "Easy"
-  },
-  {
-    id: 3,
-    sentence: "Ang mga estudyante ay nag-aaral ng mabuti para sa kanilang pagsusulit.",
-    errors: [
-      {
-        word: "ng",
-        errorType: "Particle Usage",
-        explanation: "Dapat gamitin ang 'nang' para sa paraan o intensidad.",
-        correct: "nang"
-      }
-    ],
-    category: "Particles",
-    difficulty: "Medium"
-  },
-  {
-    id: 4,
-    sentence: "Ang aming mga guro ay nagtuturo ng mahusay sa aming paaralan.",
-    errors: [
-      {
-        word: "ng",
-        errorType: "Particle Usage",
-        explanation: "Dapat gamitin ang 'nang' para sa paraan kung paano nagtuturo.",
-        correct: "nang"
-      }
-    ],
-    category: "Particles",
-    difficulty: "Medium"
-  },
-  {
-    id: 5,
-    sentence: "Sila ay kumakain sa kusina habang nanonood ng telebisyon.",
-    errors: [],
-    category: "No Errors",
-    difficulty: "Easy"
-  },
-  {
-    id: 6,
-    sentence: "Ang mga libro na nasa mesa ay kay Pedro at Maria.",
-    errors: [
-      {
-        word: "kay",
-        errorType: "Possessive Marker",
-        explanation: "Dapat gamitin ang 'nina' para sa dalawa o higit pang tao.",
-        correct: "nina"
-      }
-    ],
-    category: "Possessive Markers",
-    difficulty: "Hard"
-  },
-  {
-    id: 7,
-    sentence: "Kumain na ako ng agahan bago pumasok sa paaralan.",
-    errors: [],
-    category: "No Errors",
-    difficulty: "Medium"
-  },
-  {
-    id: 8,
-    sentence: "Ang mga bulaklak sa hardin ay nagiging maganda dahil sa ulan.",
-    errors: [
-      {
-        word: "nagiging",
-        errorType: "Verb Usage",
-        explanation: "Dapat gamitin ang 'naging' para sa nakaraang pangyayari na may resulta sa kasalukuyan.",
-        correct: "naging"
-      }
-    ],
-    category: "Verb Usage",
-    difficulty: "Hard"
-  },
-  // Adding more questions for continuous gameplay
-  {
-    id: 9,
-    sentence: "Pupunta kami sa tindahan mamaya ng hapon.",
-    errors: [
-      {
-        word: "ng",
-        errorType: "Particle Usage",
-        explanation: "Dapat gamitin ang 'nang' para sa oras.",
-        correct: "nang"
-      }
-    ],
-    category: "Particles",
-    difficulty: "Easy"
-  },
-  {
-    id: 10,
-    sentence: "Nakita ko ang mga kaibigan ko sa paaralan.",
-    errors: [],
-    category: "No Errors",
-    difficulty: "Easy"
-  },
-  {
-    id: 11,
-    sentence: "Siya ay magaling manamit ng kanyang paboritong damit.",
-    errors: [
-      {
-        word: "ng",
-        errorType: "Particle Usage",
-        explanation: "Dapat gamitin ang 'nang' bago ang pandiwa ('manamit').",
-        correct: "nang"
-      }
-    ],
-    category: "Particles",
-    difficulty: "Medium"
-  },
-  {
-    id: 12,
-    sentence: "Ang bahay na iyon ay mas malaki sa aming bahay.",
-    errors: [
-      {
-        word: "sa",
-        errorType: "Preposition Usage",
-        explanation: "Dapat gamitin ang 'kaysa' para sa paghahambing (comparison).",
-        correct: "kaysa"
-      }
-    ],
-    category: "Prepositions",
-    difficulty: "Hard"
-  },
-  {
-    id: 13,
-    sentence: "Kailangan natin ng kumain ng gulay para lumakas.",
-    errors: [
-      {
-        word: "ng",
-        errorType: "Particle Usage",
-        explanation: "Dapat gamitin ang 'na' bago ang pandiwa na nagsisimula sa katinig ('kumain').",
-        correct: "na"
-      }
-    ],
-    category: "Particles",
-    difficulty: "Medium"
-  },
-  {
-    id: 14,
-    sentence: "Maraming tao ang pumunta sa pista kahapon.",
-    errors: [],
-    category: "No Errors",
-    difficulty: "Easy"
-  },
-  {
-    id: 15,
-    sentence: "Ang mga bata ay matatalino at masipag mag-aral.",
-    errors: [],
-    category: "No Errors",
-    difficulty: "Medium"
-  },
-  // Adding a question with punctuation error for testing
-  {
-    id: 16,
-    sentence: "Kumain ako ng mansanas, at uminom ng tubig.",
-    errors: [
-      {
-        word: ",",
-        errorType: "Punctuation",
-        explanation: "Hindi kailangan ng kuwit bago ang 'at' sa compound sentence.",
-        correct: ""
-      }
-    ],
-    category: "Punctuation",
-    difficulty: "Easy"
-  }
-];
+
 
 export default function FilipinoGrammarGame() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -225,7 +34,7 @@ export default function FilipinoGrammarGame() {
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState(false);
-  const [autoSubmitTimer, setAutoSubmitTimer] = useState<NodeJS.Timeout | null>(null);
+  const [autoSubmitTimer, setAutoSubmitTimer] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [questionQueue, setQuestionQueue] = useState<Question[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<'Easy' | 'Medium' | 'Hard' | null>(null);
@@ -233,6 +42,7 @@ export default function FilipinoGrammarGame() {
   const [showHintModal, setShowHintModal] = useState(false);
   const [hintMessage, setHintMessage] = useState('');
   const [showBackConfirmationModal, setShowBackConfirmationModal] = useState(false);
+  const [showGrammarLessonModal, setShowGrammarLessonModal] = useState(false); // New state for grammar lesson modal
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const gameOverSoundRef = useRef<HTMLAudioElement>(null);
@@ -242,11 +52,11 @@ export default function FilipinoGrammarGame() {
   // Initialize question queue based on selected difficulty
   useEffect(() => {
     if (selectedDifficulty) {
-      const filteredQuestions = grammarQuestions.filter(q => q.difficulty === selectedDifficulty);
+      const filteredQuestions = grammarAccuracyQuestions.filter(q => q.difficulty === selectedDifficulty);
       const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
       setQuestionQueue(shuffled);
     } else {
-      const shuffled = [...grammarQuestions].sort(() => Math.random() - 0.5);
+      const shuffled = [...grammarAccuracyQuestions].sort(() => Math.random() - 0.5);
       setQuestionQueue(shuffled);
     }
   }, [selectedDifficulty]);
@@ -255,9 +65,10 @@ export default function FilipinoGrammarGame() {
 
   // Main game timer
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: number;
 
     if (gameStarted && !gameComplete && timeLeft > 0) {
+      // Removed timeLeft from dependencies to prevent infinite loop
       timer = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -280,7 +91,7 @@ export default function FilipinoGrammarGame() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [gameStarted, gameComplete, timeLeft]);
+  }, [gameStarted, gameComplete]); // Dependencies: gameStarted, gameComplete
 
   // Auto-submit timer when user makes selections
   useEffect(() => {
@@ -291,13 +102,14 @@ export default function FilipinoGrammarGame() {
         submitAnswer();
       }, 2500);
 
+      // Removed autoSubmitTimer from dependencies to prevent infinite loop
       setAutoSubmitTimer(timer);
     }
 
     return () => {
       if (autoSubmitTimer) clearTimeout(autoSubmitTimer);
     };
-  }, [selectedErrors]);
+  }, [selectedErrors, gameStarted, gameComplete]); // Dependencies: selectedErrors, gameStarted, gameComplete
 
   // Handle background music playback
   useEffect(() => {
@@ -319,7 +131,7 @@ export default function FilipinoGrammarGame() {
 
   const startGame = (difficulty: 'Easy' | 'Medium' | 'Hard') => {
     setSelectedDifficulty(difficulty);
-    const filteredQuestions = grammarQuestions.filter(q => q.difficulty === difficulty);
+    const filteredQuestions = grammarAccuracyQuestions.filter(q => q.difficulty === difficulty);
     const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
     setQuestionQueue(shuffled);
 
@@ -351,7 +163,7 @@ export default function FilipinoGrammarGame() {
   };
 
   const getStreakMessage = (streak: number) => {
-    if (streak >= 10) return "🔥 HINDI MAPIPIGILAN! 🔥";
+    if (streak >= 10) return "� HINDI MAPIGILAN! 🔥";
     if (streak >= 7) return "⚡ NAGLALAGABLAB! ⚡";
     if (streak >= 5) return "🚀 KAGILA-GILALAS! 🚀";
     if (streak >= 3) return "✨ MAHUSAY! ✨";
@@ -423,7 +235,7 @@ export default function FilipinoGrammarGame() {
     setFeedbackMessage('');
 
     if (questionQueue.length === 0 || (currentQuestionIndex + 1) % questionQueue.length === 0) {
-      const filteredQuestions = grammarQuestions.filter(q => q.difficulty === selectedDifficulty);
+      const filteredQuestions = grammarAccuracyQuestions.filter(q => q.difficulty === selectedDifficulty);
       const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
       setQuestionQueue(shuffled);
       setCurrentQuestionIndex(0);
@@ -483,6 +295,7 @@ export default function FilipinoGrammarGame() {
     setShowDifficultySelection(false);
     setShowHintModal(false);
     setShowBackConfirmationModal(false);
+    setShowGrammarLessonModal(false); // Close grammar lesson modal on reset
 
     if (gameOverSoundRef.current) {
       gameOverSoundRef.current.pause();
@@ -538,12 +351,18 @@ export default function FilipinoGrammarGame() {
     if (audioRef.current && isPlaying) {
       audioRef.current.play().catch(e => console.error("Error resuming background audio on restart option:", e));
     }
-    audioRef.current.currentTime = 0;
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
     setShowBackConfirmationModal(false);
   };
 
   const handleQuitGameOption = () => {
     resetGame();
+  };
+
+  const handleGrammarLessonClick = () => {
+    setShowGrammarLessonModal(true);
   };
 
 
@@ -651,11 +470,11 @@ export default function FilipinoGrammarGame() {
           <div className="max-w-2xl mx-auto">
             <div className="bg-purple-900 bg-opacity-70 backdrop-blur-md rounded-3xl shadow-xl p-8 text-center border border-purple-700">
               <div className="flex items-center justify-center mb-6">
-                <Flame className="w-12 h-12 text-orange-400 mr-3" />
-                <BookOpen className="w-12 h-12 text-purple-300" />
-                <Target className="w-12 h-12 text-green-400 ml-3" />
+                {/* <Flame className="w-12 h-12 text-orange-400 mr-3" />
+                <BookOpen className="w-12 h-12 text-purple-300" /> can insert LOGO HERE
+                <Target className="w-12 h-12 text-green-400 ml-3" /> */}
               </div>
-              <h1 className="text-4xl font-bold text-white mb-4">Laro sa Gramatika!</h1>
+              <h1 className="text-4xl font-bold text-white mb-4">Gramatika</h1>
               <div className="bg-purple-800 rounded-2xl p-6 mb-6 border border-purple-600">
                 <div className="flex items-center justify-center mb-4">
                   <Clock className="w-8 h-8 text-purple-300 mr-3" />
@@ -691,12 +510,21 @@ export default function FilipinoGrammarGame() {
                 </div>
               </div>
 
-              <button
-                onClick={handleStartGameClick}
-                className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xl font-bold rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg border-b-4 border-purple-900 hover:border-b-2"
-              >
-                 SIMULAN ANG LARO! 
-              </button>
+              <div className="flex justify-center items-center space-x-4">
+                <button
+                  onClick={handleStartGameClick}
+                  className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xl font-bold rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg border-b-4 border-purple-900 hover:border-b-2"
+                >
+                   SIMULAN ANG LARO! 
+                </button>
+                <button
+                  onClick={handleGrammarLessonClick}
+                  className="p-3 bg-purple-700 text-purple-200 rounded-full shadow-lg hover:bg-purple-600 transition-colors"
+                  title="Ano ang Gramatika?"
+                >
+                  <HelpCircle className="w-6 h-6" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -935,6 +763,28 @@ export default function FilipinoGrammarGame() {
                 Umalis sa Laro
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grammar Lesson Modal */}
+      {showGrammarLessonModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-purple-900 bg-opacity-90 backdrop-blur-md rounded-3xl shadow-2xl p-8 text-center border border-purple-700 max-w-lg w-full">
+            <h3 className="text-2xl font-bold text-white mb-4">Ano ang Gramatika?</h3>
+            <p className="text-purple-200 mb-4 text-justify">
+              Ang gramatika ay ang sistema o hanay ng mga alituntunin na namamahala sa istruktura ng isang wika. Ito ang nagtatakda kung paano nabubuo ang mga salita, parirala, sugnay, at pangungusap upang magkaroon ng malinaw at tamang kahulugan.
+            </p>
+            <h3 className="text-2xl font-bold text-white mb-4">Bakit Mahalaga Itong Matutunan?</h3>
+            <p className="text-purple-200 mb-6 text-justify">
+              Mahalaga ang gramatika dahil ito ang pundasyon ng epektibong komunikasyon. Sa pamamagitan ng tamang paggamit ng gramatika, mas malinaw nating naipapahayag ang ating mga ideya at naiintindihan ang mensahe ng iba. Nakakatulong din ito upang maging mas propesyonal at kapani-paniwala sa pagsusulat at pagsasalita.
+            </p>
+            <button
+              onClick={() => setShowGrammarLessonModal(false)}
+              className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-lg font-bold rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg border-b-4 border-purple-900 hover:border-b-2"
+            >
+              Nakuha Ko!
+            </button>
           </div>
         </div>
       )}

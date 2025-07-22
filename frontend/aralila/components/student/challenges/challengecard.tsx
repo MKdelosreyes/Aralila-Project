@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Play } from "lucide-react";
@@ -9,6 +10,7 @@ interface ChallengeCardProps {
   card: {
     id: number;
     title: string;
+    slug: string;
     image: string;
     category: string;
     description: string;
@@ -50,20 +52,27 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ card, isActive }) => {
             <div className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full mb-2">
               {card.category}
             </div>
-            <h3 className="font-bold text-xl text-slate-800 mb-2 leading-tight">{card.title}</h3>
-            <p className="text-slate-600 text-sm leading-relaxed mb-4">{card.description}</p>
+            <h3 className="font-bold text-xl text-slate-800 mb-2 leading-tight">
+              {card.title}
+            </h3>
+            <p className="text-slate-600 text-sm leading-relaxed mb-4">
+              {card.description}
+            </p>
           </div>
           {isActive && (
             <div className="mt-5 pt-3 border-t border-gray-100">
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3 px-6 rounded-xl text-base flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
               >
-                <Play className="w-4 h-4" fill="currentColor" />
-                Start Challenge
-              </motion.button>
+                <Link href={`/student/challenges/games/${card.slug}`}>
+                  <button className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3 px-6 rounded-xl text-base flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]">
+                    <Play className="w-4 h-4" fill="currentColor" />
+                    Start Challenge
+                  </button>
+                </Link>
+              </motion.div>
             </div>
           )}
         </div>

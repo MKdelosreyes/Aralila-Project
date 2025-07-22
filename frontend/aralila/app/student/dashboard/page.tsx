@@ -2,14 +2,12 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
-// Main layout components
 import FullscreenMenu from "@/components/student/fullscreen-menu";
 import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
+import AnimatedBackground from "@/components/bg/animatedforest-bg";
 
-// New Dashboard Card Components
 import ProfileCard from "@/components/student/dashboard/profile-card";
 import ClassroomCard from "@/components/student/dashboard/classroom-card";
 import TodoListCard from "@/components/student/dashboard/todolist-card";
@@ -20,7 +18,7 @@ export default function DashboardPage() {
   const student = {
     firstName: "Alex",
     fullName: "Alexandra dela Cruz",
-    avatar: "/images/avatars/student-avatar.png", // Make sure this image exists
+    avatar: "/images/avatars/student-avatar.png",
   };
 
   const bentoGridVariants = {
@@ -36,29 +34,8 @@ export default function DashboardPage() {
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <FullscreenMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
-      {/* Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <motion.div
-          className="absolute inset-[-5%] w-[110%] h-[110%]"
-          animate={{ x: ["0%", "-5%", "0%"], y: ["0%", "2%", "0%"] }}
-          transition={{
-            duration: 45,
-            repeat: Infinity,
-            repeatType: "mirror",
-            ease: "easeInOut",
-          }}
-        >
-          <Image
-            src="/images/bg/forestbg-learn.jpg"
-            alt="Forest Background"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover opacity-70"
-          />
-        </motion.div>
-        <div className="min-h-screen absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
-      </div>
+      {/* bg */}
+      <AnimatedBackground />
 
       <Sidebar />
 
@@ -69,7 +46,6 @@ export default function DashboardPage() {
           animate="visible"
           className="w-full max-w-6xl grid grid-cols-2 md:grid-cols-4 auto-rows-[12rem] gap-4 md:gap-6"
         >
-          {/* --- THE CLEAN & ORGANIZED GRID --- */}
 
           <ProfileCard student={student} />
           
@@ -77,8 +53,6 @@ export default function DashboardPage() {
           
           <TodoListCard />
 
-          {/* You can easily add more cards here, like the calendar */}
-          {/* <CalendarCard /> */}
 
         </motion.div>
       </main>

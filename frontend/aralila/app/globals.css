@@ -135,3 +135,18 @@
   }
 }
 
+@keyframes pulse-24-7 {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-24-7 {
+  animation: pulse-24-7 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

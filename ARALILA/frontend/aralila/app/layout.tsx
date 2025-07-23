@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Quicksand } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
+import "../styles/colors.css";
 
-const quicksand = Quicksand({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-quicksand",
+  variable: "--font-outfit",
   display: "swap",
 });
 
@@ -19,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${quicksand.variable}`}>
+    <html lang="en" className={`${outfit.variable}`}>
       <body>
 
         {children}

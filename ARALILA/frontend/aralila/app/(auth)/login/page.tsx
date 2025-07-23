@@ -1,10 +1,10 @@
 "use client";
 
-import LoginForm from "@/components/ui/forms/loginform";
+import LoginForm from "@/components/forms/loginform";
 import Link from "next/link";
 import Image from "next/image";
-
 export default function LoginPage() {
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-purple-300 px-4 overflow-hidden">
       <Image
@@ -24,7 +24,7 @@ export default function LoginPage() {
             height={200}
             className="object-contain"
           />
-          <h1 className="text-xl font-bold text-center text-purple-500">
+          <h1 className="text-xl font-bold text-center text-gray-800 te">
             Pagsulat, Pag-unlad, Pagwawagi!
           </h1>
         </div>

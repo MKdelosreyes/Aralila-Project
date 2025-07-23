@@ -14,7 +14,6 @@ interface PunctuationChallengeIntroProps {
 
 export const PunctuationChallengeIntro = ({
   onStartChallenge,
-  onReviewLessons, 
 }: PunctuationChallengeIntroProps) => {
   return (
     <div className="relative z-10 flex flex-col items-center justify-center h-screen overflow-hidden">
@@ -71,7 +70,7 @@ export const PunctuationChallengeIntro = ({
       </motion.div>
 
       {/* Review Lessons Button */}
-      <motion.button
+      {/* <motion.button
         onClick={onReviewLessons}
         className="mt-20 text-sm text-gray-400 hover:text-gray-200 transition-colors duration-300 font-medium cursor-pointer"
         initial={{ opacity: 0, y: 30 }}
@@ -79,7 +78,7 @@ export const PunctuationChallengeIntro = ({
         transition={{ duration: 0.7, delay: 0.7 }}
       >
         REVIEW LESSONS
-      </motion.button>
+      </motion.button> */}
     </div>
   );
 };

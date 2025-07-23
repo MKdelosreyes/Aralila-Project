@@ -30,7 +30,7 @@ const cards = [
     description: "Kilalanin at uriin ang mga salita (pangngalan, pandiwa, at iba pa.) sa loob ng pangungusap."
   },
   { id: 4,
-    title: "Salitang Konektado",
+    title: "Apat na Larawan, Isang Salita",
     slug: "word-association",
     image: "/images/art/game-art-4.png",
     category: "Word Association",

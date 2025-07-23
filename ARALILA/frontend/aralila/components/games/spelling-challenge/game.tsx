@@ -9,7 +9,7 @@ import { SpellingResult } from "./summary";
 import { ConfirmationModal } from "../confirmation-modal";
 
 const TIME_LIMIT = 120;
-const BONUS_TIME = 10;
+const BONUS_TIME = 5;
 const BASE_POINTS = 20;
 
 type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thumbsup";

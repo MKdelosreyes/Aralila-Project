@@ -44,7 +44,7 @@ export const ConfirmationModal = ({
             {/* Message */}
             <div>
               <h2 className="text-xl font-semibold text-slate-700 leading-snug">
-                Wait, don’t go! You’ll lose your progress if you quit now.
+                Wait! If you quit now, you&apos;ll lose your work
               </h2>
             </div>
 
@@ -59,9 +59,9 @@ export const ConfirmationModal = ({
 
               <button
                 onClick={onConfirm}
-                className="w-full text-red-600 hover:underline font-semibold uppercase cursor-pointer"
+                className="w-full text-red-600 font-semibold uppercase cursor-pointer"
               >
-                End Session
+                QUIT GAME
               </button>
             </div>
           </motion.div>

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { CheckCircle, XCircle, Star, RotateCcw, Trophy, BookOpen, Eye, EyeOff, Clock, Zap, Heart, Target, Flame, Volume2, VolumeX, ArrowLeft, HelpCircle, Trash2 } from 'lucide-react';
-import { EMOJI_SENTENCE_DATABASE } from '@/data/EmojiData';
+import { emojiSentenceChallenges } from '@/data/EmojiData';
 
 export default function EmojiSentenceChallenge() {
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -36,7 +36,7 @@ export default function EmojiSentenceChallenge() {
   };
 
   const loadNewQuestion = (diff = difficulty) => {
-    const filteredQuestions = EMOJI_SENTENCE_DATABASE.filter(q => q.difficulty === diff);
+    const filteredQuestions = emojiSentenceChallenges.filter(q => q.difficulty === diff);
 
     if (filteredQuestions.length === 0) return;
 

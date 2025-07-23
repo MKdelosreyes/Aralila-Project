@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import Navbar from "@/components/ui/navbar/navbar-home";
+import { Button } from "@/components/ui/button"
+import Navbar from "@/components/navbar/navbar-home";
 
 export default function Home() {
   return (
@@ -10,19 +10,19 @@ export default function Home() {
       <Navbar />
       <main className="text-white">
         <section
-          className="min-h-screen bg-[url('/images/forestbg.jpg')] bg-no-repeat bg-center bg-cover flex flex-col items-center justify-center text-center px-4"
-          id="getting-started"
-        >
-          <h1 className="text-5xl font-bold mb-6">Welcome to Aralila</h1>
-          <p className="text-lg mb-8 max-w-xl">
-            Empowering Students and Teachers with Seamless Collaboration.
-          </p>
-          <Link href="/signup">
-            <Button className="text-lg px-8 py-6 bg-white text-purple-700 hover:bg-purple-100 font-semibold rounded-full">
-              Get Started
-            </Button>
-          </Link>
-        </section>
+        className="min-h-screen bg-[url('/images/bg/forestbg.jpg')] bg-no-repeat bg-center bg-cover flex flex-col items-center justify-center text-center px-4"
+        id="getting-started"
+      >
+        <h1 className="text-5xl font-bold mb-6">Welcome to Aralila</h1>
+        <p className="text-lg mb-8 max-w-xl">
+          Empowering Students and Teachers with Seamless Collaboration.
+        </p>
+        <Link href="/signup">
+          <Button className="text-lg px-8 py-6 bg-white text-purple-700 hover:bg-purple-100 font-semibold rounded-full">
+            Get Started
+          </Button>
+        </Link>
+      </section>
 
         {/* random section for viewing*/}
         <section

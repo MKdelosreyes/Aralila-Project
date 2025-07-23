@@ -99,6 +99,8 @@ export default function SignupForm() {
     console.log("Form submitted with data:", formData);
     try {
       const response = await authAPI.register(formData);
+      if (response.role === "student") {
+      }
       console.log("User registered successfully:", response);
       router.push("/login");
     } catch (error) {

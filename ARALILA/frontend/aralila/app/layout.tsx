@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
+import "../styles/colors.css";
 
 const quicksand = Quicksand({
   subsets: ["latin"],
@@ -20,10 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${quicksand.variable}`}>
-      <body>
-
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

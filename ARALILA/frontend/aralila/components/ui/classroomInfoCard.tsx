@@ -1,20 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Users, Trophy, BookOpen } from "lucide-react";
-
-// classInfo = {
-//     name: "Filipino 101",
-//     grade: "Grade 8",
-//     studentCount: 32,
-//     isActive: true,
-//     overallScore: 68,
-//     workAssigned: 36,
-//     bannerImage: "/images/forestbg.jpg", // Path to your banner image
-//   },
+import { Users, Trophy, BookOpen, Check, Copy } from "lucide-react";
 
 const ClassroomInfoCard = ({ classInfo, studentSize }) => {
   const [copied, setCopied] = useState(false);
+  const sampleStudentSize = studentSize || 28;
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(classInfo?.class_key);
@@ -26,103 +18,128 @@ const ClassroomInfoCard = ({ classInfo, studentSize }) => {
   };
 
   return (
-    <div
-      className={`flex-2/3 pr-3 bg-white rounded-lg shadow-xl overflow-hidden border border-purple-200`}
-    >
-      <div className="flex items-center">
-        {/* Left side - Banner image */}
-        <div className="w-1/5 h-48 relative">
-          <img
-            src="/images/forestbg.jpg"
-            alt={`${classInfo?.class_name} banner`}
-            className="h-full w-full object-cover"
-          />
-        </div>
-
-        {/* Right side - Content */}
-        <div className="flex-1 px-5 py-3">
-          {/* Header with class name and status */}
-          <div className="flex justify-between items-center mb-1">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {classInfo?.class_name}
-            </h2>
-            {classInfo?.isActive ? (
-              <div className="px-4 py-0 bg-green-100 text-green-800 rounded-full font-medium text-sm">
-                ACTIVE
+    <div className="flex-1/2 pr-3">
+      <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl shadow-2xl overflow-hidden border border-purple-100 hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="flex items-stretch min-h-[200px]">
+          {/* Left side - Enhanced banner with overlay */}
+          <div className="w-1/4 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-800"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-white">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
+                  <BookOpen className="w-8 h-8" />
+                </div>
+                <div className="text-xs font-medium opacity-90">CLASSROOM</div>
               </div>
-            ) : (
-              <div className="px-4 py-0 bg-gray-100 text-gray-800 rounded-full font-medium text-sm">
-                INACTIVE
-              </div>
-            )}
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-purple-600"></div>
           </div>
 
-          {/* Class details */}
-          <div className="flex items-center gap-8 mb-2">
-            <span className="text-base text-gray-500">
-              {`Section ${classInfo?.section}`}
-            </span>
-            <div className="flex items-center gap-2">
-              <Users className="text-gray-500" size={24} />
-              {studentSize === 0 ? (
-                <span className="text-base text-gray-500">
-                  No students enrolled in this class
-                </span>
+          {/* Right side - Enhanced content */}
+          <div className="flex-1 px-8 py-6">
+            {/* Header with enhanced status badge */}
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-1 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                  {classInfo?.class_name}
+                </h2>
+                <div className="text-lg text-gray-600 font-medium">
+                  Section {classInfo?.section}
+                </div>
+              </div>
+
+              {classInfo?.status ? (
+                <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 rounded-full font-semibold text-sm border border-green-200 shadow-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  ACTIVE
+                </div>
               ) : (
-                <span className="text-base text-gray-500">
-                  {studentSize}
-                  {studentSize === 1 ? " student" : " students"}
-                </span>
+                <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-full font-semibold text-sm border border-gray-200">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  INACTIVE
+                </div>
               )}
             </div>
-            <div className="ml-auto">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Class Key:</span>
+
+            {/* Enhanced student count and class key */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3 px-4 py-2 bg-purple-50 rounded-full border border-purple-100">
+                <Users className="text-purple-600" size={20} />
+                {sampleStudentSize === 0 ? (
+                  <span className="text-sm text-gray-600 font-medium">
+                    No students enrolled
+                  </span>
+                ) : (
+                  <span className="text-sm text-gray-700 font-medium">
+                    {sampleStudentSize}{" "}
+                    {sampleStudentSize === 1 ? "student" : "students"}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 font-medium">
+                  Class Key:
+                </span>
                 <button
                   onClick={handleCopy}
-                  className="group relative inline-flex items-center px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 font-mono font-semibold text-sm border border-purple-200 hover:border-purple-300 rounded-full transition-all duration-200 ease-out"
+                  className="group relative inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 text-purple-800 font-mono font-bold text-sm border border-purple-200 hover:border-purple-400 rounded-lg transition-all duration-200 ease-out transform hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
                 >
-                  <span className="tracking-wider">{classInfo?.class_key}</span>
+                  <span className="tracking-wide">{classInfo?.class_key}</span>
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4 opacity-70 group-hover:opacity-100" />
+                  )}
+
                   {copied && (
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-purple-600 text-white text-xs rounded shadow-lg whitespace-nowrap animate-fade-in">
-                      Copied to clipboard!
+                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-green-600 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10 animate-in fade-in duration-200">
+                      <div className="relative">
+                        Copied successfully!
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-green-600"></div>
+                      </div>
                     </div>
                   )}
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Class metrics */}
-          <div className="flex gap-12 justify-between items-center mt-5">
-            {/* Overall score */}
-            <div className="flex items-center gap-4">
-              <div>
-                {/* <img src="/images/trophy.svg" alt="trophy-icon" /> */}
-                <Trophy className="w-12 h-12 text-yellow-600" />
-              </div>
-              <div>
-                <div className="text-gray-600 font-medium">
-                  Overall Class Score
+            {/* Enhanced metrics cards */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Overall score card */}
+              <div className="group bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200 hover:border-yellow-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                    <Trophy className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-gray-600 font-semibold text-sm mb-1">
+                      Overall Class Score
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 flex items-baseline gap-1">
+                      72
+                      <span className="text-lg text-gray-600">%</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-xl font-bold text-gray-900">72%</div>
               </div>
-            </div>
 
-            {/* Work assigned */}
-            <div className="flex items-center gap-4">
-              <div>
-                {/* <img
-                  src="/images/assigned-activities.svg"
-                  alt="assigned-activities-icon"
-                  className="h-full w-full object-cover"
-                /> */}
-                <BookOpen className="w-12 h-12 text-purple-900" />
-              </div>
-              <div>
-                <div className="text-gray-600 font-medium">Work Assigned</div>
-                <div className="text-xl font-bold text-gray-900">
-                  {/* {classInfo.workAssigned} */}20
+              {/* Work assigned card */}
+              <div className="group bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                    <BookOpen className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-gray-600 font-semibold text-sm mb-1">
+                      Work Assigned
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 flex items-baseline gap-1">
+                      20
+                      <span className="text-lg text-gray-600">tasks</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

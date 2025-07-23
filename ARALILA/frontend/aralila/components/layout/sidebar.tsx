@@ -45,6 +45,13 @@ export default function Sidebar({ id }: SidebarProps) {
 
       <div className="flex flex-col flex-grow p-4 space-y-3">
         <NavItem
+          icon={<Home />}
+          label="Umpisa"
+          isOpen={isOpen}
+          href={`/teacher`}
+          matchPath=""
+        />
+        <NavItem
           icon={<LayoutGrid />}
           label="Ulat"
           isOpen={isOpen}

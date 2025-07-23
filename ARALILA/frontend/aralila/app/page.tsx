@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button"
@@ -24,15 +24,26 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* random section for viewing*/}
-      <section className="min-h-screen bg-gray-900 text-white py-20 px-4" id="testimonials">
-        <h2 className="text-4xl font-bold text-center mb-10">What Our Users Say</h2>
-        <div className="max-w-4xl mx-auto space-y-8">
-          <blockquote className="text-xl italic">“This app changed the way I manage my class!”</blockquote>
-          <blockquote className="text-xl italic">“Super easy to use. My students love it.”</blockquote>
-          <blockquote className="text-xl italic">“THIS IS JUST A FORMATTING VIEW OKAY NOT FINAL”</blockquote>
-        </div>
-      </section>
+        {/* random section for viewing*/}
+        <section
+          className="min-h-screen bg-gray-900 text-white py-20 px-4"
+          id="testimonials"
+        >
+          <h2 className="text-4xl font-bold text-center mb-10">
+            What Our Users Say
+          </h2>
+          <div className="max-w-4xl mx-auto space-y-8">
+            <blockquote className="text-xl italic">
+              “This app changed the way I manage my class!”
+            </blockquote>
+            <blockquote className="text-xl italic">
+              “Super easy to use. My students love it.”
+            </blockquote>
+            <blockquote className="text-xl italic">
+              “THIS IS JUST A FORMATTING VIEW OKAY NOT FINAL”
+            </blockquote>
+          </div>
+        </section>
       </main>
     </div>
   );

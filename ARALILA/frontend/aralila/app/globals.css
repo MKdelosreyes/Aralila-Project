@@ -126,6 +126,17 @@
 @keyframes gradientMotion {
   0% {
     background-position: 0% 50%;
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
   50% {
     background-position: 100% 50%;
@@ -149,4 +160,25 @@
 
 .animate-pulse-24-7 {
   animation: pulse-24-7 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.scrollbar-purple {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(187, 138, 234) rgb(243 244 246);
+}
+
+.scrollbar-purple::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-purple::-webkit-scrollbar-track {
+  background: rgb(243 244 246);
+  border-radius: 8px;
+}
+
+.scrollbar-purple::-webkit-scrollbar-thumb {
+  background: rgb(159,89,223);
+  border-radius: 8px;
+}
+
+.scrollbar-purple::-webkit-scrollbar-thumb:hover {
+  background: rgb(83, 47, 114);
 }

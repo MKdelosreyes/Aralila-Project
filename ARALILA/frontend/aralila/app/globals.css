@@ -150,3 +150,43 @@
 .scrollbar-purple::-webkit-scrollbar-thumb:hover {
   background: rgb(83, 47, 114);
 }
+
+.bg-fancy-gradient {
+  background: radial-gradient(
+      circle at 30% 30%,
+      rgba(99, 102, 241, 0.3),
+      transparent 70%
+    ),
+    radial-gradient(circle at 70% 70%, rgba(236, 72, 153, 0.3), transparent 70%),
+    linear-gradient(135deg, #1e1e2f, #111122);
+  background-size: 400% 400%;
+  animation: gradientMotion 15s ease infinite;
+}
+
+@keyframes gradientMotion {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-24-7 {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-24-7 {
+  animation: pulse-24-7 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

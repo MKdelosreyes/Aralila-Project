@@ -12,6 +12,16 @@ type Entry = {
   [key: string]: string;
 };
 
+const gameFieldMap: Record<string, string[]> = {
+  "Spelling Challenge Game": ["description", "word"],
+  "Punctuation Task": ["sentence", "correctAnswer"],
+  "Parts of Speech": ["sentence", "word", "correctAnswer"],
+  "Word Matching Activity": ["sentence", "word1", "word2", "word3", "word4"],
+  "Four-Pics-1-Word": ["image1", "image2", "image3", "image4", "correctAnswer"],
+  "Grammar Check Game": ["sentence", "correctWord"],
+  "Sentence Construction Challenge": ["sentence"],
+};
+
 const Input = ({ className = "", ...props }) => (
   <input
     className={`flex h-10 w-full rounded-xl border border-input bg-background px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ${className}`}
@@ -78,7 +88,12 @@ const AssignmentCreationModal = ({
   ];
 
   const handleAddEntry = () => {
-    setEntries([...entries, { question: "", answer: "" }]);
+    const fields = gameFieldMap[gameType] || [];
+    const newEntry: Entry = {};
+    fields.forEach((field) => {
+      newEntry[field] = "";
+    });
+    setEntries([...entries, newEntry]);
   };
 
   const handleEntryChange = (index, field, value) => {
@@ -104,28 +119,7 @@ const AssignmentCreationModal = ({
   };
 
   const renderEntryFields = () => {
-    const getPlaceholders = () => {
-      switch (gameType) {
-        case "Spelling Challenge Game":
-        case "Punctuation Task":
-        case "Grammar Check Game":
-          return { question: "Incorrect", answer: "Correct" };
-        case "Word Matching Activity":
-        case "Word Association Game":
-          return { question: "Word", answer: "Match" };
-        case "Sentence Construction Challenge":
-        case "Emoji Sentence Challenge":
-          return { question: "Prompt / Clue", answer: "Expected Answer" };
-        default:
-          return { question: "Question", answer: "Answer" };
-      }
-    };
-
-    const placeholders = getPlaceholders();
-    const isTextarea = [
-      "Sentence Construction Challenge",
-      "Emoji Sentence Challenge",
-    ].includes(gameType);
+    const fields = gameFieldMap[gameType] || [];
 
     return entries.map((entry, index) => (
       <div
@@ -144,41 +138,16 @@ const AssignmentCreationModal = ({
           </button>
         </div>
         <div className="grid gap-3">
-          {isTextarea ? (
-            <>
-              <Textarea
-                placeholder={placeholders.question}
-                value={entry.question}
-                onChange={(e) =>
-                  handleEntryChange(index, "question", e.target.value)
-                }
-              />
-              <Textarea
-                placeholder={placeholders.answer}
-                value={entry.answer}
-                onChange={(e) =>
-                  handleEntryChange(index, "answer", e.target.value)
-                }
-              />
-            </>
-          ) : (
-            <>
-              <Input
-                placeholder={placeholders.question}
-                value={entry.question}
-                onChange={(e) =>
-                  handleEntryChange(index, "question", e.target.value)
-                }
-              />
-              <Input
-                placeholder={placeholders.answer}
-                value={entry.answer}
-                onChange={(e) =>
-                  handleEntryChange(index, "answer", e.target.value)
-                }
-              />
-            </>
-          )}
+          {fields.map((field) => (
+            <Input
+              key={field}
+              placeholder={field
+                .replace(/([A-Z])/g, " $1")
+                .replace(/^./, (s) => s.toUpperCase())}
+              value={entry[field] || ""}
+              onChange={(e) => handleEntryChange(index, field, e.target.value)}
+            />
+          ))}
         </div>
       </div>
     ));

@@ -15,7 +15,7 @@ export const classroomAPI = {
 
   // GET /api/classrooms/{id}/ - calls your Django get_classroom_detail view
   getClassroomById: async (id: number) => {
-    const response = await api.get(`/api/classroom/${id}/`);
+    const response = await api.get(`/api/classroom/${id}/dashboard/`);
     return response.data;
   },
 

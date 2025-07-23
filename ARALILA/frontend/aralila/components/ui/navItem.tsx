@@ -32,7 +32,11 @@ export default function NavItem({
           isActive
             ? "bg-purple-100 text-purple-700"
             : "text-gray-600 hover:bg-gray-100"
-        } ${isOpen ? "justify-start pl-3" : ""}`}
+        } ${isOpen ? "justify-start pl-3" : ""} ${
+          label === "Umpisa"
+            ? "bg-purple-600 text-white hover:text-black hover:bg-purple-400"
+            : ""
+        }`}
       >
         <div className="py-2 ">{icon}</div>
         {isOpen && <span className="font-medium">{label}</span>}

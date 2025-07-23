@@ -18,6 +18,7 @@ import {
   Settings,
   User,
   X,
+  Trophy,
 } from "lucide-react";
 import { student, exercises } from "@/data/mockData";
 import ExerciseCard from "@/components/ui/exerciseCard";
@@ -29,6 +30,7 @@ import ProficiencyDistribution from "@/components/ui/proficiencyDistribution";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { classroomAPI } from "@/lib/api/classroom";
 import { authAPI } from "@/lib/api/auth";
+// import "../../../../../styles/colors.css";
 
 interface User {
   id: number;
@@ -60,8 +62,22 @@ const categories = [
   "Mekaniks ng Pagsulat",
   "Bokabularyo",
   "Gramatika sa Pagsulat",
-  "Kayarian ng Pangungusap",
+  "Pagbuo ng Pangungusap",
 ];
+
+const getRankIcon = (rank) => {
+  if (rank === 1) return "🏆";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+  return rank;
+};
+
+const getProgressBarColor = (progress) => {
+  if (progress >= 90) return "bg-green-500";
+  if (progress >= 75) return "bg-blue-500";
+  if (progress >= 60) return "bg-yellow-500";
+  return "bg-red-500";
+};
 
 const getProgressColor = (score) => {
   if (score >= 80) return "bg-purple-300";
@@ -124,8 +140,8 @@ export default function StudentDashboard() {
 
   return (
     <Layout sidebar={true} user={user} id={Number(classId)}>
-      <div className="rounded-2xl bg-white p-6">
-        <div className="flex flex-row mb-5 h-48 gap-5">
+      <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-blue-50 p-6 h-fit shadow-lg">
+        <div className="flex flex-row mb-5 gap-5">
           {/* {classroom?.class_name} */}
           <ClassroomInfoCard
             classInfo={classroom}
@@ -134,130 +150,136 @@ export default function StudentDashboard() {
           <ProficiencyDistribution />
         </div>
 
-        <div className="flex bg-white rounded-lg border items-center justify-center">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
           {students?.length === 0 ? (
-            <span className="m-10 text-black text-center">
-              No Students Listed
-            </span>
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <span className="text-gray-500 text-lg">
+                  No Students Listed
+                </span>
+              </div>
+            </div>
           ) : (
-            <div className="w-full p-4 ">
-              {/* Header */}
-              <div className="grid grid-cols-[80px_repeat(7,1fr)] p-2 items-center justify-center mb-2 py-4 text-sm font-medium text-shadow-2xs text-white bg-purple-500 rounded-t-lg rounded-b-sm">
-                {categories.map((category, index) => (
-                  <div key={index} className="text-center px-2">
-                    {category}
-                  </div>
-                ))}
+            <div className="overflow-x-auto">
+              {/* Table Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+                <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-4 px-6 py-4 text-sm font-semibold">
+                  {categories.map((category, index) => (
+                    <div
+                      key={index}
+                      className="text-center flex items-center justify-center"
+                    >
+                      <span className="truncate">{category}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Students List */}
-              <div className="space-y-2">
-                {students?.map((student) => (
+              {/* Table Body */}
+              <div className="divide-y divide-gray-100">
+                {classroom?.students?.map((student, index) => (
                   <div
                     key={student.id}
-                    className="border border-purple-200 rounded-sm p-2"
+                    className={`grid grid-cols-[80px_repeat(7,1fr)] px-6 gap-4 py-4 hover:bg-purple-25 transition-colors duration-200 ${
+                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    }`}
                   >
-                    <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-6">
-                      <div className="flex items-center justify-center">
-                        <img
-                          src="/images/first-rank.png"
-                          alt="rank-icon"
-                          width="20"
-                          height="20"
+                    {/* Rank */}
+                    <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold text-lg">
+                        {getRankIcon(student?.rank)}
+                      </div>
+                    </div>
+
+                    {/* Student Name & Avatar */}
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg font-semibold shadow-md border-3 border-purple-400">
+                        {/* {student?.user.profile_pic} */}
+                        <Image
+                          src={student?.profile_pic}
+                          alt={`user-${student?.id}-icon`}
+                          width={160}
+                          height={40}
+                          priority
                         />
                       </div>
-
-                      {/* Student Name & Avatar */}
-                      <div className="flex items-center space-x-3">
-                        <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-lg border-3 border-purple-400">
-                          {/* {student?.user.profile_pic} */}
-                          <Image
-                            src={student?.user.profile_pic}
-                            alt={`user-${student?.user?.id}-icon`}
-                            width={160}
-                            height={40}
-                            priority
-                          />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-gray-900 truncate">
+                          {`${student?.full_name}`}
                         </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">
-                            {`${student?.user?.first_name} ${student?.user?.last_name}`}
+                      </div>
+                    </div>
+
+                    {/* Kabuuang Iskor */}
+                    <div className="flex items-center justify-center">
+                      <div className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">
+                        {student?.overall_score}
+                      </div>
+                    </div>
+
+                    {/* Pag-usad with progress bar */}
+                    <div className="flex items-center justify-center">
+                      <div className="w-full max-w-20">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${getProgressBarColor(
+                                student.progress
+                              )} transition-all duration-300`}
+                              style={{ width: `${student.progress}` }}
+                            ></div>
                           </div>
+                          <span className="text-xs font-medium text-gray-700 min-w-fit">
+                            {student.progress}
+                          </span>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Kabuuang Iskor */}
-                      <div className="flex items-center justify-center space-x-2">
-                        {/* <div className="w-8 h-6 bg-black"></div> */}
-                        <div className="text-sm font-medium">
-                          {/* {student.scores.kabuhuan} */}45
-                        </div>
+                    {/* Mekaniks ng Pagsulat */}
+                    <div className="flex items-center justify-center">
+                      <div className="text-sm font-medium text-gray-800 bg-blue-50 px-2 py-1 rounded">
+                        {student.Mechanics}
                       </div>
+                    </div>
 
-                      {/* Pag-usad with percentage */}
-                      <div className="flex items-center justify-center">
-                        <div className="relative flex items-center justify-center">
-                          <div
-                            className={`rounded-full flex items-center justify-center text-center text-white font-bold ${getProgressColor(
-                              90 // student.overallProgress
-                            )}`}
-                            style={{
-                              width: `${Math.max(71 * 0.4, 28)}px`,
-                              height: `${Math.max(88 * 0.4, 28)}px`,
-                              fontSize: `12px`,
-                            }}
-                          >
-                            {/* {student.overallProgress} */}95
-                          </div>
-                        </div>
+                    {/* Bokabularyo */}
+                    <div className="flex items-center justify-center">
+                      <div className="text-sm font-medium text-gray-800 bg-green-50 px-2 py-1 rounded">
+                        {student.Vocabulary}
                       </div>
+                    </div>
 
-                      {/* Mekaniks ng Pagsulat */}
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-1 relative">
-                          <div className="w-full bg-gray-200 rounded h-2"></div>
-                          <div
-                            className="bg-purple-400 h-2 rounded absolute top-0 left-0"
-                            style={{ width: `80%` }}
-                          ></div>
-                        </div>
+                    {/* Gramatika sa Pagsulat */}
+                    <div className="flex items-center justify-center">
+                      <div className="text-sm font-medium text-gray-800 bg-yellow-50 px-2 py-1 rounded">
+                        {student.Grammar}
                       </div>
+                    </div>
 
-                      {/* Bokabularyo */}
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-1 relative">
-                          <div className="w-full bg-gray-200 rounded h-2"></div>
-                          <div
-                            className="bg-purple-300 h-2 rounded absolute top-0 left-0"
-                            style={{ width: `80%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Gramatika sa Pagsulat */}
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-1 relative">
-                          <div className="w-full bg-gray-200 rounded h-2"></div>
-                          <div
-                            className="bg-purple-300 h-2 rounded absolute top-0 left-0"
-                            style={{ width: `80%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Kayarian ng Pangungusap */}
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-1 relative">
-                          <div className="w-full bg-gray-200 rounded h-2"></div>
-                          <div
-                            className="bg-purple-300 h-2 rounded absolute top-0 left-0"
-                            style={{ width: `80%` }}
-                          ></div>
-                        </div>
+                    {/* Kayarian ng Pangungusap */}
+                    <div className="flex items-center justify-center">
+                      <div className="text-sm font-medium text-gray-800 bg-purple-50 px-2 py-1 rounded">
+                        {student.Sentence_Construction}
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Table Footer */}
+              <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {students?.length} student
+                    {students?.length !== 1 ? "s" : ""}
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <Trophy className="h-4 w-4 text-purple-600" />
+                    <span>Performance Overview</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

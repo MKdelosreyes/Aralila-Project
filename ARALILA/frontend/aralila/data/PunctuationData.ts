@@ -1,5 +1,5 @@
 // Mga pangungusap sa laro na may tamang posisyon ng bantas
-const sentences = {
+export const sentences = {
   easy: [
     {
       text: "Kamusta kumusta ka ngayon",

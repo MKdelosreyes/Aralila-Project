@@ -1,6 +1,6 @@
 // Mga bahagi ng pananalita
 
-const questions = {
+export const questions = {
   easy: [
     {
       sentence: "Ang pusa ay tumatakbo nang mabilis.",

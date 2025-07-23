@@ -126,6 +126,15 @@
 @keyframes gradientMotion {
   0% {
     background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 @keyframes slide-in {
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }
@@ -160,6 +169,7 @@
 
 .animate-pulse-24-7 {
   animation: pulse-24-7 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 .scrollbar-purple {
   scrollbar-width: thin;
   scrollbar-color: rgb(187, 138, 234) rgb(243 244 246);

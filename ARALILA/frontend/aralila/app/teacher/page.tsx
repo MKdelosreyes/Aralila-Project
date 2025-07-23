@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { authAPI } from "@/lib/api/auth";
 import { classroomAPI } from "@/lib/api/classroom";
-import CreateClassroomModal from "@/components/ui/forms/createClassroomModal";
+import CreateClassroomModal from "@/components/forms/createClassroomModal";
 
 interface User {
   id: number;

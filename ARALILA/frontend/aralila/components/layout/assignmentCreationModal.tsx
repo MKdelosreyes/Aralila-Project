@@ -9,6 +9,7 @@ import {
 import { set } from "date-fns";
 
 type Entry = {
+  description: string;
   question: string;
   answer: string;
 };

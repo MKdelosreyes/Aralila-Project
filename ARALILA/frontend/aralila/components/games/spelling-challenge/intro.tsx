@@ -14,7 +14,6 @@ interface SpellingChallengeIntroProps {
 
 export const SpellingChallengeIntro = ({
   onStartChallenge,
-  onReviewLessons,
 }: SpellingChallengeIntroProps) => {
   return (
     <div className="relative z-10 flex flex-col items-center justify-center h-screen overflow-hidden">
@@ -71,15 +70,6 @@ export const SpellingChallengeIntro = ({
         </motion.button>
       </motion.div>
 
-      <motion.button
-        onClick={onReviewLessons}
-        className="mt-20 text-sm text-gray-400 hover:text-gray-200 transition-colors duration-300 font-medium cursor-pointer"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.7 }}
-      >
-        REVIEW LESSONS
-      </motion.button>
     </div>
   );
 };

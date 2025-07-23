@@ -62,3 +62,13 @@ export interface PartsOfSpeechResult {
   skipped: boolean;
   hintUsed: boolean;
 }
+
+// word association
+export interface WordAssociationQuestion {
+  id: string;
+  images: string[];
+  options: string[];
+  correctAnswer: string;
+  hint?: string;
+  explanation?: string;
+}

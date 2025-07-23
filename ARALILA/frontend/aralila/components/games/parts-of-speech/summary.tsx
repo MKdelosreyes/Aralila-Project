@@ -100,9 +100,9 @@ export const PartsOfSpeechSummary = ({ score, results, onRestart }: PartsOfSpeec
     showConfetti: false,
   };
   if (accuracy === 100) {
-    summaryContent = { title: "Perfect Score!", imageSrc: "/images/character/lila-joy.png", showConfetti: true };
+    summaryContent = { title: "Perfect Score!", imageSrc: "/images/character/lila-happy.png", showConfetti: true };
   } else if (accuracy >= 80) {
-    summaryContent = { title: "Excellent Work!", imageSrc: "/images/character/lila-joy.png", showConfetti: true };
+    summaryContent = { title: "Excellent Work!", imageSrc: "/images/character/lila-happy.png", showConfetti: true };
   } else if (accuracy < 20) {
     summaryContent = { title: "Keep Practicing!", imageSrc: "/images/character/lila-crying.png", showConfetti: false };
   } else if (accuracy < 40) {

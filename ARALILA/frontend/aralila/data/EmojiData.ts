@@ -1,5 +1,5 @@
 // Mock data for demonstration - replace with your actual EMOJI_SENTENCE_DATABASE
-export const EMOJI_SENTENCE_DATABASE = [
+export const emojiSentenceChallenges = [
   // EASY (3 emojis each)
   {
     id: 1,

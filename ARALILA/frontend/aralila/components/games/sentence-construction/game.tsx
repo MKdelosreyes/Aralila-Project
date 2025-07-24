@@ -138,7 +138,7 @@ export const SentenceConstructionGame = ({
       const points = streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS;
       setScore((prev) => prev + points);
       setStreak((prev) => prev + 1);
-      setTimeLeft(prev => Math.min(prev + 5, TIME_LIMIT));
+      setTimeLeft((prev) => Math.min(prev + 5, TIME_LIMIT));
       setFeedback({ type: "success" });
       setLilaState("happy");
       setDialogue("Great job! You got it right!");
@@ -236,7 +236,7 @@ export const SentenceConstructionGame = ({
 
           <div className="w-full md:w-1/4 flex flex-col items-center justify-start gap-4 order-1 md:order-none">
             <DialogueBubble>{dialogue}</DialogueBubble>
-                        <AnimatePresence>
+            <AnimatePresence>
               <motion.div
                 key={lilaState}
                 initial={{ opacity: 0.5, y: 20 }}
@@ -299,15 +299,20 @@ export const SentenceConstructionGame = ({
             </div>
 
             {/* Reset Button */}
-            <div className="w-full flex justify-center my-4">
-              <button
-                onClick={resetFragments}
-                disabled={!!feedback || draggedFragments.length === 0}
-                className="p-4 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300"
-              >
-                <RotateCcw />
-              </button>
-            </div>
+<div className="w-full flex justify-center my-4">
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <button
+      onClick={resetFragments}
+      disabled={!!feedback || draggedFragments.length === 0}
+      className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-full text-slate-600 font-semibold transition-all transform hover:scale-105 disabled:opacity-40 disabled:pointer-events-none"
+    >
+      <RotateCcw className="w-5 h-5" />
+      Reset
+    </button>
+  </motion.div>
+</div>
+
+
 
             {/* Feedback Area */}
             <div className="flex items-center justify-center h-24">

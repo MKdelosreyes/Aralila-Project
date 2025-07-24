@@ -338,13 +338,13 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         </div>
 
         {/* Bottom Action Buttons */}
-        <div className="w-full flex justify-between items-center pt-6 border-t border-slate-200">
+        <div className="w-full flex justify-between items-center pt-6 mt-auto border-t border-slate-200">
           <button
             onClick={skipQuestion}
             disabled={showFeedback}
-            className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-10 py-4 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold rounded-2xl text-lg"
           >
-            Skip
+            SKIP
           </button>
         </div>
       </div>

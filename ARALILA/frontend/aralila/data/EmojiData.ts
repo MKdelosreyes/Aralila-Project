@@ -1,50 +1,50 @@
 // Mock data for demonstration - replace with your actual EMOJI_SENTENCE_DATABASE
 export const emojiSentenceChallenges = [
   // EASY (3 emojis each)
-  {
+   {
     id: 1,
     emojis: ["👦", "🏫", "📚"],
-    correctSentence: "Ang bata ay nag-aaral sa paaralan",
-    hint: "Lugar ng pag-aaral at gawain ng estudyante",
-    translation: "The child is studying at school",
+    correctSentence: "Ang bata ay nasa paaralan.",
+    hint: "Bata at paaralan",
+    translation: "The child is at school.",
     category: "Education",
-    difficulty: "easy"
+    difficulty: "very easy"
   },
   {
     id: 2,
     emojis: ["🍎", "👩‍🏫", "📖"],
-    correctSentence: "Ang guro ay nagtuturo gamit ang aklat",
+    correctSentence: "Ang guro ay may aklat.",
     hint: "Guro at libro",
-    translation: "The teacher is teaching using a book",
+    translation: "The teacher has a book.",
     category: "Education",
-    difficulty: "easy"
+    difficulty: "very easy"
   },
   {
     id: 3,
     emojis: ["👦", "⚽", "🐶"],
-    correctSentence: "Ang bata ay naglalaro ng bola kasama ang aso",
-    hint: "Laro ng bata at alagang hayop",
-    translation: "The child is playing ball with the dog",
+    correctSentence: "Ang bata ay may bola.",
+    hint: "Bata at bola",
+    translation: "The child has a ball.",
     category: "Recreation",
-    difficulty: "easy"
+    difficulty: "very easy"
   },
   {
     id: 4,
     emojis: ["👩", "☔", "🌧️"],
-    correctSentence: "Ang babae ay may payong sa ulan",
-    hint: "Gamit tuwing umuulan",
-    translation: "The woman has an umbrella in the rain",
+    correctSentence: "May payong ang babae.",
+    hint: "Babae at payong",
+    translation: "The woman has an umbrella.",
     category: "Weather",
-    difficulty: "easy"
+    difficulty: "very easy"
   },
   {
     id: 5,
-    emojis: ["👨", "🚗" , "🛣️"],
-    correctSentence: "Ang lalaki ay nagmamaneho sa kalsada",
-    hint: "Gamit sa paglalakbay",
-    translation: "The man is driving on the road",
+    emojis: ["👨", "🚗", "🛣️"],
+    correctSentence: "Ang lalaki ay nasa kotse.",
+    hint: "Lalaki at kotse",
+    translation: "The man is in the car.",
     category: "Transport",
-    difficulty: "easy"
+    difficulty: "very easy"
   },
   // {
   //   id: 6,

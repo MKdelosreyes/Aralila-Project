@@ -59,7 +59,7 @@ const cards = [
   },
   { id: 8,
     title: "Kwento ng mga Emoji",
-    slug: "emoji-sentence",
+    slug: "emoji-challenge",
     image: "/images/art/game-art-8.png",
     category: "Comprehension",
     description: "Hulaan kung anong pangungusap ang ibig sabihin ng mga emoji, at buuin ito sa Filipino!"

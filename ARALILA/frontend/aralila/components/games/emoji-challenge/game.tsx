@@ -4,31 +4,8 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Zap, X, SkipForward, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { ConfirmationModal } from "../confirmation-modal";
 
-// --- For the Confirmation Modal (Assuming it exists in this path) ---
-// You might need to create this component based on the example provided.
-// import { ConfirmationModal } from "../confirmation-modal";
-
-// --- Helper: Simple Confirmation Modal Placeholder ---
-const ConfirmationModal = ({ isOpen, onClose, onConfirm }: any) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 shadow-xl max-w-sm w-full">
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Sigurado ka na?</h2>
-        <p className="text-slate-600 mb-6">Kung aalis ka, hindi mase-save ang iyong score.</p>
-        <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 font-semibold">
-            Hindi
-          </button>
-          <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold">
-            Oo, aalis na
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 
 // --- Interfaces ---

@@ -294,9 +294,9 @@ export const WordMatchingGame = ({
                   } ${feedback ? "opacity-60 pointer-events-none" : ""}`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm flex-shrink-0 mt-1">
+                    {/* <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm flex-shrink-0 mt-1">
                       {String.fromCharCode(65 + index)}
-                    </div>
+                    </div> */}
                     <p className="text-sm leading-relaxed">{definition}</p>
                   </div>
                 </motion.button>

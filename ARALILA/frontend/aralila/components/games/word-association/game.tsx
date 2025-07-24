@@ -58,20 +58,22 @@ export const WordAssociationGame = ({
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [animationKey, setAnimationKey] = useState(0);
+  // New state for dynamic dialogue
+  const [dialogue, setDialogue] = useState("Let's find the common word!");
 
   const currentQuestion = shuffledQuestions[currentIndex];
   const happyStates: LilaState[] = ["happy", "thumbsup"];
   const sadStates: LilaState[] = ["sad"];
-  
-
 
   useEffect(() => {
     setShuffledQuestions(shuffleArray(questions).slice(0, 10));
   }, [questions]);
 
+  // Set initial dialogue to the question's hint
   useEffect(() => {
     if (currentQuestion) {
       setUserLetters(Array(currentQuestion.answer.length).fill(""));
+      setDialogue(currentQuestion.hint);
       setTimeout(() => document.getElementById("letter-0")?.focus(), 100);
     }
   }, [currentQuestion]);
@@ -88,15 +90,22 @@ export const WordAssociationGame = ({
     onGameComplete({ score, results: finalResults });
   }, [score, results, currentIndex, shuffledQuestions, onGameComplete]);
 
+  // Updated timer logic with dialogue change
   useEffect(() => {
+    if (timeLeft <= 15 && lilaState === "normal") {
+      setLilaState("worried");
+      setDialogue("Uh oh, the clock is ticking!");
+    }
+    
     if (timeLeft <= 0) {
       handleEndGame();
     }
+    
     if (timeLeft > 0 && !feedback) {
       const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [timeLeft, feedback, handleEndGame]);
+  }, [timeLeft, feedback, handleEndGame, lilaState]);
 
   const advanceToNext = useCallback(() => {
     if (currentIndex + 1 >= shuffledQuestions.length) {
@@ -108,7 +117,8 @@ export const WordAssociationGame = ({
       setAnimationKey((prev) => prev + 1);
     }
   }, [currentIndex, shuffledQuestions.length, handleEndGame]);
-
+  
+  // Updated answer processing with dialogue changes
   const processAnswer = (
     userWord: string,
     isCorrect: boolean,
@@ -124,17 +134,20 @@ export const WordAssociationGame = ({
       setStreak(0);
       setFeedback({ type: "skipped" });
       setLilaState("sad");
+      setDialogue("No problem, let's try the next one.");
     } else if (isCorrect) {
       const points = streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS;
       setScore((prev) => prev + points);
       setStreak((prev) => prev + 1);
       setFeedback({ type: "success" });
       setLilaState(happyStates[Math.floor(Math.random() * happyStates.length)]);
-      setTimeLeft(prev => Math.min(prev + BONUS_TIME, TIME_LIMIT));
+      setDialogue("You got it! Great job!");
+      setTimeLeft((prev) => Math.min(prev + BONUS_TIME, TIME_LIMIT));
     } else {
       setStreak(0);
       setFeedback({ type: "error" });
-      setLilaState(sadStates[Math.floor(Math.random() * sadStates.length)]);
+      setLilaState("sad");
+      setDialogue("Oops, that's not quite right.");
     }
     setResults((prev) => [...prev, newResult]);
     setTimeout(advanceToNext, 2000);
@@ -182,15 +195,15 @@ export const WordAssociationGame = ({
       : "w-9 h-9 text-lg";
 
   return (
-    <div className="relative z-10 max-w-6xl w-full mx-auto">
+    <div className="relative z-10 max-w-7xl w-full mx-auto">
       <ConfirmationModal
         isOpen={isExitModalOpen}
         onClose={() => setIsExitModalOpen(false)}
         onConfirm={onExit}
       />
-      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xl border border-slate-200 flex flex-col h-full max-h-screen w-full">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xl border border-slate-200 flex flex-col w-full">
         {/* Header */}
-        <div className="w-full flex items-center gap-4 mb-2 flex-shrink-0">
+        <div className="w-full flex items-center gap-4 mb-4 flex-shrink-0">
           <button
             onClick={() => setIsExitModalOpen(true)}
             className="text-slate-400 hover:text-purple-600 p-2 rounded-full hover:bg-purple-100"
@@ -229,33 +242,24 @@ export const WordAssociationGame = ({
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-grow w-full flex flex-col items-center justify-center overflow-hidden py-1">
-          {/* 1. Images - Reduced max-width and margin */}
-          <div className="w-full max-w-md grid grid-cols-2 gap-2 mx-auto mb-2">
-            {currentQuestion.images.map((src, idx) => (
-              <div
-                key={idx}
-                className="w-full aspect-square rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm"
-              >
-                <Image
-                  src={src}
-                  alt={`Clue ${idx + 1}`}
-                  width={256}
-                  height={256}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* 2. Character and Hint - side-by-side, reduced size and margin */}
+        {/* Main Content Area:*/}
+        <div className="flex-grow w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 py-2">
+            
           <motion.div
             key={animationKey}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center gap-4 w-full max-w-md my-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center justify-center gap-4 order-2 lg:order-1"
           >
+    
+            <div className="relative bg-purple-50 border border-purple-200 p-3 rounded-xl shadow-md max-w-[200px] text-center">
+              
+              <p className="text-md text-slate-800">
+                {dialogue}
+              </p>
+            
+              <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-purple-50"></div>
+            </div>
             <motion.div
               key={lilaState}
               initial={{ scale: 0.8 }}
@@ -264,79 +268,90 @@ export const WordAssociationGame = ({
               <Image
                 src={lilaImage}
                 alt="Lila"
-                width={90}
-                height={90}
+                width={150}
+                height={150}
                 priority
               />
             </motion.div>
-            <div className="relative bg-purple-50 border border-purple-200 p-3 rounded-xl shadow-md">
-              <p className="text-md text-slate-800 flex items-center justify-center gap-2">
-                <HelpCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                {currentQuestion.hint}
-              </p>
-              {/* Arrow pointing left */}
-              <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[10px] border-r-purple-50"></div>
-            </div>
           </motion.div>
 
-          {/* 3. Letter Input Area - now with flex-nowrap */}
-          <div className="flex justify-center gap-2 flex-nowrap w-full max-w-xl mx-auto px-4 py-2 overflow-x-auto">
-            {currentQuestion.answer.split("").map((_, index) => (
-              <input
-                key={index}
-                id={`letter-${index}`}
-                type="text"
-                maxLength={1}
-                value={userLetters[index] || ""}
-                onChange={(e) => updateLetter(index, e.target.value)}
-                onKeyDown={(e) => handleKeyPress(e, index)}
-                className={`${boxSize} font-bold text-center text-slate-800 rounded-lg bg-slate-100 border-2 border-slate-300 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0`}
-                autoFocus={index === 0}
-                disabled={!!feedback}
-              />
-            ))}
-          </div>
-
-          {/* Feedback Area - Reduced height and font size */}
-          <div className="flex items-center justify-center h-14 mt-1">
-            <AnimatePresence mode="wait">
-              {feedback && (
-                <motion.div
-                  key={feedback.type + currentIndex}
-                  className="text-center"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+    
+          <div className="flex flex-col items-center justify-center w-full max-w-lg order-1 lg:order-2">
+            <div className="w-full grid grid-cols-2 gap-2 mb-4">
+              {currentQuestion.images.map((src, idx) => (
+                <div
+                  key={idx}
+                  className="w-full aspect-square rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm"
                 >
-                  {feedback.type === "success" && (
-                    <div className="flex flex-col items-center gap-1">
-                      <CheckCircle2 className="w-9 h-9 text-green-500" />
-                      <p className="text-md font-bold text-green-600">
-                        Correct!
-                      </p>
-                    </div>
-                  )}
-                  {(feedback.type === "error" ||
-                    feedback.type === "skipped") && (
-                    <div className="flex flex-col items-center gap-1">
-                      <XCircle
-                        className={`w-9 h-9 ${
-                          feedback.type === "error"
-                            ? "text-red-500"
-                            : "text-orange-500"
-                        }`}
-                      />
-                      <p className="text-sm text-slate-600">
-                        Answer:{" "}
-                        <span className="font-bold text-purple-700">
-                          {currentQuestion.answer}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <Image
+                    src={src}
+                    alt={`Clue ${idx + 1}`}
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-center gap-2 flex-nowrap w-full px-2 py-2 overflow-x-auto">
+              {currentQuestion.answer.split("").map((_, index) => (
+                <input
+                  key={index}
+                  id={`letter-${index}`}
+                  type="text"
+                  maxLength={1}
+                  value={userLetters[index] || ""}
+                  onChange={(e) => updateLetter(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyPress(e, index)}
+                  className={`${boxSize} font-bold text-center text-slate-800 rounded-lg bg-slate-100 border-2 border-slate-300 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0`}
+                  autoFocus={index === 0}
+                  disabled={!!feedback}
+                />
+              ))}
+            </div>
+
+            {/* 3. Feedback Area */}
+            <div className="flex items-center justify-center h-16 mt-2">
+              <AnimatePresence mode="wait">
+                {feedback && (
+                  <motion.div
+                    key={feedback.type + currentIndex}
+                    className="text-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    {feedback.type === "success" && (
+                      <div className="flex flex-col items-center gap-1">
+                        <CheckCircle2 className="w-9 h-9 text-green-500" />
+                        <p className="text-md font-bold text-green-600">
+                          Correct!
+                        </p>
+                      </div>
+                    )}
+                    {(feedback.type === "error" ||
+                      feedback.type === "skipped") && (
+                      <div className="flex flex-col items-center gap-1">
+                        <XCircle
+                          className={`w-9 h-9 ${
+                            feedback.type === "error"
+                              ? "text-red-500"
+                              : "text-orange-500"
+                          }`}
+                        />
+                        <p className="text-sm text-slate-600">
+                          Answer:{" "}
+                          <span className="font-bold text-purple-700">
+                            {currentQuestion.answer}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 

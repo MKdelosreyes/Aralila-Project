@@ -37,7 +37,7 @@ export const spellingChallengeData: SpellingWord[] = [
     hint: "Kailangan ito tuwing may pasok",
   },
   {
-    word: "ESKWELA",
+    word: "ESKWELAHAN",
     definition: "Isa pang tawag sa paaralan",
     hint: "Pumupunta ka dito para mag-aral",
   },

@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
-import { Quicksand } from "next/font/google";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import "../styles/colors.css";
-
-const quicksand = Quicksand({
-  subsets: ["latin"],
-  variable: "--font-quicksand",
-  display: "swap",
-});
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -28,7 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${outfit.variable}`}>
-      <body>{children}</body>
+      <body>
+
+        {children}
+      </body>
     </html>
   );
 }

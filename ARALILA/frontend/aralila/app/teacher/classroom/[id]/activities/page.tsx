@@ -328,7 +328,7 @@ const page = () => {
             <AssignmentCreationModal
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
-              onCreateAssignment={handleCreateAssignment}
+              // onCreateAssignment={handleCreateAssignment}
               asDrawer
             />
           </div>

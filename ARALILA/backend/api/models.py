@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
 from django.utils import timezone
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
+from datetime import timedelta
 import string, random, datetime
 
 def generate_class_key():
@@ -79,8 +82,6 @@ class ClassRoom(models.Model):
     class_name = models.CharField(max_length=255)
     section = models.CharField(max_length=255, default='A')
     isActive = models.BooleanField(default=True, verbose_name="Active")
-    subject = models.CharField(max_length=255, blank=True)
-    semester = models.CharField(max_length=255, blank=True)
     class_key = models.CharField(max_length=10, unique=True, default=generate_class_key)
     created_at = models.DateField(auto_now_add=True)
 
@@ -101,9 +102,17 @@ class ClassRoom(models.Model):
 
     @property
     def total_tasks(self):
-        from .models import Activity, Game
-        # Count all activities assigned to this classroom + default games
-        default_game_count = Game.objects.filter(default=True).count()
+        from .models import Activity, SpellingGame, PunctuationTask, PartsOfSpeech, WordMatching, FourPicsOneWord, GrammarGame, SentenceConstruction
+
+        default_game_count = (
+            SpellingGame.objects.filter(default=True).count() +
+            PunctuationTask.objects.filter(default=True).count() +
+            PartsOfSpeech.objects.filter(default=True).count() + 
+            WordMatching.objects.filter(default=True).count() +
+            FourPicsOneWord.objects.filter(default=True).count() +  
+            GrammarGame.objects.filter(default=True).count() +
+            SentenceConstruction.objects.filter(default=True).count()
+        )
         activity_count = Activity.objects.filter(classroom=self).count()
         return default_game_count + activity_count
 
@@ -115,32 +124,185 @@ class Student(models.Model):
 
     def __str__(self):
         return f"{self.user.full_name} in {self.classroom}"
+
+
+class WordBank(models.Model):
+    word = models.CharField(max_length=255, unique=True)
+    difficulty = models.CharField(max_length=20, choices=[('easy', 'Easy'), ('medium', 'Medium'), ('hard', 'Hard')], default='medium')
+    part_of_speech = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return self.word
+
+class SentenceBank(models.Model):
+    sentence = models.TextField(unique=True)
+    word = models.CharField(max_length=20, blank=True)
+    complexity = models.CharField(max_length=20, choices=[('easy', 'Easy'), ('medium', 'Medium'), ('hard', 'Hard')], default='medium')
+    part_of_speech = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return self.sentence
     
 
 class Game(models.Model):
     title = models.CharField(max_length=255)
     topic = models.CharField(max_length=50, choices=GameTopic.choices)
     description = models.TextField(blank=True)
-    default = models.BooleanField(default=True) 
+    default = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.items.exists() and self._meta.model_name not in ['fourpicsoneword', 'sentenceconstruction']:  # Exclude games without items
+            self._create_default_items()
+
+    def _create_default_items(self):
+        # Override in specific game models to create 10 items
+        pass
+    
+
+class SpellingGame(Game):
+    progress_records = GenericRelation('StudentGameProgress')
+
+    def _create_default_items(self):
+        from .models import SpellingItem
+        for _ in range(10):
+            SpellingItem.objects.create(game=self, incorrect_word=WordBank.objects.order_by('?').first(), correct_word=WordBank.objects.order_by('?').first())
+
+class SpellingItem(models.Model):
+    game = models.ForeignKey(SpellingGame, on_delete=models.CASCADE, related_name='items')
+    incorrect_word = models.ForeignKey(WordBank, on_delete=models.SET_NULL, blank=True, null=True, related_name='spelling_incorrect_items')
+    correct_word = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True, related_name='spelling_correct_items')
 
     def __str__(self):
-        return self.title
-    
+        return f"{self.incorrect_word} -> {self.correct_word}"
+
+class PunctuationTask(Game):
+    progress_records = GenericRelation('StudentGameProgress')
+
+    def _create_default_items(self):
+        from .models import PunctuationItem
+        for _ in range(10):
+            PunctuationItem.objects.create(game=self, sentence=SentenceBank.objects.order_by('?').first())
+
+class PunctuationItem(models.Model):
+    game = models.ForeignKey(PunctuationTask, on_delete=models.CASCADE, related_name='items')
+    sentence = models.ForeignKey(SentenceBank, on_delete=models.SET_NULL, null=True)
+    correct_answer = models.TextField()
+
+    def __str__(self):
+        return self.sentence.sentence
+
+class PartsOfSpeech(Game):
+    progress_records = GenericRelation('StudentGameProgress')
+
+    def _create_default_items(self):
+        from .models import PartsOfSpeechItem
+        for _ in range(10):
+            PartsOfSpeechItem.objects.create(game=self, sentence=SentenceBank.objects.order_by('?').first())
+
+class PartsOfSpeechItem(models.Model):
+    game = models.ForeignKey(PartsOfSpeech, on_delete=models.CASCADE, related_name='items')
+    sentence = models.ForeignKey(SentenceBank, on_delete=models.SET_NULL, null=True)
+    # word = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True)
+    # correct_answer = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.sentence}"
+
+class WordMatching(Game):
+    progress_records = GenericRelation('StudentGameProgress')
+
+    def _create_default_items(self):
+        from .models import WordMatchingItem
+        for _ in range(10):
+            WordMatchingItem.objects.create(game=self, sentence=SentenceBank.objects.order_by('?').first())
+
+class WordMatchingItem(models.Model):
+    game = models.ForeignKey(WordMatching, on_delete=models.CASCADE, related_name='items')
+    sentence = models.ForeignKey(SentenceBank, on_delete=models.SET_NULL, null=True)
+    word1 = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True, related_name='wordmatch1_items')
+    word2 = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True, related_name='wordmatch2_items')
+    word3 = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True, related_name='wordmatch3_items')
+    word4 = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True, related_name='wordmatch4_items')
+
+    def __str__(self):
+        return self.sentence.sentence
+
+class FourPicsOneWord(Game):
+    progress_records = GenericRelation('StudentGameProgress')
+
+    def _create_default_items(self):
+        from .models import FourPicsOneWordItem
+        for _ in range(10):
+            FourPicsOneWordItem.objects.create(game=self)
+
+class FourPicsOneWordItem(models.Model):
+    game = models.ForeignKey(FourPicsOneWord, on_delete=models.CASCADE, related_name='items')
+    image1 = models.ImageField(upload_to='game_images/')
+    image2 = models.ImageField(upload_to='game_images/')
+    image3 = models.ImageField(upload_to='game_images/')
+    image4 = models.ImageField(upload_to='game_images/')
+    correct_answer = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"Item for {self.game.title}"
+
+class GrammarGame(Game):
+    progress_records = GenericRelation('StudentGameProgress')
+
+    def _create_default_items(self):
+        from .models import GrammarItem
+        for _ in range(10):
+            GrammarItem.objects.create(game=self, sentence=SentenceBank.objects.order_by('?').first())
+
+class GrammarItem(models.Model):
+    game = models.ForeignKey(GrammarGame, on_delete=models.CASCADE, related_name='items')
+    sentence = models.ForeignKey(SentenceBank, on_delete=models.SET_NULL, null=True)
+    correct_word = models.ForeignKey(WordBank, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.sentence.sentence
+
+class SentenceConstruction(Game):
+    progress_records = GenericRelation('StudentGameProgress')
+
+    def _create_default_items(self):
+        from .models import SentenceConstructionItem
+        for _ in range(10):
+            SentenceConstructionItem.objects.create(game=self, sentence=SentenceBank.objects.order_by('?').first())
+
+class SentenceConstructionItem(models.Model):
+    game = models.ForeignKey(SentenceConstruction, on_delete=models.CASCADE, related_name='items')
+    sentence = models.ForeignKey(SentenceBank, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.sentence.sentence
 
 class Activity(models.Model):
     classroom = models.ForeignKey(ClassRoom, on_delete=models.CASCADE, related_name='activities')
     title = models.CharField(max_length=255)
     instructions = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    rubric = models.TextField(blank=True)  # plain textarea for now
-    status = models.CharField(max_length=50, choices=ActivityStatus.choices, blank=True, default='Active')
+    duration = models.DurationField(
+        default=timedelta(hours=1),
+        help_text="Time limit to complete the activity once started (e.g., 1:00:00 for 1 hour)"
+    )
+    status = models.CharField(max_length=50, choices=ActivityStatus.choices, blank=True, default='active')
     due_date = models.DateTimeField(
         null=False,
         blank=False,
-        default=datetime.date.today, 
+        default=datetime.date.today,
         help_text="Deadline for the activity (YYYY-MM-DD HH:MM:SS)"
     )
     number_of_submissions = models.PositiveIntegerField(null=True, blank=True, default=0)
+
+    # Generic relation to Game models
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    game = GenericForeignKey('content_type', 'object_id')
     
     def __str__(self):
         return self.title 
@@ -148,12 +310,28 @@ class Activity(models.Model):
 
 class StudentGameProgress(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    game = GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        db_table = 'api_studentgameprogress'
+
     score = models.PositiveIntegerField(default=0)
     rank = models.PositiveIntegerField(null=True, blank=True)
 
-    class Meta:
-        unique_together = ('student', 'game')
+    # def save(self, *args, **kwargs):
+    #     if not self.content_type:
+    #         spelling_game_type = ContentType.objects.get_for_model(SpellingGame)
+    #         self.content_type = spelling_game_type
+    #     super().save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+    # Remove hardcoded default. Instead, require content_type to be passed explicitly
+        if not self.content_type or not self.object_id:
+            raise ValueError("Both content_type and object_id must be set for StudentGameProgress.")
+        super().save(*args, **kwargs)
+
 
 
 class StudentClassroomStats(models.Model):

@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserProfileView, CreateClassroomView, ClassRoomView, ClassRoomListView, ClassroomStudentListView, CreateStudentView, ClassroomDashboardView
+from .views import UserProfileView, CreateClassroomView, ClassRoomView, ClassRoomListView, ClassroomStudentListView, CreateStudentView, ClassroomDashboardView, TeacherActivitiesViewSet
 
 urlpatterns = [
     path('ping/', views.ping),  # http://127.0.0.1:8000/api/ping/
@@ -11,4 +11,6 @@ urlpatterns = [
     path('classroom/<int:pk>/students/', ClassroomStudentListView.as_view(), name='classroom-students'),
     path('student/create/', CreateStudentView.as_view(), name='create-student'),
     path('classroom/<int:classroom_id>/dashboard/', ClassroomDashboardView.as_view(), name='classroom-dashboard'),
+    path('classroom/<int:classroom_id>/activities/', TeacherActivitiesViewSet.as_view({'get': 'list', 'post': 'create'}), name='teacher-activities'),
+    path('games/parts-of-speech/', views.PartsOfSpeechGameView.as_view(), name='parts-of-speech-questions'),
 ]

@@ -5,10 +5,11 @@ import { Award, TrendingUp, BookOpen, Users } from "lucide-react";
 // import "../../styles/colors.css";
 
 const ProficiencyDistribution = ({
+  studentCount,
   classInfo = {
     name: "Filipino 101",
     grade: "Grade 8",
-    studentCount: 32,
+    studentCount: 0,
     isActive: true,
   },
 }) => {
@@ -18,8 +19,8 @@ const ProficiencyDistribution = ({
   const proficiencyData = [
     {
       level: "Mahusay",
-      count: 8,
-      percentage: 32,
+      count: 0,
+      percentage: 0,
       color: "from-emerald-500 to-green-600",
       bgColor: "from-emerald-50 to-green-100",
       borderColor: "border-emerald-200",
@@ -29,8 +30,8 @@ const ProficiencyDistribution = ({
     },
     {
       level: "Katamtaman",
-      count: 15,
-      percentage: 60,
+      count: 0,
+      percentage: 0,
       color: "from-purple-500 to-indigo-600",
       bgColor: "from-purple-50 to-indigo-100",
       borderColor: "border-purple-200",
@@ -40,8 +41,8 @@ const ProficiencyDistribution = ({
     },
     {
       level: "Paunang",
-      count: 2,
-      percentage: 8,
+      count: 0,
+      percentage: 0,
       color: "from-orange-500 to-red-500",
       bgColor: "from-orange-50 to-red-100",
       borderColor: "border-orange-200",
@@ -115,76 +116,77 @@ const ProficiencyDistribution = ({
                 transitionDelay: `${index * 200}ms`,
               }}
             >
-              {/* Background Pattern */}
-              <div className="absolute top-0 right-0 w-32 h-32 opacity-10 overflow-hidden">
-                <div
-                  className={`absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br ${item.color} rounded-full blur-xl`}
-                ></div>
-              </div>
-
-              {/* Icon Header */}
-              <div className="flex items-center justify-between mb-4 gap-1">
-                <div
-                  className={`flex-1 p-3 bg-gradient-to-br ${item.color} rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300`}
-                >
-                  <IconComponent className="w-5 h-5 text-white" />
-                </div>
-                <div
-                  className={`flex-1/3 px-3 py-1 bg-white/80 backdrop-blur-sm ${item.textColor} rounded-full text-xs align-middle wrap-break-word  font-semibold border ${item.borderColor}`}
-                >
-                  {item.description}
-                </div>
-              </div>
-
-              {/* Main Content */}
-              <div className="relative z-10">
-                {/* Count with enhanced animation */}
-                <div className="flex items-baseline gap-2 mb-3">
-                  <span
-                    className={`text-5xl font-bold ${
-                      item.textColor
-                    } transition-all duration-1000 ease-out ${
-                      isLoaded
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-4 opacity-0"
-                    }`}
-                    style={{ transitionDelay: `${index * 200 + 400}ms` }}
-                  >
-                    {animatedCounts[index]}
-                  </span>
-                  <span className="text-lg text-gray-600 font-medium">
-                    students
-                  </span>
-                </div>
-
-                {/* Percentage with progress bar */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-lg font-semibold ${item.textColor}`}>
-                      {item.percentage}% ng klase
-                    </span>
-                  </div>
-                  <div className="w-full bg-white/50 rounded-full h-2 overflow-hidden">
+              {studentCount === 0 ? (
+                ""
+              ) : (
+                <div>
+                  <div className="absolute top-0 right-0 w-32 h-32 opacity-10 overflow-hidden">
                     <div
-                      className={`h-full bg-gradient-to-r ${item.color} rounded-full transition-all duration-1500 ease-out`}
-                      style={{
-                        width: isLoaded ? `${item.percentage}%` : "0%",
-                        transitionDelay: `${index * 200 + 600}ms`,
-                      }}
+                      className={`absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br ${item.color} rounded-full blur-xl`}
                     ></div>
                   </div>
-                </div>
 
-                {/* Level name with enhanced styling */}
-                <div className="flex items-center justify-between">
-                  <h4 className={`text-xl font-bold ${item.textColor}`}>
-                    {item.level}
-                  </h4>
-                </div>
-              </div>
+                  <div className="flex items-center justify-between mb-4 gap-1">
+                    <div
+                      className={`flex-1 p-3 bg-gradient-to-br ${item.color} rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300`}
+                    >
+                      <IconComponent className="w-5 h-5 text-white" />
+                    </div>
+                    <div
+                      className={`flex-1/3 px-3 py-1 bg-white/80 backdrop-blur-sm ${item.textColor} rounded-full text-xs align-middle wrap-break-word  font-semibold border ${item.borderColor}`}
+                    >
+                      {item.description}
+                    </div>
+                  </div>
 
-              {/* Hover effect overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-baseline gap-2 mb-3">
+                      <span
+                        className={`text-5xl font-bold ${
+                          item.textColor
+                        } transition-all duration-1000 ease-out ${
+                          isLoaded
+                            ? "translate-y-0 opacity-100"
+                            : "translate-y-4 opacity-0"
+                        }`}
+                        style={{ transitionDelay: `${index * 200 + 400}ms` }}
+                      >
+                        0
+                      </span>
+                      <span className="text-lg text-gray-600 font-medium">
+                        students
+                      </span>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span
+                          className={`text-lg font-semibold ${item.textColor}`}
+                        >
+                          {item.percentage}% ng klase
+                        </span>
+                      </div>
+                      <div className="w-full bg-white/50 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full bg-gradient-to-r ${item.color} rounded-full transition-all duration-1500 ease-out`}
+                          style={{
+                            width: isLoaded ? `${item.percentage}%` : "0%",
+                            transitionDelay: `${index * 200 + 600}ms`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <h4 className={`text-xl font-bold ${item.textColor}`}>
+                        {item.level}
+                      </h4>
+                    </div>
+                  </div>
+
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              )}
             </div>
           );
         })}

@@ -103,6 +103,7 @@ export default function StudentDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [overall_score, setOverallScore] = useState(0);
   const params = useParams();
   const classId = params.id;
 
@@ -110,9 +111,17 @@ export default function StudentDashboard() {
     if (classId && !isNaN(Number(classId))) {
       classroomAPI.getClassroomById(Number(classId)).then(setClassroom);
       classroomAPI.getClassroomStudentList(Number(classId)).then((data) => {
-        console.log("Fetched students:", data);
+        console.log("Fetched student data:", data);
         setStudents(data);
       });
+      // if (students) {
+      //   let total = 0;
+      //   for (const student of students) {
+      //     console.log(student?.overall_score);
+      //     total += student?.overall_score || 0;
+      //   }
+      //   setOverallScore(total);
+      // }
     }
 
     const loadData = async () => {
@@ -147,7 +156,7 @@ export default function StudentDashboard() {
             classInfo={classroom}
             studentSize={students?.length}
           />
-          <ProficiencyDistribution />
+          <ProficiencyDistribution studentCount={students?.length} />
         </div>
 
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">

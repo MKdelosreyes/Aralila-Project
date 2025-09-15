@@ -38,27 +38,26 @@ export default function LoginForm() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Handle login logic here (e.g., call Supabase auth)
-    try {
-      const response = await authAPI.login(values);
-      console.log("User logged in successfully:", response);
-      localStorage.setItem("ACCESS_TOKEN", response.access);
-      const profile = await authAPI.getProfile();
-      console.log("User profile:", profile);
-      console.log(profile.role);
-      if (profile.role === "teacher") router.push("/teacher");
-      else router.push("/student/dashboard");
-    } catch (error) {
-      console.log("Error logging in...", error);
-    }
-  }
+  // async function onSubmit(values: z.infer<typeof formSchema>) {
+  //   console.log(values);
+  //   try {
+  //     const response = await authAPI.login(values);
+  //     console.log("User logged in successfully:", response);
+  //     localStorage.setItem("ACCESS_TOKEN", response.access);
+  //     const profile = await authAPI.getProfile();
+  //     console.log("User profile:", profile);
+  //     console.log(profile.role);
+  //     if (profile.role === "teacher") router.push("/teacher");
+  //     else router.push("/student/dashboard");
+  //   } catch (error) {
+  //     console.log("Error logging in...", error);
+  //   }
+  // }
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        // onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-4 m-10"
       >
         <FormField

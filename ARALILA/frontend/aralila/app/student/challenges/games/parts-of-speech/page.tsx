@@ -5,22 +5,22 @@ import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { PartsOfSpeechIntro } from "@/components/games/parts-of-speech/intro";
 import { PartsOfSpeechGame } from "@/components/games/parts-of-speech/game";
 import { PartsOfSpeechSummary } from "@/components/games/parts-of-speech/summary"; // Create this summary component
-import { PartsOfSpeechResult } from "@/types/games";
-import { partsOfSpeechData } from "@/data/games/parts-of-speech"; // Create this data file
+import { PartsOfSpeechQuestion, PartsOfSpeechResult } from "@/types/games";
+import { partOfSpeechData } from "@/data/games/parts-of-speech";
 import { PartsOfSpeechDifficulty } from "@/types/games"; // Assuming this type is defined
 import { partOfSpeechAPI } from "@/lib/api/partsOfSpeech";
 
 type GameState = "intro" | "playing" | "summary";
 
-export interface PartsOfSpeechQuestion {
-  id: number;
-  sentence: string;
-  word: string;
-  options: string[];
-  correctAnswer: string;
-  hint: string;
-  explanation: string;
-}
+// export interface PartsOfSpeechQuestion {
+//   id: number;
+//   sentence: string;
+//   word: string;
+//   options: string[];
+//   correctAnswer: string;
+//   hint: string;
+//   explanation: string;
+// }
 
 const PartsOfSpeechPage = () => {
   const [gameState, setGameState] = useState<GameState>("intro");
@@ -28,26 +28,26 @@ const PartsOfSpeechPage = () => {
   const [finalResults, setFinalResults] = useState<PartsOfSpeechResult[]>([]);
   const [difficulty, setDifficulty] =
     useState<PartsOfSpeechDifficulty>("medium"); // Default difficulty
-  const [questions, setQuestions] = useState<PartsOfSpeechResult[]>([]);
+  const [questions, setQuestions] = useState<PartsOfSpeechQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const itemData = await partOfSpeechAPI.getPartsOfSpeechQuestions();
-        console.log("Retrieved items successfully!");
-        setQuestions(itemData);
-      } catch (err) {
-        console.log(error);
-        setError("Failed to load data.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   const loadData = async () => {
+  //     try {
+  //       const itemData = await partOfSpeechAPI.getPartsOfSpeechQuestions();
+  //       console.log("Retrieved items successfully!");
+  //       setQuestions(itemData);
+  //     } catch (err) {
+  //       console.log(error);
+  //       setError("Failed to load data.");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    loadData();
-  }, []);
+  //   loadData();
+  // }, []);
 
   const handleStart = (selectedDifficulty: PartsOfSpeechDifficulty) => {
     setDifficulty(selectedDifficulty);
@@ -82,8 +82,7 @@ const PartsOfSpeechPage = () => {
       case "playing":
         return (
           <PartsOfSpeechGame
-            questions={questions} // Use your partsOfSpeechData
-            difficulty={difficulty}
+            questions={partOfSpeechData} // Use your partsOfSpeechData
             onGameComplete={handleGameComplete}
             onExit={handleRestart}
           />
@@ -94,7 +93,7 @@ const PartsOfSpeechPage = () => {
             score={finalScore}
             results={finalResults}
             onRestart={handleRestart}
-            onReviewLessons={handleReviewLessons} // Add this prop to summary
+            onReviewLessons={handleReviewLessons}
           />
         );
       case "intro":

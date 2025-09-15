@@ -5,7 +5,7 @@ import { Users, Trophy, BookOpen, Check, Copy } from "lucide-react";
 
 const ClassroomInfoCard = ({ classInfo, studentSize }) => {
   const [copied, setCopied] = useState(false);
-  const sampleStudentSize = studentSize || 28;
+  const sampleStudentSize = studentSize || 0;
 
   const handleCopy = async () => {
     try {
@@ -106,43 +106,47 @@ const ClassroomInfoCard = ({ classInfo, studentSize }) => {
             </div>
 
             {/* Enhanced metrics cards */}
-            <div className="grid grid-cols-2 gap-6">
-              {/* Overall score card */}
-              <div className="group bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200 hover:border-yellow-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                    <Trophy className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-gray-600 font-semibold text-sm mb-1">
-                      Overall Class Score
+            {studentSize === 0 ? (
+              <div className="flex items-center justify-center text-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-full font-semibold text-sm border border-gray-200">
+                No metrics available
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-6">
+                <div className="group bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200 hover:border-yellow-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                      <Trophy className="w-8 h-8 text-white" />
                     </div>
-                    <div className="text-2xl font-bold text-gray-900 flex items-baseline gap-1">
-                      72
-                      <span className="text-lg text-gray-600">%</span>
+                    <div>
+                      <div className="text-gray-600 font-semibold text-sm mb-1">
+                        Overall Class Score
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 flex items-baseline gap-1">
+                        72
+                        <span className="text-lg text-gray-600">%</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Work assigned card */}
-              <div className="group bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                    <BookOpen className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-gray-600 font-semibold text-sm mb-1">
-                      Work Assigned
+                <div className="group bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                      <BookOpen className="w-8 h-8 text-white" />
                     </div>
-                    <div className="text-2xl font-bold text-gray-900 flex items-baseline gap-1">
-                      20
-                      <span className="text-lg text-gray-600">tasks</span>
+                    <div>
+                      <div className="text-gray-600 font-semibold text-sm mb-1">
+                        Work Assigned
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 flex items-baseline gap-1">
+                        20
+                        <span className="text-lg text-gray-600">tasks</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

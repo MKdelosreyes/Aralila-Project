@@ -1,6 +1,5 @@
 "use client";
 
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { PartsOfSpeechIntro } from "@/components/games/parts-of-speech/intro";
@@ -23,24 +22,10 @@ type GameState = "intro" | "playing" | "summary";
 //   explanation: string;
 // }
 
-=======
-import React, { useState } from "react";
-
-import AnimatedBackground from "@/components/bg/animatedforest-bg"; 
-import { PartsOfSpeechIntro } from "@/components/games/parts-of-speech/intro";
-import { PartsOfSpeechGame } from "@/components/games/parts-of-speech/game";
-import { PartsOfSpeechSummary, PartsOfSpeechResult } from "@/components/games/parts-of-speech/summary"; // Create this summary component
-import { partsOfSpeechData } from "@/data/games/parts-of-speech"; // Create this data file
-import { PartsOfSpeechDifficulty } from "@/types/games"; // Assuming this type is defined
-
-type GameState = "intro" | "playing" | "summary";
-
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 const PartsOfSpeechPage = () => {
   const [gameState, setGameState] = useState<GameState>("intro");
   const [finalScore, setFinalScore] = useState(0);
   const [finalResults, setFinalResults] = useState<PartsOfSpeechResult[]>([]);
-<<<<<<< HEAD
   const [difficulty, setDifficulty] =
     useState<PartsOfSpeechDifficulty>("medium"); // Default difficulty
   const [questions, setQuestions] = useState<PartsOfSpeechQuestion[]>([]);
@@ -63,16 +48,12 @@ const PartsOfSpeechPage = () => {
 
   //   loadData();
   // }, []);
-=======
-  const [difficulty, setDifficulty] = useState<PartsOfSpeechDifficulty>("medium"); // Default difficulty
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 
   const handleStart = (selectedDifficulty: PartsOfSpeechDifficulty) => {
     setDifficulty(selectedDifficulty);
     setGameState("playing");
   };
 
-<<<<<<< HEAD
   const handleGameComplete = ({
     score,
     results,
@@ -80,9 +61,6 @@ const PartsOfSpeechPage = () => {
     score: number;
     results: PartsOfSpeechResult[];
   }) => {
-=======
-  const handleGameComplete = ({ score, results }: { score: number; results: PartsOfSpeechResult[] }) => {
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
     setFinalScore(score);
     setFinalResults(results);
     setGameState("summary");
@@ -104,12 +82,7 @@ const PartsOfSpeechPage = () => {
       case "playing":
         return (
           <PartsOfSpeechGame
-<<<<<<< HEAD
             questions={partOfSpeechData} // Use your partsOfSpeechData
-=======
-            questions={partsOfSpeechData} // Use your partsOfSpeechData
-            difficulty={difficulty}
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
             onGameComplete={handleGameComplete}
             onExit={handleRestart}
           />
@@ -120,28 +93,17 @@ const PartsOfSpeechPage = () => {
             score={finalScore}
             results={finalResults}
             onRestart={handleRestart}
-<<<<<<< HEAD
             onReviewLessons={handleReviewLessons}
-=======
-            onReviewLessons={handleReviewLessons} // Add this prop to summary
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
           />
         );
       case "intro":
       default:
-<<<<<<< HEAD
         return (
           <PartsOfSpeechIntro
             onStartChallenge={handleStart}
             onReviewLessons={handleReviewLessons}
           />
         );
-=======
-        return <PartsOfSpeechIntro
-          onStartChallenge={handleStart}
-          onReviewLessons={handleReviewLessons}
-        />;
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
     }
   };
 
@@ -158,8 +120,4 @@ const PartsOfSpeechPage = () => {
   );
 };
 
-<<<<<<< HEAD
 export default PartsOfSpeechPage;
-=======
-export default PartsOfSpeechPage;
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c

@@ -1,25 +1,17 @@
 "use client";
 
-<<<<<<< HEAD
 import React, { useState, useEffect, useRef, useCallback } from "react";
-=======
-import React, { useState, useEffect, useCallback } from "react";
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Zap, CheckCircle2, XCircle, X, Volume2 } from "lucide-react";
 import { SpellingChallengeGameProps } from "@/types/games";
 import { SpellingResult } from "./summary";
 import { ConfirmationModal } from "../confirmation-modal";
-<<<<<<< HEAD
 import { LEFT } from "react-swipeable";
-=======
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 
 const TIME_LIMIT = 120;
 const BONUS_TIME = 10;
 const BASE_POINTS = 20;
-<<<<<<< HEAD
 const FALL_SPEED = 0.5;
 const LETTER_SPAWN_INTERVAL = 4000;
 const CATCHER_WIDTH = 115;
@@ -41,53 +33,34 @@ interface FallingLetter {
   speed: number;
 }
 
-=======
-
-type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thumbsup";
-
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 export const SpellingChallengeGame = ({
   words,
   onGameComplete,
   onExit,
 }: SpellingChallengeGameProps & { onExit: () => void }) => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-<<<<<<< HEAD
   const [builtWord, setBuiltWord] = useState("");
   const [nextExpectedIndex, setNextExpectedIndex] = useState(0);
   const [results, setResults] = useState<SpellingResult[]>([]);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-=======
-  const [userLetters, setUserLetters] = useState<string[]>([]);
-  const [results, setResults] = useState<SpellingResult[]>([]);
-
-  const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
-  const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
-
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
   const [feedback, setFeedback] = useState<{
     type: "success" | "error" | "skipped";
   } | null>(null);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
-<<<<<<< HEAD
   const [fallingLetters, setFallingLetters] = useState<FallingLetter[]>([]);
   const [catcherPosition, setCatcherPosition] = useState(GAME_AREA_HEIGHT / 2);
   const [gameWidth, setGameWidth] = useState(0);
   const nextId = useRef<number>(0);
   var gameAreaRef = useRef<HTMLDivElement>(null);
-=======
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 
   const happyStates: LilaState[] = ["happy", "thumbsup"];
   const sadStates: LilaState[] = ["sad", "crying"];
   const currentWordData = words[currentWordIndex];
 
-<<<<<<< HEAD
   const getRandomLetter = () =>
     String.fromCharCode(65 + Math.floor(Math.random() * 26));
 
@@ -165,23 +138,6 @@ export const SpellingChallengeGame = ({
 
   // Timer logic
   useEffect(() => {
-=======
-  // Handler functions
-  const advanceToNext = useCallback(() => {
-    if (currentWordIndex < words.length - 1) {
-      setCurrentWordIndex((prev) => prev + 1);
-      setUserLetters([]);
-      setFeedback(null);
-      setLilaState("normal");
-      setAnimationKey((prev) => prev + 1);
-      setTimeout(() => document.getElementById("letter-0")?.focus(), 100);
-    } else {
-      onGameComplete({ score, results });
-    }
-  }, [currentWordIndex, words.length, onGameComplete, score, results]);
-
-  useEffect(() => {
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
     if (timeLeft <= 15 && lilaState === "normal") setLilaState("worried");
     if (timeLeft > 0 && !feedback) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -208,7 +164,6 @@ export const SpellingChallengeGame = ({
     lilaState,
   ]);
 
-<<<<<<< HEAD
   // Advance to next word
   const advanceToNext = useCallback(() => {
     if (currentWordIndex < words.length - 1) {
@@ -337,35 +292,6 @@ export const SpellingChallengeGame = ({
   }, [feedback, timeLeft, catcherPosition, handleCatch]);
 
   // Skip word
-=======
-  const submitAnswer = () => {
-    if (feedback) return;
-    const userWord = userLetters.join("");
-    const correctWord = currentWordData.word;
-    const isCorrect = userWord === correctWord;
-    const newResult: SpellingResult = {
-      wordData: currentWordData,
-      userAnswer: userWord,
-      isCorrect,
-    };
-
-    if (isCorrect) {
-      const points = streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS;
-      setScore((prev) => prev + points);
-      setStreak((prev) => prev + 1);
-      setTimeLeft((prev) => Math.min(prev + BONUS_TIME, TIME_LIMIT));
-      setFeedback({ type: "success" });
-      setLilaState(happyStates[Math.floor(Math.random() * happyStates.length)]);
-    } else {
-      setStreak(0);
-      setFeedback({ type: "error" });
-      setLilaState(sadStates[Math.floor(Math.random() * sadStates.length)]);
-    }
-    setResults((prev) => [...prev, newResult]);
-    setTimeout(advanceToNext, 2500);
-  };
-
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
   const handleSkip = () => {
     if (feedback) return;
     setStreak(0);
@@ -375,7 +301,6 @@ export const SpellingChallengeGame = ({
       ...prev,
       { wordData: currentWordData, userAnswer: "", isCorrect: false },
     ]);
-<<<<<<< HEAD
 
     setTimeout(() => {
       setFallingLetters([]);
@@ -391,36 +316,6 @@ export const SpellingChallengeGame = ({
     if (typeof window !== "undefined" && window.speechSynthesis) {
       const utterance = new SpeechSynthesisUtterance(currentWordData.word);
       utterance.lang = "fil-PH";
-=======
-    setTimeout(advanceToNext, 2500);
-  };
-
-  const updateLetter = (index: number, letter: string) => {
-    const newLetters = [...userLetters];
-    newLetters[index] = letter.toUpperCase();
-    setUserLetters(newLetters);
-    if (letter && index < currentWordData.word.length - 1) {
-      document.getElementById(`letter-${index + 1}`)?.focus();
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent, index: number) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (userLetters.filter((l) => l).length === currentWordData.word.length) {
-        submitAnswer();
-      }
-    } else if (e.key === "Backspace" && !userLetters[index] && index > 0) {
-      document.getElementById(`letter-${index - 1}`)?.focus();
-    }
-  };
-
-  // not accurate english
-  const handleListen = () => {
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(currentWordData.word);
-      utterance.lang = "fil-PH"; // or use "tl-PH" if "fil-PH" doesn't work
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
       window.speechSynthesis.speak(utterance);
     } else {
       alert(
@@ -429,7 +324,6 @@ export const SpellingChallengeGame = ({
     }
   };
 
-<<<<<<< HEAD
   const lilaImage = `/images/character/lila-${lilaState}.png`;
 
   return (
@@ -438,30 +332,6 @@ export const SpellingChallengeGame = ({
         <div className="w-full flex items-center gap-4 mb-2">
           <button
             onClick={onExit}
-=======
-  const boxSize =
-    currentWordData.word.length <= 5
-      ? "w-16 h-16 text-3xl"
-      : currentWordData.word.length <= 8
-      ? "w-14 h-14 text-2xl"
-      : "w-12 h-12 text-xl";
-
-  const lilaImage = `/images/character/lila-${lilaState}.png`;
-
-  return (
-    <div className="relative z-10 max-w-[950px] w-full mx-auto p-4">
-
-      <ConfirmationModal
-        isOpen={isExitModalOpen}
-        onClose={() => setIsExitModalOpen(false)}
-        onConfirm={onExit}
-      />
-
-      <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[70vh] w-full">
-        <div className="w-full flex items-center gap-4 mb-8">
-          <button
-            onClick={() => setIsExitModalOpen(true)}
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
             className="text-slate-400 hover:text-purple-600 transition-colors p-2 rounded-full hover:bg-purple-100"
           >
             <X className="w-6 h-6" />
@@ -499,7 +369,6 @@ export const SpellingChallengeGame = ({
         </div>
 
         {/* Main Game */}
-<<<<<<< HEAD
         <div
           id="mainGameArea"
           className="flex-grow w-full flex flex-col items-center justify-center mb-4 px-15"
@@ -578,66 +447,6 @@ export const SpellingChallengeGame = ({
 
         {/* Feedback */}
         <div className="flex items-center justify-center h-24 my-4 absolute">
-=======
-        <div className="flex-grow w-full flex flex-col items-center justify-center">
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
-            <motion.div
-              className="relative"
-              key={lilaState}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            >
-              <Image
-                src={lilaImage}
-                alt="Lila"
-                width={150}
-                height={150}
-                priority
-              />
-            </motion.div>
-            <motion.div
-              key={animationKey}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="flex flex-col items-center md:items-start gap-4"
-            >
-              <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md max-w-sm text-center md:text-left">
-                <p className="text-lg text-slate-800">{currentWordData.hint}</p>
-                <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[10px] border-r-purple-50 hidden md:block"></div>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-purple-50 md:hidden"></div>
-              </div>
-              <button
-                onClick={handleListen}
-                className="flex items-center gap-2 px-5 py-2 bg-purple-100/80 hover:bg-purple-200/80 border border-purple-200 rounded-full text-purple-700 font-semibold transition-all transform hover:scale-105"
-              >
-                <Volume2 className="w-5 h-5" />
-                Listen
-              </button>
-            </motion.div>
-          </div>
-          <div className="flex justify-center gap-2 sm:gap-3 flex-wrap w-full max-w-5xl mx-auto px-4 py-4 overflow-visible">
-            {currentWordData.word.split("").map((_, index) => (
-              <input
-                key={index}
-                id={`letter-${index}`}
-                type="text"
-                maxLength={1}
-                value={userLetters[index] || ""}
-                onChange={(e) => updateLetter(index, e.target.value)}
-                onKeyDown={(e) => handleKeyPress(e, index)}
-                className={`${boxSize} font-bold text-center text-slate-800 rounded-2xl bg-slate-100 border-2 border-slate-300 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0`}
-                autoFocus={index === 0}
-                disabled={!!feedback}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* correct/wrong feedback */}
-        <div className="flex items-center justify-center h-24 my-4">
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
           <AnimatePresence mode="wait">
             {feedback && (
               <motion.div
@@ -681,7 +490,6 @@ export const SpellingChallengeGame = ({
           </AnimatePresence>
         </div>
 
-<<<<<<< HEAD
         {/* Buttons */}
         <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
           <button
@@ -691,33 +499,6 @@ export const SpellingChallengeGame = ({
           >
             SKIP
           </button>
-=======
-        {/* buttons */}
-        <div className="w-full flex justify-between items-center pt-6 border-t border-slate-200">
-          <button
-            onClick={handleSkip}
-            disabled={!!feedback}
-            className="px-10 py-4 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-lg"
-          >
-            SKIP
-          </button>
-          <button
-            onClick={submitAnswer}
-            disabled={
-              userLetters.filter((l) => l).length !==
-                currentWordData.word.length || !!feedback
-            }
-            className={`px-10 py-4 text-white font-bold rounded-2xl transition-all duration-300 transform text-lg shadow-lg
-    ${
-      userLetters.filter((l) => l).length !== currentWordData.word.length ||
-      !!feedback
-        ? "bg-gray-400 cursor-not-allowed shadow-none"
-        : "bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 hover:scale-105"
-    }`}
-          >
-            CHECK
-          </button>
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
         </div>
       </div>
     </div>

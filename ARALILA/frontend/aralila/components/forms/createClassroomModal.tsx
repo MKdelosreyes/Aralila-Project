@@ -21,15 +21,9 @@ export default function CreateClassroomModal({
   onCreate: (data: any) => void;
 }) {
   const [open, setOpen] = useState(false);
-<<<<<<< HEAD
   const [class_name, setName] = useState("");
   const [section, setSection] = useState("");
   const [class_key, setClassKey] = useState(generateClassKey());
-=======
-  const [name, setName] = useState("");
-  const [section, setSection] = useState("");
-  const [classKey, setClassKey] = useState(generateClassKey());
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
   const [teacherID, setTeacherID] = useState("");
   const router = useRouter();
 
@@ -42,7 +36,6 @@ export default function CreateClassroomModal({
   }
 
   const handleSubmit = async () => {
-<<<<<<< HEAD
     const classroom = { class_name, class_key, section };
     onCreate(classroom);
     setOpen(false);
@@ -61,23 +54,6 @@ export default function CreateClassroomModal({
         error.response?.data || error.message
       );
     }
-=======
-    const classroom = { name, section, teacherID, classKey };
-    onCreate(classroom);
-    setOpen(false);
-    setName("");
-    setSection("");
-    setTeacherID("");
-    setClassKey(generateClassKey());
-    // console.log("Form submitted with data:", classroom);
-    // try {
-    //   const response = await classroomAPI.createClassroom(classroom);
-    //   console.log("User registered successfully:", response);
-    //   router.push("/teacher");
-    // } catch (error) {
-    //   console.error("Classroom creation failed:", error);
-    // }
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
   };
 
   return (
@@ -97,11 +73,7 @@ export default function CreateClassroomModal({
             <Label htmlFor="name">Class Name</Label>
             <Input
               id="name"
-<<<<<<< HEAD
               value={class_name}
-=======
-              value={name}
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., English 10 - Writing"
             />
@@ -122,11 +94,7 @@ export default function CreateClassroomModal({
             <div className="flex gap-2">
               <Input
                 id="classKey"
-<<<<<<< HEAD
                 value={class_key}
-=======
-                value={classKey}
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
                 readOnly
                 className="bg-gray-100 cursor-not-allowed"
               />
@@ -134,11 +102,7 @@ export default function CreateClassroomModal({
                 type="button"
                 variant="outline"
                 onClick={() => {
-<<<<<<< HEAD
                   navigator.clipboard.writeText(class_key);
-=======
-                  navigator.clipboard.writeText(classKey);
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
                 }}
               >
                 Copy
@@ -148,11 +112,7 @@ export default function CreateClassroomModal({
         </div>
 
         <DialogFooter>
-<<<<<<< HEAD
           <Button onClick={handleSubmit} disabled={!class_name || !section}>
-=======
-          <Button onClick={handleSubmit} disabled={!name || !section}>
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
             Create
           </Button>
         </DialogFooter>

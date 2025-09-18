@@ -3,15 +3,6 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import "../styles/colors.css";
 
-<<<<<<< HEAD
-=======
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-});
-
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
@@ -30,15 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${outfit.variable}`}>
-<<<<<<< HEAD
       <body>
 
         {children}
       </body>
-=======
-      {/* <body>{children}</body> */}
-      <body>{children}</body>
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
     </html>
   );
 }

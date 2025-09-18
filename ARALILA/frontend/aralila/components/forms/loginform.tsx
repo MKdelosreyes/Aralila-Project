@@ -38,7 +38,6 @@ export default function LoginForm() {
     },
   });
 
-<<<<<<< HEAD
   // async function onSubmit(values: z.infer<typeof formSchema>) {
   //   console.log(values);
   //   try {
@@ -54,33 +53,11 @@ export default function LoginForm() {
   //     console.log("Error logging in...", error);
   //   }
   // }
-=======
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Handle login logic here (e.g., call Supabase auth)
-    try {
-      const response = await authAPI.login(values);
-      console.log("User logged in successfully:", response);
-      localStorage.setItem("ACCESS_TOKEN", response.access);
-      const profile = await authAPI.getProfile();
-      console.log("User profile:", profile);
-      console.log(profile.role);
-      if (profile.role === "teacher") router.push("/teacher");
-      else router.push("/student/dashboard");
-    } catch (error) {
-      console.log("Error logging in...", error);
-    }
-  }
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 
   return (
     <Form {...form}>
       <form
-<<<<<<< HEAD
         // onSubmit={form.handleSubmit(onSubmit)}
-=======
-        onSubmit={form.handleSubmit(onSubmit)}
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
         className="flex flex-col gap-4 m-10"
       >
         <FormField
@@ -138,23 +115,12 @@ export default function LoginForm() {
           <Link href="">Forgot Password?</Link>
         </h1>
 
-<<<<<<< HEAD
         <Button
           type="submit"
           className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md"
         >
           Login
         </Button>
-=======
-        <Link href="/student/dashboard">
-          <Button
-            type="submit"
-            className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md cursor-pointer"
-          >
-            Login
-          </Button>
-        </Link>
->>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
       </form>
     </Form>
   );

@@ -45,8 +45,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environments
-venv/
-virtenv/
-ENV/
-.env/
+# # Virtual environments
+# venv/
+# virtenv/
+# ENV/
+# .env/

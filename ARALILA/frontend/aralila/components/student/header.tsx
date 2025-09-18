@@ -11,16 +11,24 @@ type HeaderProps = {
   setMenuOpen: (value: boolean) => void;
 };
 
+<<<<<<< HEAD
 export default function Header({ menuOpen, setMenuOpen, user }) {
+=======
+export default function Header({ menuOpen, setMenuOpen }: HeaderProps) {
+>>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
   return (
     <header className="absolute top-0 left-0 right-0 z-[100] p-4 md:p-6 flex justify-between items-center">
       <a href="#" className="w-28 md:w-32">
         <Image
+<<<<<<< HEAD
           src={
             menuOpen
               ? "/images/aralila-logo-exp-pr.svg"
               : "/images/aralila-logo-exp1.svg"
           }
+=======
+          src={menuOpen ? "/images/aralila-logo-exp-pr.svg" : "/images/aralila-logo-exp1.svg"}
+>>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
           alt="Aralila Logo"
           width={128}
           height={32}
@@ -31,6 +39,7 @@ export default function Header({ menuOpen, setMenuOpen, user }) {
 
       {!menuOpen && (
         <div className="flex items-center gap-4">
+<<<<<<< HEAD
           <span className="text-sm font-medium">
             {user?.first_name + " " + user?.last_name}
           </span>
@@ -43,6 +52,17 @@ export default function Header({ menuOpen, setMenuOpen, user }) {
               className="h-11 w-11 rounded-full border-3 border-gray-500"
             />
           </Avatar>
+=======
+
+<Avatar className="relative ring-2 ring-purple-500 shadow-[0_0_12px_3px_rgba(168,85,247,0.5)]">
+  <AvatarImage
+    alt="Student Avatar"
+    className="object-cover"
+  />
+  <AvatarFallback className="bg-purple-900 text-white">AL</AvatarFallback>
+</Avatar>
+
+>>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 
           {/* Menu Button */}
           <button

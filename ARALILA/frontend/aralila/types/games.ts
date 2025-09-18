@@ -39,6 +39,7 @@ export interface PunctuationChallengeGameProps {
 export type PartsOfSpeechDifficulty = "easy" | "medium" | "hard";
 
 export interface PartsOfSpeechQuestion {
+<<<<<<< HEAD
 id: string;
 sentence: string;
 word: string; // word to identifyS
@@ -96,3 +97,28 @@ hintUsed: boolean;
 //   skipped: boolean;
 //   hintUsed: boolean;
 // }
+=======
+  id: string;
+  sentence: string;
+  word: string; // The word to identify the part of speech for
+  options: string[]; // e.g., ['Noun', 'Verb', 'Adjective']
+  correctAnswer: string;
+  hint: string;
+  explanation: string; // Optional, for post-game review
+}
+
+export interface PartsOfSpeechGameProps {
+  questions: PartsOfSpeechQuestion[];
+  difficulty: PartsOfSpeechDifficulty;
+  onGameComplete: (data: { score: number; results: PartsOfSpeechResult[] }) => void;
+  onExit: () => void;
+}
+
+export interface PartsOfSpeechResult {
+  question: PartsOfSpeechQuestion;
+  userAnswer: string;
+  isCorrect: boolean;
+  skipped: boolean;
+  hintUsed: boolean;
+}
+>>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c

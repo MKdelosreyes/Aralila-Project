@@ -1,12 +1,17 @@
 "use client";
 
+<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
+=======
+import React, { useState } from "react";
+>>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
 import { motion } from "framer-motion";
 
 import FullscreenMenu from "@/components/student/fullscreen-menu";
 import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
+<<<<<<< HEAD
 import { authAPI } from "@/lib/api/auth";
 
 import ClassroomCard from "@/components/student/dashboard/classroom-card";
@@ -42,6 +47,15 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
+=======
+
+import ClassroomCard from "@/components/student/dashboard/classroom-card";
+
+
+export default function DashboardPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+>>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
   const bentoGridVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -52,7 +66,11 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
+<<<<<<< HEAD
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} user={user} />
+=======
+      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+>>>>>>> c61a561f516f1fb0621ba6fa989a28c86aa16d7c
       <FullscreenMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
       {/* bg */}

@@ -127,7 +127,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
   const renderSentence = (sentence: string, word: string) => {
     return (
-      <div className="text-xl text-slate-800 bg-slate-100 px-6 py-4 rounded-2xl shadow-md flex flex-wrap gap-2 items-center">
+      <div className="text-xl text-slate-800 px-4 py-2 rounded-2xl flex flex-wrap gap-2 items-center">
         {sentence.split(" ").map((w, idx) => {
           const cleanWord = w.replace(/[.,!?]/g, "");
           const isTarget = cleanWord === word;
@@ -156,7 +156,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     <div className="relative z-10 max-w-4xl w-full mx-auto">
       {/* Exit Confirmation */}
       {isExitModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <p>Are you sure you want to exit?</p>
             <div className="flex gap-4 mt-4">
@@ -222,38 +222,120 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
         {/* Game Content */}
         <div className="flex-grow w-full flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center p-6 space-y-6">
-            {/* Sentence + Drag and Drop */}
+          <div className="flex-grow w-full flex flex-col">
             <DndContext onDragEnd={handleDragEnd}>
-              <div className="flex flex-row gap-10">
-                {/* Character */}
-                <Image
-                  src={`/images/character/lila-${lilaState}.png`}
-                  alt="Lila"
-                  width={120}
-                  height={120}
-                />
+              {/* Game Play Area */}
+              <div className="flex-grow bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-8 relative min-h-[500px] border-4 border-dashed border-purple-200">
+                {/* Floating Sentence Display */}
+                <div className="absolute top-6 left-7/12 transform -translate-x-1/2 z-20">
+                  <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-purple-200 max-w-2xl">
+                    <div className="text-lg leading-relaxed text-slate-800 flex flex-wrap gap-2 items-center justify-center">
+                      {currentQ &&
+                        renderSentence(currentQ.sentence, currentQ.word)}
+                    </div>
+                  </div>
+                </div>
 
-                <div className="text-xl text-slate-800 bg-slate-100 rounded-2xl shadow-md flex flex-wrap gap-1">
-                  {currentQ && renderSentence(currentQ.sentence, currentQ.word)}
+                {/* Character - positioned playfully */}
+                <div className="absolute bottom-8 right-8 z-10">
+                  <div className="relative">
+                    <motion.div
+                      animate={{
+                        y: [0, -5, 0],
+                        rotate: lilaState === "happy" ? [0, 5, -5, 0] : 0,
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <Image
+                        src={`/images/character/lila-${lilaState}.png`}
+                        alt="Lila"
+                        width={120}
+                        height={120}
+                        className="drop-shadow-lg"
+                      />
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Category Drop Zones - scattered like islands */}
+                <div className="absolute inset-0 p-8">
+                  {PARTS_OF_SPEECH_CATEGORIES.map((option, index) => {
+                    // Position categories in different areas of the play space
+                    const positions = [
+                      { top: "38%", left: "20%" },
+                      { top: "40%", right: "5%" },
+                      { bottom: "20%", left: "8%" },
+                      { bottom: "28%", right: "28%" },
+                      { top: "10%", left: "5%" },
+                      { bottom: "5%", right: "31%" },
+                    ];
+
+                    return (
+                      <motion.div
+                        key={option.id}
+                        className="absolute"
+                        style={positions[index]}
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{
+                          delay: index * 0.2,
+                          type: "spring",
+                          stiffness: 260,
+                          damping: 20,
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <div className="relative">
+                          {/* Decorative elements around categories */}
+                          <div className="absolute -inset-2 bg-gradient-to-r from-purple-200 to-pink-200 rounded-full opacity-20 animate-pulse"></div>
+                          <div
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full animate-bounce"
+                            style={{ animationDelay: `${index * 0.3}s` }}
+                          ></div>
+                          <div
+                            className="absolute -bottom-2 -left-2 w-3 h-3 bg-blue-400 rounded-full animate-ping"
+                            style={{ animationDelay: `${index * 0.5}s` }}
+                          ></div>
+
+                          <DropZone id={option.id} label={option.label} />
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Decorative floating elements */}
+                <div
+                  className="absolute top-20 right-20 w-6 h-6 bg-yellow-300 rounded-full opacity-60 animate-bounce"
+                  style={{ animationDelay: "0.5s" }}
+                ></div>
+                <div
+                  className="absolute top-40 left-16 w-4 h-4 bg-pink-300 rounded-full opacity-60 animate-bounce"
+                  style={{ animationDelay: "1s" }}
+                ></div>
+                <div
+                  className="absolute bottom-40 right-32 w-5 h-5 bg-blue-300 rounded-full opacity-60 animate-bounce"
+                  style={{ animationDelay: "1.5s" }}
+                ></div>
+
+                {/* Animated background patterns */}
+                <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                  <div className="absolute top-10 left-10 w-20 h-20 bg-purple-200 rounded-full opacity-20 animate-pulse"></div>
+                  <div
+                    className="absolute bottom-20 right-20 w-16 h-16 bg-pink-200 rounded-full opacity-20 animate-pulse"
+                    style={{ animationDelay: "1s" }}
+                  ></div>
+                  <div
+                    className="absolute top-1/2 left-1/3 w-12 h-12 bg-blue-200 rounded-full opacity-20 animate-pulse"
+                    style={{ animationDelay: "2s" }}
+                  ></div>
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-10 w-full max-w-4xl">
-                {PARTS_OF_SPEECH_CATEGORIES.map((option) => (
-                  <DropZone
-                    key={option.id}
-                    id={option.id}
-                    label={option.label}
-                  />
-                ))}
-              </div>
             </DndContext>
-
-            {/* <p className="text-lg font-semibold mt-6">Score: {score}</p>
-            <p className="text-slate-500">
-              Sentence {currentIndex + 1} / {questions.length}
-            </p> */}
           </div>
         </div>
       </div>
@@ -295,10 +377,10 @@ function DropZone({ id, label }: { id: string; label: string }) {
   return (
     <div
       ref={setNodeRef}
-      className={`px -4 py-5 rounded-2xl border-4 text-center font-semibold transition-colors
+      className={`px-4 py-5 rounded-4xl border-4 text-center font-semibold transition-colors bg-gradient-to-r from-purple-200 to-pink-200 opacity-70 animate-pulse text-purple-800
         ${
           isOver
-            ? "bg-green-100 border-green-400"
+            ? "bg-green-100 border-b-green-200"
             : "bg-slate-50 border-slate-300"
         }
       `}

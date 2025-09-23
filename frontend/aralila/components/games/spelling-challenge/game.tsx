@@ -414,7 +414,7 @@ export const SpellingChallengeGame = ({
           <div
             ref={gameAreaRef}
             id="gameArea"
-            className="relative w-full h-[400px] bg-sky-100 rounded-2xl overflow-hidden border-2 border-purple-300"
+            className="relative w-full h-[400px] bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-200"
           >
             <AnimatePresence>
               {fallingLetters.map(({ id, letter, x, y }) => (

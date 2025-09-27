@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, X, CheckCircle2, XCircle, Zap, Volume2 } from 'lucide-react';
-import { PartsOfSpeechQuestion, PartsOfSpeechGameProps, PartsOfSpeechResult } from '@/types/games';
-import { PARTS_OF_SPEECH_DIFFICULTY_SETTINGS } from '@/data/games/parts-of-speech';
-import Image from 'next/image';
-import { ConfirmationModal } from '../confirmation-modal';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, X, CheckCircle2, XCircle, Zap, Volume2 } from "lucide-react";
+import {
+  PartsOfSpeechQuestion,
+  PartsOfSpeechGameProps,
+  PartsOfSpeechResult,
+} from "@/types/games";
+import { PARTS_OF_SPEECH_DIFFICULTY_SETTINGS } from "@/data/games/parts-of-speech";
+import Image from "next/image";
+import { ConfirmationModal } from "../confirmation-modal";
 
 type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thumbsup";
 
@@ -19,7 +23,9 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(PARTS_OF_SPEECH_DIFFICULTY_SETTINGS[difficulty].initialTime);
+  const [timeLeft, setTimeLeft] = useState(
+    PARTS_OF_SPEECH_DIFFICULTY_SETTINGS[difficulty].initialTime
+  );
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -44,7 +50,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     const finalResults = [...results];
 
     for (let i = currentQuestionIndex; i < questions.length; i++) {
-      if (!finalResults.some(r => r.question.id === questions[i].id)) {
+      if (!finalResults.some((r) => r.question.id === questions[i].id)) {
         finalResults.push({
           question: questions[i],
           userAnswer: "time-out",
@@ -61,7 +67,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     if (timeLeft <= 15 && lilaState === "normal") setLilaState("worried");
     if (timeLeft > 0 && !showFeedback) {
       timerRef.current = setTimeout(() => {
-        setTimeLeft(prev => prev - 1);
+        setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0) {
       finishGame();
@@ -77,11 +83,11 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const nextQuestion = useCallback(() => {
     setSelectedAnswer(null);
     setShowFeedback(false);
-    setAnimationKey(prev => prev + 1);
+    setAnimationKey((prev) => prev + 1);
     setLilaState("normal");
 
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       finishGame();
     }
@@ -117,13 +123,16 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     setScore(newScore);
     setStreak(newStreak);
     setTimeLeft(newTimeLeft);
-    setResults(prev => [...prev, {
-      question: currentQ,
-      userAnswer: answer,
-      isCorrect: correct,
-      skipped: false,
-      hintUsed: false,
-    }]);
+    setResults((prev) => [
+      ...prev,
+      {
+        question: currentQ,
+        userAnswer: answer,
+        isCorrect: correct,
+        skipped: false,
+        hintUsed: false,
+      },
+    ]);
 
     setTimeout(() => {
       nextQuestion();
@@ -135,16 +144,19 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     setStreak(0);
     setShowFeedback(true);
     setIsCorrect(false);
-    setSelectedAnswer('skipped');
+    setSelectedAnswer("skipped");
     setLilaState("sad");
 
-    setResults(prev => [...prev, {
-      question: currentQ,
-      userAnswer: 'skipped',
-      isCorrect: false,
-      skipped: true,
-      hintUsed: false,
-    }]);
+    setResults((prev) => [
+      ...prev,
+      {
+        question: currentQ,
+        userAnswer: "skipped",
+        isCorrect: false,
+        skipped: true,
+        hintUsed: false,
+      },
+    ]);
 
     setTimeout(() => {
       nextQuestion();
@@ -162,13 +174,15 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   };
 
   const renderSentenceWithHighlight = (sentence: string, word: string) => {
-    const parts = sentence.split(new RegExp(`(\\b${word}\\b)`, 'gi'));
+    const parts = sentence.split(new RegExp(`(\\b${word}\\b)`, "gi"));
     return parts.map((part, index) => (
       <span
         key={index}
-        className={part.toLowerCase() === word.toLowerCase() ?
-          'bg-purple-200 px-2 py-1 rounded-lg font-bold text-purple-800' :
-          ''}
+        className={
+          part.toLowerCase() === word.toLowerCase()
+            ? "bg-purple-200 px-2 py-1 rounded-lg font-bold text-purple-800"
+            : ""
+        }
       >
         {part}
       </span>
@@ -177,17 +191,17 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
   const getAnswerButtonClass = (option: string) => {
     if (!showFeedback) {
-      return selectedAnswer === option ?
-        'bg-purple-100 border-purple-400 transform scale-95' :
-        'bg-white border-slate-300 hover:bg-purple-50 hover:border-purple-300';
+      return selectedAnswer === option
+        ? "bg-purple-100 border-purple-400 transform scale-95"
+        : "bg-white border-slate-300 hover:bg-purple-50 hover:border-purple-300";
     }
 
     if (option === currentQ.correctAnswer) {
-      return 'bg-green-100 border-green-400 text-green-700';
+      return "bg-green-100 border-green-400 text-green-700";
     } else if (option === selectedAnswer && !isCorrect) {
-      return 'bg-red-100 border-red-400 text-red-700';
+      return "bg-red-100 border-red-400 text-red-700";
     }
-    return 'bg-slate-100 border-slate-300 opacity-60';
+    return "bg-slate-100 border-slate-300 opacity-60";
   };
 
   const lilaImage = `/images/character/lila-${lilaState}.png`;
@@ -213,9 +227,11 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
           <div className="flex-grow bg-slate-200 rounded-full h-4">
             <motion.div
               className={`h-4 rounded-full transition-colors duration-500 ${
-                progress > 50 ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500' :
-                progress > 25 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                'bg-gradient-to-r from-red-500 to-red-600'
+                progress > 50
+                  ? "bg-gradient-to-r from-purple-500 to-fuchsia-500"
+                  : progress > 25
+                  ? "bg-gradient-to-r from-yellow-500 to-orange-500"
+                  : "bg-gradient-to-r from-red-500 to-red-600"
               }`}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 1, ease: "linear" }}
@@ -228,7 +244,11 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
               <span className="text-xl font-bold">{score}</span>
             </div>
             {streak > 1 && (
-              <motion.div className="flex items-center gap-1 text-orange-500" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+              <motion.div
+                className="flex items-center gap-1 text-orange-500"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+              >
                 <Zap className="w-5 h-5" />
                 <span className="text-lg font-bold">{streak}x</span>
               </motion.div>
@@ -266,14 +286,17 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
               transition={{ duration: 0.3 }}
               className="text-center w-full max-w-3xl flex flex-col items-center"
             >
-              <h2 className="text-lg text-slate-600 mb-6 font-semibold">
+              {/* <h2 className="text-lg text-slate-600 mb-6 font-semibold">
                 Identify the part of speech for the highlighted word:
-              </h2>
+              </h2> */}
               {/* ======== SENTENCE: Corrected Layout to prevent icon overlap ======== */}
               <div className="text-2xl text-slate-800 font-medium leading-relaxed bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm w-full flex items-center justify-between gap-4">
                 {/* Sentence text */}
                 <span>
-                    {renderSentenceWithHighlight(currentQ.sentence, currentQ.word)}
+                  {renderSentenceWithHighlight(
+                    currentQ.sentence,
+                    currentQ.word
+                  )}
                 </span>
                 {/* Speaker Button - no longer absolute */}
                 <button
@@ -294,8 +317,12 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
                 key={option}
                 onClick={() => handleAnswerSelect(option)}
                 disabled={showFeedback}
-                className={`p-4 rounded-2xl border-2 transition-all duration-300 font-semibold text-lg shadow-sm ${getAnswerButtonClass(option)} ${
-                  !showFeedback ? 'hover:transform hover:scale-105 active:scale-95' : ''
+                className={`p-4 rounded-2xl border-2 transition-all duration-300 font-semibold text-lg shadow-sm ${getAnswerButtonClass(
+                  option
+                )} ${
+                  !showFeedback
+                    ? "hover:transform hover:scale-105 active:scale-95"
+                    : ""
                 } disabled:cursor-not-allowed`}
               >
                 {option}
@@ -304,30 +331,45 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
           </div>
 
           {/* Feedback */}
-          <div className="flex items-center justify-center h-24 my-4">
+          <div className="absolute flex items-center justify-center h-24 my-4 z-50">
             <AnimatePresence mode="wait">
               {showFeedback && (
-                <motion.div key={selectedAnswer} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                  {isCorrect && selectedAnswer !== 'skipped' && (
+                <motion.div
+                  key={selectedAnswer}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  {isCorrect && selectedAnswer !== "skipped" && (
                     <div className="flex flex-col items-center gap-2">
                       <CheckCircle2 className="w-12 h-12 text-green-500" />
-                      <p className="text-xl font-bold text-green-600">Correct!</p>
-                      {streak > 1 && <p className="text-green-600">Streak bonus applied!</p>}
+                      <p className="text-xl font-bold text-green-600">
+                        Correct!
+                      </p>
+                      {streak > 1 && (
+                        <p className="text-green-600">Streak bonus applied!</p>
+                      )}
                     </div>
                   )}
-                  {(!isCorrect && selectedAnswer !== 'skipped') && (
+                  {!isCorrect && selectedAnswer !== "skipped" && (
                     <div className="flex flex-col items-center gap-2">
                       <XCircle className="w-12 h-12 text-red-500" />
                       <p className="text-lg text-slate-600">
-                        Correct answer: <span className="font-bold text-purple-700">{currentQ.correctAnswer}</span>
+                        Correct answer:{" "}
+                        <span className="font-bold text-purple-700">
+                          {currentQ.correctAnswer}
+                        </span>
                       </p>
                     </div>
                   )}
-                  {selectedAnswer === 'skipped' && (
+                  {selectedAnswer === "skipped" && (
                     <div className="flex flex-col items-center gap-2">
                       <XCircle className="w-12 h-12 text-orange-500" />
                       <p className="text-lg text-slate-600">
-                        Skipped: <span className="font-bold text-purple-700">{currentQ.correctAnswer}</span>
+                        Skipped:{" "}
+                        <span className="font-bold text-purple-700">
+                          {currentQ.correctAnswer}
+                        </span>
                       </p>
                     </div>
                   )}
@@ -338,11 +380,11 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         </div>
 
         {/* Bottom Action Buttons */}
-        <div className="w-full flex justify-between items-center pt-6 mt-auto border-t border-slate-200">
+        <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
           <button
             onClick={skipQuestion}
             disabled={showFeedback}
-            className="px-10 py-4 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold rounded-2xl text-lg"
+            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
           >
             SKIP
           </button>

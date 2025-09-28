@@ -1,51 +1,37 @@
 // Mock data for demonstration - replace with your actual EMOJI_SENTENCE_DATABASE
 export const emojiSentenceChallenges = [
   // EASY (3 emojis each)
-   {
+  {
     id: 1,
     emojis: ["👦", "🏫", "📚"],
-    correctSentence: "Ang bata ay nasa paaralan.",
-    hint: "Bata at paaralan",
+    keywords: ["bata", "paaralan", "aklat"],
     translation: "The child is at school.",
-    category: "Education",
-    difficulty: "very easy"
   },
   {
     id: 2,
     emojis: ["🍎", "👩‍🏫", "📖"],
-    correctSentence: "Ang guro ay may aklat.",
-    hint: "Guro at libro",
+    keywords: ["mansanas", "guro", "aklat"],
     translation: "The teacher has a book.",
-    category: "Education",
-    difficulty: "very easy"
   },
   {
     id: 3,
     emojis: ["👦", "⚽", "🐶"],
-    correctSentence: "Ang bata ay may bola.",
-    hint: "Bata at bola",
+    keywords: ["bata", "bola", "aso"],
     translation: "The child has a ball.",
-    category: "Recreation",
-    difficulty: "very easy"
   },
   {
     id: 4,
     emojis: ["👩", "☔", "🌧️"],
-    correctSentence: "May payong ang babae.",
-    hint: "Babae at payong",
+    keywords: ["babae", "payong", "ulan"],
     translation: "The woman has an umbrella.",
-    category: "Weather",
-    difficulty: "very easy"
   },
   {
     id: 5,
     emojis: ["👨", "🚗", "🛣️"],
-    correctSentence: "Ang lalaki ay nasa kotse.",
-    hint: "Lalaki at kotse",
+    keywords: ["lalaki", "kotse", "kalsada"],
     translation: "The man is in the car.",
-    category: "Transport",
-    difficulty: "very easy"
   },
+
   // {
   //   id: 6,
   //   emojis: ["👵", "🍽️", "👦"],

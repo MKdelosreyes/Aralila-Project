@@ -37,7 +37,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     profile_pic = models.CharField(max_length=255, choices=ProfilePicEnum.choices ,blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
+    date_joined = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

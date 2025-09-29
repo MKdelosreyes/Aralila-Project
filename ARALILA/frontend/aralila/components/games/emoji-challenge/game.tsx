@@ -20,7 +20,7 @@ interface Question {
   id: number;
   emojis: string[];
   keywords: string[];
-  hint: string;
+  translation: string;
 }
 interface GameResult {
   questionData: Question;
@@ -37,7 +37,14 @@ const TIME_LIMIT = 180; // 3 minutes total
 const BONUS_TIME = 5; // +5 seconds for a correct answer
 const MAX_MISTAKES = 6;
 
-type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thumbsup";
+type LilaState =
+  | "normal"
+  | "happy"
+  | "sad"
+  | "worried"
+  | "crying"
+  | "thumbsup"
+  | "thinking";
 type GameStatus = "playing" | "failed" | "completed" | "skipped";
 
 // --- Main Game Component ---
@@ -61,8 +68,8 @@ export const EmojiHulaSalitaGame = ({
   const [status, setStatus] = useState<GameStatus>("playing");
   const [results, setResults] = useState<GameResult[]>([]);
 
-  const [lilaState, setLilaState] = useState<LilaState>("normal");
-  const [dialogue, setDialogue] = useState("");
+  const [lilaState, setLilaState] = useState<LilaState>("thinking");
+  const [dialogue, setDialogue] = useState(".....");
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
   const currentQuestion = useMemo(
@@ -91,8 +98,17 @@ export const EmojiHulaSalitaGame = ({
     setStudentAnswer("");
     setMistakes(0);
     setStatus("playing");
-    setLilaState("normal");
-    setDialogue(currentQuestion.hint);
+    if (currentQuestionIndex === 0) {
+      setLilaState("thinking");
+    } else if (lilaState === "sad" || lilaState === "crying") {
+      setLilaState("worried");
+    } else {
+      setLilaState("normal");
+    }
+
+    setDialogue(
+      "Ang kahulugan nito sa englis ay: '" + currentQuestion.translation + "'"
+    );
   }, [currentQuestion]);
 
   // --- Timer Logic ---
@@ -104,7 +120,7 @@ export const EmojiHulaSalitaGame = ({
       return;
     }
 
-    if (timeLeft <= 15 && lilaState === "normal") {
+    if (timeLeft <= 15) {
       setLilaState("worried");
       setDialogue("Naku, paubos na ang oras! 😥");
     }
@@ -124,7 +140,7 @@ export const EmojiHulaSalitaGame = ({
       );
 
       if (result.valid) {
-        // ✅ Correct
+        // Correct
         setStatus("completed");
         const points = 20 + streak * 5;
         setScore((prev) => prev + points);
@@ -141,11 +157,20 @@ export const EmojiHulaSalitaGame = ({
           advanceToNextQuestion();
         }, 2500);
       } else {
-        // ❌ Incorrect
+        // Incorrect
         const newMistakes = mistakes + 1;
         setMistakes(newMistakes);
         setLilaState("sad");
         setDialogue(result.explanation || "Ay, mali! Subukan muli.");
+        setStreak(0);
+        setResults((prev) => [
+          ...prev,
+          { questionData: currentQuestion, isCorrect: false },
+        ]);
+        setTimeout(() => {
+          setStudentAnswer("");
+          advanceToNextQuestion();
+        }, 5000);
 
         if (newMistakes >= MAX_MISTAKES) {
           setStatus("failed");
@@ -159,7 +184,7 @@ export const EmojiHulaSalitaGame = ({
           setTimeout(() => {
             setStudentAnswer("");
             advanceToNextQuestion();
-          }, 3000);
+          }, 5000);
         }
       }
     } catch (err) {
@@ -236,7 +261,7 @@ export const EmojiHulaSalitaGame = ({
         {/* Main Game Area */}
         <div className="flex-grow w-full flex flex-col items-center justify-center">
           {/* Lila and Dialogue */}
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-6">
+          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-8">
             <motion.div
               key={lilaState}
               initial={{ scale: 0.8, opacity: 0 }}
@@ -263,99 +288,54 @@ export const EmojiHulaSalitaGame = ({
           </div>
 
           {/* Emojis */}
-          <div className="flex justify-center items-center space-x-2 md:space-x-4 mb-6">
-            {currentQuestion.emojis.map((emoji, index) => (
-              <motion.div
-                key={index}
-                className="text-5xl md:text-6xl"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                {emoji}
-              </motion.div>
-            ))}
+          <div className="flex justify-center items-center gap-3 md:gap-6 mb-8">
+            <div className="bg-gradient-to-br from-yellow-50 to-purple-50 rounded-2xl shadow-lg px-8 py-4 flex gap-4 border border-purple-100">
+              {currentQuestion.emojis.map((emoji, index) => (
+                <motion.div
+                  key={index}
+                  className="text-5xl md:text-6xl"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  {emoji}
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           {/* Text Answer Input */}
-          <div className="w-full max-w-xl flex flex-col items-center gap-4 mb-6">
-            <textarea
-              value={studentAnswer}
-              onChange={(e) => setStudentAnswer(e.target.value)}
-              placeholder="I-type ang buong pangungusap dito..."
-              disabled={status !== "playing"}
-              className="w-full min-h-[80px] border rounded-lg p-3 text-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-            />
-            <button
-              onClick={handleSubmitAnswer}
-              disabled={status !== "playing"}
-              className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-bold text-lg transition disabled:opacity-50"
-            >
-              Submit Answer
-            </button>
-          </div>
-
-          {/* Feedback Area */}
-          <div className="h-16 mb-2 flex items-center justify-center text-lg font-semibold">
-            <AnimatePresence mode="wait">
-              {status === "completed" && (
-                <motion.div
-                  key="completed"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 text-green-600"
-                >
-                  <CheckCircle2 /> Correct!
-                </motion.div>
-              )}
-              {status === "failed" && (
-                <motion.div
-                  key="failed"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 text-red-600"
-                >
-                  <XCircle /> Incorrect!
-                </motion.div>
-              )}
-              {status === "skipped" && (
-                <motion.div
-                  key="skipped"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 text-orange-600"
-                >
-                  <XCircle /> Skipped!
-                </motion.div>
-              )}
-              {status === "playing" && (
-                <motion.div
-                  key="playing"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 text-slate-500"
-                >
-                  <AlertCircle className="w-5 h-5" /> Mistakes: {mistakes} /{" "}
-                  {MAX_MISTAKES}
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="w-full max-w-xl flex flex-col items-center gap-4 mb-8">
+            <div className="w-full bg-gradient-to-br from-purple-50 to-white border-2 border-purple-200 rounded-2xl shadow-lg p-4">
+              <textarea
+                value={studentAnswer}
+                onChange={(e) => setStudentAnswer(e.target.value)}
+                placeholder="I-type ang buong pangungusap dito..."
+                disabled={status !== "playing"}
+                className="w-full min-h-[90px] bg-transparent border-none outline-none resize-none text-lg font-mono text-purple-800 placeholder:text-purple-300 focus:ring-0"
+                style={{
+                  fontFamily: `'Fira Mono', 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'monospace'`,
+                }}
+              />
+            </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="w-full flex justify-center items-center pt-6 mt-4 border-t border-slate-200">
+        <div className="w-full flex justify-between items-center pt-6 mt-auto border-t border-slate-200">
           <button
             onClick={handleSkip}
             disabled={status !== "playing"}
-            className="flex items-center gap-2 px-8 py-3 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-full transition-all duration-300 text-lg transform hover:scale-105"
+            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold rounded-2xl text-base"
           >
-            <SkipForward className="w-5 h-5" />
             SKIP
+          </button>
+          <button
+            onClick={handleSubmitAnswer}
+            disabled={status !== "playing"}
+            className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-bold text-lg transition disabled:opacity-50"
+          >
+            Submit Answer
           </button>
         </div>
       </div>

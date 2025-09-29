@@ -18,17 +18,22 @@ type GameFeedback = "success" | "error" | "skipped" | null;
 
 // --- Helper Function to Prepare Sentence ---
 // This function inserts placeholder objects only where punctuation is needed.
-const parseSentence = (sentence: string, correctPunctuation: { position: number; mark: string }[]) => {
+const parseSentence = (
+  sentence: string,
+  correctPunctuation: { position: number; mark: string }[]
+) => {
   const words = sentence.split(" ");
-  const elements: (string | { type: 'placeholder'; position: number })[] = [];
-  const placeholderPositions = new Set(correctPunctuation.map(p => p.position));
+  const elements: (string | { type: "placeholder"; position: number })[] = [];
+  const placeholderPositions = new Set(
+    correctPunctuation.map((p) => p.position)
+  );
 
   let wordIndex = 0;
   for (let i = 0; i < words.length; i++) {
     elements.push(words[i]);
     // A "position" corresponds to the space *after* a word.
     if (placeholderPositions.has(i)) {
-      elements.push({ type: 'placeholder', position: i });
+      elements.push({ type: "placeholder", position: i });
     }
   }
   return elements;
@@ -47,15 +52,26 @@ const DialogueBubble = ({ children }: { children: React.ReactNode }) => (
 );
 
 // --- Main Game Component ---
-export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: {
+export const PunctuationChallengeGame = ({
+  sentences,
+  onGameComplete,
+  onExit,
+}: {
   sentences: PunctuationData[];
-  onGameComplete: (data: { score: number; results: PunctuationResult[] }) => void;
+  onGameComplete: (data: {
+    score: number;
+    results: PunctuationResult[];
+  }) => void;
   onExit: () => void;
 }) => {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [results, setResults] = useState<PunctuationResult[]>([]);
-  const [placedAnswers, setPlacedAnswers] = useState<{ [key: number]: string }>({});
-  const [selectedPunctuation, setSelectedPunctuation] = useState<string | null>(null);
+  const [placedAnswers, setPlacedAnswers] = useState<{ [key: number]: string }>(
+    {}
+  );
+  const [selectedPunctuation, setSelectedPunctuation] = useState<string | null>(
+    null
+  );
 
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);
@@ -64,7 +80,9 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
   const [feedback, setFeedback] = useState<GameFeedback>(null);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
-  const [dialogue, setDialogue] = useState<React.ReactNode>("Piliin ang tamang bantas at ilagay sa puwang.");
+  const [dialogue, setDialogue] = useState<React.ReactNode>(
+    "Piliin ang tamang bantas at ilagay sa puwang."
+  );
 
   const currentSentenceData = sentences[currentQIndex];
   const lilaImage = `/images/character/lila-${lilaState}.png`;
@@ -72,7 +90,10 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
   // Memoize the parsed sentence to avoid recalculating on every render
   const parsedSentence = useMemo(() => {
     if (!currentSentenceData) return [];
-    return parseSentence(currentSentenceData.sentence, currentSentenceData.correctPunctuation);
+    return parseSentence(
+      currentSentenceData.sentence,
+      currentSentenceData.correctPunctuation
+    );
   }, [currentSentenceData]);
 
   // Reset state for new question
@@ -81,10 +102,10 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
     setSelectedPunctuation(null);
     setDialogue("Piliin ang tamang bantas at ilagay sa puwang.");
   }, [currentQIndex]);
- 
+
   const advanceToNext = useCallback(() => {
     if (currentQIndex < sentences.length - 1) {
-      setCurrentQIndex(prev => prev + 1);
+      setCurrentQIndex((prev) => prev + 1);
       setFeedback(null);
       setLilaState("normal");
     } else {
@@ -109,23 +130,27 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
 
   const handlePunctuationSelect = (mark: string) => {
     if (feedback) return;
-    
+
     // Find the first empty placeholder position
-    const correctPositions = currentSentenceData.correctPunctuation.map(p => p.position);
-    const firstEmptyPosition = correctPositions.find(pos => !placedAnswers[pos]);
-    
+    const correctPositions = currentSentenceData.correctPunctuation.map(
+      (p) => p.position
+    );
+    const firstEmptyPosition = correctPositions.find(
+      (pos) => !placedAnswers[pos]
+    );
+
     // If there's an empty position, place the punctuation there immediately
     if (firstEmptyPosition !== undefined) {
-      setPlacedAnswers(prev => ({ ...prev, [firstEmptyPosition]: mark }));
+      setPlacedAnswers((prev) => ({ ...prev, [firstEmptyPosition]: mark }));
     }
   };
 
   const handlePlaceholderClick = (position: number) => {
     if (feedback) return;
-   
+
     // If this position has punctuation, remove it (send it back to choices)
     if (placedAnswers[position]) {
-      const newAnswers = {...placedAnswers};
+      const newAnswers = { ...placedAnswers };
       delete newAnswers[position];
       setPlacedAnswers(newAnswers);
     }
@@ -134,14 +159,20 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
   const checkAnswer = () => {
     if (feedback) return;
 
-    const userAnswerAsArray = Object.entries(placedAnswers).map(([pos, mk]) => ({
-      position: Number(pos),
-      mark: mk,
-    })).sort((a,b) => a.position - b.position);
+    const userAnswerAsArray = Object.entries(placedAnswers)
+      .map(([pos, mk]) => ({
+        position: Number(pos),
+        mark: mk,
+      }))
+      .sort((a, b) => a.position - b.position);
 
-    const correctAnswerAsArray = [...currentSentenceData.correctPunctuation].sort((a,b) => a.position - b.position);
-    const isCorrect = JSON.stringify(userAnswerAsArray) === JSON.stringify(correctAnswerAsArray);
-   
+    const correctAnswerAsArray = [
+      ...currentSentenceData.correctPunctuation,
+    ].sort((a, b) => a.position - b.position);
+    const isCorrect =
+      JSON.stringify(userAnswerAsArray) ===
+      JSON.stringify(correctAnswerAsArray);
+
     const newResult: PunctuationResult = {
       sentenceData: currentSentenceData,
       userAnswer: userAnswerAsArray,
@@ -150,9 +181,9 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
 
     if (isCorrect) {
       const points = streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS;
-      setScore(prev => prev + points);
-      setStreak(prev => prev + 1);
-      setTimeLeft(prev => Math.min(prev + TIME_BONUS, TIME_LIMIT));
+      setScore((prev) => prev + points);
+      setStreak((prev) => prev + 1);
+      setTimeLeft((prev) => Math.min(prev + TIME_BONUS, TIME_LIMIT));
       setFeedback("success");
       setLilaState("happy");
       setDialogue("Magaling! Tama ang sagot mo!");
@@ -163,7 +194,7 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
       setDialogue("Ay, hindi iyan ang tamang sagot.");
     }
 
-    setResults(prev => [...prev, newResult]);
+    setResults((prev) => [...prev, newResult]);
     setTimeout(advanceToNext, 2500);
   };
 
@@ -174,7 +205,7 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
     setFeedback("skipped");
     setLilaState("sad");
     setDialogue("Sige lang. Subukan natin ang susunod!");
-    setResults(prev => [
+    setResults((prev) => [
       ...prev,
       { sentenceData: currentSentenceData, userAnswer: [], isCorrect: false },
     ]);
@@ -192,18 +223,25 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
         isOpen={isExitModalOpen}
         onClose={() => setIsExitModalOpen(false)}
         onConfirm={onExit}
-        title="Lumabas sa Laro?"
+        title={"Lumabas sa Laro?"}
         description="Sigurado ka ba na gusto mong umalis? Hindi mase-save ang iyong score."
       />
       <div className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[90vh] w-full">
         {/* Header */}
         <div className="w-full flex items-center gap-4 mb-6">
-          <button onClick={() => setIsExitModalOpen(true)} className="p-2 text-slate-400 hover:text-purple-600 transition-colors rounded-full hover:bg-purple-100">
+          <button
+            onClick={() => setIsExitModalOpen(true)}
+            className="p-2 text-slate-400 hover:text-purple-600 transition-colors rounded-full hover:bg-purple-100"
+          >
             <X className="w-6 h-6" />
           </button>
           <div className="w-full bg-slate-200 rounded-full h-4">
             <motion.div
-              className={`h-4 rounded-full ${timeLeft <= 15 ? "bg-red-500" : "bg-gradient-to-r from-purple-500 to-fuchsia-500"}`}
+              className={`h-4 rounded-full ${
+                timeLeft <= 15
+                  ? "bg-red-500"
+                  : "bg-gradient-to-r from-purple-500 to-fuchsia-500"
+              }`}
               animate={{ width: `${(timeLeft / TIME_LIMIT) * 100}%` }}
               transition={{ duration: 1, ease: "linear" }}
             />
@@ -214,7 +252,11 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
               <span className="text-xl font-bold">{score}</span>
             </div>
             {streak > 1 && (
-              <motion.div className="flex items-center gap-1 text-orange-500" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+              <motion.div
+                className="flex items-center gap-1 text-orange-500"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+              >
                 <Zap className="w-5 h-5" />
                 <span className="text-lg font-bold">{streak}x</span>
               </motion.div>
@@ -231,19 +273,34 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
           <div className="w-full md:w-1/4 flex flex-col items-center justify-start gap-4 order-1 md:order-none">
             <DialogueBubble>{dialogue}</DialogueBubble>
             <AnimatePresence>
-              <motion.div key={lilaState} initial={{ opacity: 0.5, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                <Image src={lilaImage} alt="Lila character" width={180} height={250} className="drop-shadow-lg" />
+              <motion.div
+                key={lilaState}
+                initial={{ opacity: 0.5, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Image
+                  src={lilaImage}
+                  alt="Lila character"
+                  width={180}
+                  height={250}
+                  className="drop-shadow-lg"
+                />
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Punctuation Area */}
           <div className="w-full md:w-3/4 flex flex-col items-center">
-             {/* Sentence Display Area - Fixed font consistency */}
+            {/* Sentence Display Area - Fixed font consistency */}
             <div className="w-full bg-slate-100 rounded-2xl p-6 min-h-[160px] flex flex-wrap gap-x-2 gap-y-4 items-center justify-center mb-4 text-3xl md:text-4xl text-slate-800 leading-relaxed">
               {parsedSentence.map((el, index) => {
                 if (typeof el === "string") {
-                  return <span key={index} className="font-sans">{el}</span>;
+                  return (
+                    <span key={index} className="font-sans">
+                      {el}
+                    </span>
+                  );
                 }
                 // It's a placeholder
                 return (
@@ -252,7 +309,11 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
                     onClick={() => handlePlaceholderClick(el.position)}
                     disabled={!!feedback}
                     className={`w-12 h-12 md:w-16 md:h-16 inline-flex items-center justify-center rounded-lg border-2 border-dashed transition-colors font-sans
-                      ${placedAnswers[el.position] ? 'border-purple-500 bg-purple-200 text-purple-700 font-bold hover:bg-red-100 hover:border-red-500 cursor-pointer' : 'border-slate-400 bg-white'}
+                      ${
+                        placedAnswers[el.position]
+                          ? "border-purple-500 bg-purple-200 text-purple-700 font-bold hover:bg-red-100 hover:border-red-500 cursor-pointer"
+                          : "border-slate-400 bg-white"
+                      }
                     `}
                   >
                     {placedAnswers[el.position] || ""}
@@ -263,14 +324,17 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
 
             {/* Punctuation Bank */}
             <div className="w-full bg-slate-50 rounded-2xl p-4 min-h-[100px] flex flex-wrap gap-3 items-center justify-center">
-              {PUNCTUATION_MARKS.map(mark => (
+              {PUNCTUATION_MARKS.map((mark) => (
                 <button
                   key={mark}
                   onClick={() => handlePunctuationSelect(mark)}
                   disabled={!!feedback || isPunctuationPlaced(mark)}
                   className={`w-14 h-14 text-2xl font-bold rounded-lg transition-all duration-200 shadow-sm
-                    ${isPunctuationPlaced(mark) ? 'bg-gray-300 text-gray-500 border-2 border-gray-400 cursor-not-allowed' :
-                      'bg-white border-2 border-slate-300 text-slate-700 hover:bg-purple-50 hover:border-purple-400 hover:scale-105'}
+                    ${
+                      isPunctuationPlaced(mark)
+                        ? "bg-gray-300 text-gray-500 border-2 border-gray-400 cursor-not-allowed"
+                        : "bg-white border-2 border-slate-300 text-slate-700 hover:bg-purple-50 hover:border-purple-400 hover:scale-105"
+                    }
                   `}
                 >
                   {mark}
@@ -278,22 +342,39 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
               ))}
             </div>
 
-             {/* Feedback Area */}
+            {/* Feedback Area */}
             <div className="flex items-center justify-center h-24 mt-4">
               <AnimatePresence mode="wait">
                 {feedback && (
-                   <motion.div key={feedback + currentQIndex} className="text-center" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                  <motion.div
+                    key={feedback + currentQIndex}
+                    className="text-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
                     {feedback === "success" && (
-                       <div className="flex flex-col items-center gap-1">
-                          <CheckCircle2 className="w-12 h-12 text-green-500" />
-                          <p className="text-xl font-bold text-green-600">Tama!</p>
-                       </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <CheckCircle2 className="w-12 h-12 text-green-500" />
+                        <p className="text-xl font-bold text-green-600">
+                          Tama!
+                        </p>
+                      </div>
                     )}
                     {feedback === "error" && (
-                       <div className="flex flex-col items-center gap-1">
-                          <XCircle className="w-12 h-12 text-red-500" />
-                          <p className="text-lg text-slate-600">Tamang Sagot: <span className="font-bold text-purple-700">&quot;{currentSentenceData.correctPunctuation.map(p => p.mark).join(' ')}&quot;</span></p>
-                       </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <XCircle className="w-12 h-12 text-red-500" />
+                        <p className="text-lg text-slate-600">
+                          Tamang Sagot:{" "}
+                          <span className="font-bold text-purple-700">
+                            &quot;
+                            {currentSentenceData.correctPunctuation
+                              .map((p) => p.mark)
+                              .join(" ")}
+                            &quot;
+                          </span>
+                        </p>
+                      </div>
                     )}
                   </motion.div>
                 )}
@@ -304,16 +385,24 @@ export const PunctuationChallengeGame = ({ sentences, onGameComplete, onExit }: 
 
         {/* Footer Buttons */}
         <div className="w-full flex justify-between items-center pt-6 mt-auto border-t border-slate-200">
-            <button onClick={handleSkip} disabled={!!feedback} className="px-10 py-4 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold rounded-2xl text-lg">
-                SKIP
-            </button>
-            <button
-                onClick={checkAnswer}
-                disabled={Object.keys(placedAnswers).length === 0 || !!feedback}
-                className={`px-10 py-4 text-white font-bold rounded-2xl transition-all duration-300 text-lg shadow-lg ${Object.keys(placedAnswers).length === 0 || !!feedback ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:scale-105"}`}
-            >
-                CHECK
-            </button>
+          <button
+            onClick={handleSkip}
+            disabled={!!feedback}
+            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold rounded-2xl text-base"
+          >
+            SKIP
+          </button>
+          <button
+            onClick={checkAnswer}
+            disabled={Object.keys(placedAnswers).length === 0 || !!feedback}
+            className={`px-7 py-2 text-white font-bold rounded-2xl transition-all duration-300 text-base shadow-lg ${
+              Object.keys(placedAnswers).length === 0 || !!feedback
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:scale-105"
+            }`}
+          >
+            CHECK
+          </button>
         </div>
       </div>
     </div>

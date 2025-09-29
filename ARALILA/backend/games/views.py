@@ -12,9 +12,6 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @csrf_exempt
 def evaluate_emoji_sentence(request):
-    # student_answer = request.GET.get("answer", "")
-    # emojis = request.GET.get("emojis", "")
-    # if request.method == "POST":
     data = json.loads(request.body)
     student_answer = data.get("answer", "")
     emojis = data.get("emojis", [])

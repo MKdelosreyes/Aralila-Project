@@ -7,5 +7,5 @@ export const emojiSentenceAPI = {
       emojis: emojis
     });
     return response.data;
-  },
+  }, 
 };

@@ -155,5 +155,5 @@ class EmojiSymbol(models.Model):
     symbol = models.CharField(max_length=10)  
     keyword = models.CharField(max_length=100)  
 
-    def __str__(self):1
+    def __str__(self):
         return f"{self.symbol} ({self.keyword})"

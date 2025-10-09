@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.conf import settings
 
 # 1. Areas Table
 class Area(models.Model):
@@ -157,3 +157,56 @@ class EmojiSymbol(models.Model):
 
     def __str__(self):
         return f"{self.symbol} ({self.keyword})"
+    
+
+class GameRoom(models.Model):
+    game = models.ForeignKey(
+        'Game', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='multiplayer_rooms'
+    )
+    room_name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default="active")
+    total_images = models.PositiveIntegerField(default=5)
+    current_image_index = models.PositiveIntegerField(default=0)
+    topic = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.room_name
+
+
+class GamePlayer(models.Model):
+    room = models.ForeignKey(GameRoom, on_delete=models.CASCADE, related_name="players")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+
+class GameRound(models.Model):
+    room = models.ForeignKey(GameRoom, on_delete=models.CASCADE, related_name="rounds")
+    image_url = models.URLField(blank=True, null=True)
+    round_index = models.PositiveIntegerField()
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    group_score = models.IntegerField(default=0)  # AI evaluation result
+    evaluated_sentence = models.TextField(blank=True, null=True)
+
+
+class SentenceContribution(models.Model):
+    round = models.ForeignKey(GameRound, on_delete=models.CASCADE, related_name="contributions")
+    player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
+    word_or_phrase = models.CharField(max_length=255)
+    turn_order = models.PositiveIntegerField()
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    was_skipped = models.BooleanField(default=False)
+
+
+class SentenceEvaluation(models.Model):
+    round = models.OneToOneField(GameRound, on_delete=models.CASCADE, related_name="evaluation")
+    grammar_score = models.FloatField(default=0)
+    coherence_score = models.FloatField(default=0)
+    overall_score = models.FloatField(default=0)
+    feedback = models.TextField(blank=True, null=True)

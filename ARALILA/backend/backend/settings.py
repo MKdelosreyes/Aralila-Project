@@ -95,6 +95,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = "backend.asgi.application"
 
+REDIS_URL = "redis://127.0.0.1:6379/0"
 # Channel layer configuration (using Redis)
 CHANNEL_LAYERS = {
     "default": {

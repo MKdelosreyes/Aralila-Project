@@ -35,13 +35,13 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
             await self.save_state(state)
 
         # Notify other players
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "player_joined",
-                "player": self.channel_name,
-            },
-        )
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "player_joined",
+        #         "player": self.channel_name,
+        #     },
+        # )
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -76,7 +76,14 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
 
                 # If this is the first player, start the first turn
                 if len(state["players"]) == 1:
+                    # First player — initialize game
                     await self.start_turn(state)
+                elif len(state["players"]) == 3:
+                    # Optional: Automatically start game once 3 players have joined
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {"type": "game_start"}
+    )
 
         elif msg_type == "submit_sentence":
             text = data.get("text", "").strip()
@@ -102,6 +109,19 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
                 await self.evaluate_sentence()
             else:
                 await self.next_turn()
+
+
+    async def player_joined(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "player_joined",
+            "player": event["player"]
+        }))
+
+
+    async def game_start(self, event):
+        await self.send(json.dumps({
+            "type": "game_start"
+        }))
 
     # -------------------- Turn Management --------------------
 
@@ -147,6 +167,13 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
             await self.next_turn()
 
     # -------------------- Sentence Evaluation --------------------
+
+    async def word_submitted(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "word_submitted",
+            "player": event["player"],
+            "word": event["word"],
+        }))
 
     async def evaluate_sentence(self):
         state = await self.get_state()

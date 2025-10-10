@@ -64,6 +64,10 @@ export default function StoryChainGame() {
           setTotalImages(data.total_images);
           break;
 
+        case "game_start":
+          console.log("🚀 All players joined, starting game!");
+          break;
+
         case "game_complete":
           setGameOver(true);
           setScores(data.scores);

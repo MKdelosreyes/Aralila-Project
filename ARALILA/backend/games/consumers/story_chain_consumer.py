@@ -3,7 +3,13 @@ import asyncio
 from redis import asyncio as aioredis
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+from games.data.story_images import story_images # Ensure this import is correct based on your project structure
 
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def get_redis():
     """Singleton Redis connection."""
@@ -78,6 +84,19 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
                 if len(state["players"]) == 1:
                     # First player — initialize game
                     await self.start_turn(state)
+
+                    # 🖼️ Send the first image
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "new_image",
+                            "image_index": 0,
+                            "total_images": len(story_images),
+                            "image_url": story_images[0]["url"],
+                            "image_description": story_images[0]["description"],
+                        },
+                    )
+
                 elif len(state["players"]) == 3:
                     # Optional: Automatically start game once 3 players have joined
                     await self.channel_layer.group_send(
@@ -129,7 +148,7 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
         """Start first player's turn."""
         current_player = state["players"][state["current_turn"]]
         await self.broadcast_turn_update(current_player)
-        asyncio.create_task(self.player_timer(current_player, 10))
+        asyncio.create_task(self.player_timer(current_player, 15))
 
     async def next_turn(self):
         state = await self.get_state()
@@ -138,12 +157,12 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
 
         next_player = state["players"][state["current_turn"]]
         await self.broadcast_turn_update(next_player)
-        asyncio.create_task(self.player_timer(next_player, 10))
+        asyncio.create_task(self.player_timer(next_player, 15))
 
     async def broadcast_turn_update(self, player):
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "turn_update", "next_player": player, "time_limit": 10},
+            {"type": "turn_update", "next_player": player, "time_limit": 15},
         )
 
     async def player_timer(self, player, seconds):
@@ -174,13 +193,53 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
             "player": event["player"],
             "word": event["word"],
         }))
+    
+    async def evaluate_with_ai(self, sentence, image_description):
+        """
+        Evaluates the players' sentence based on grammar, coherence, creativity,
+        and relevance to the given image.
+        """
+
+        prompt = f"""
+        You are a Filipino language evaluator.
+        Evaluate the following Filipino sentence based on:
+        1. Grammar correctness
+        2. Coherence and flow
+        3. Creativity
+        4. Relevance to the image description
+
+        Image description:
+        "{image_description}"
+
+        Sentence:
+        "{sentence}"
+
+        Give a total score from 1 to 20 (just the number, no explanation).
+        """
+
+        try:
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            text = response.choices[0].message.content.strip()
+            score = int("".join(filter(str.isdigit, text)))  # Extract numeric score safely
+            return max(1, min(score, 20))  # Clamp to 1–20 range
+        except Exception as e:
+            print("⚠️ AI evaluation error:", e)
+            return 10  # default fallback score
 
     async def evaluate_sentence(self):
         state = await self.get_state()
         full_sentence = " ".join(state["sentence"])
 
-        # Placeholder AI evaluation
-        group_score = 10  # Replace with actual evaluation logic later
+        # Get the current image metadata
+        current_index = state.get("current_image_index", 0)
+        image_data = story_images[current_index]
+        image_description = image_data["description"]
+
+        group_score = await self.evaluate_with_ai(full_sentence, image_description)  # Replace with actual evaluation logic later
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -212,7 +271,9 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "new_image",
                     "image_index": state["current_image_index"],
-                    "total_images": state["total_images"],
+                    "total_images": len(story_images),
+                    "image_url": story_images[state["current_image_index"]]["url"],
+                    "image_description": story_images[state["current_image_index"]]["description"],
                 },
             )
             await self.start_turn(state)
@@ -239,3 +300,5 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
 
     async def game_complete(self, event):
         await self.send(json.dumps(event))
+
+# print("Hello World")

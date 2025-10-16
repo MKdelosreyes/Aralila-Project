@@ -16,6 +16,8 @@ export default function StoryChainGame() {
   const [currentTurn, setCurrentTurn] = useState<string>("");
   const [scores, setScores] = useState<Record<string, number>>({});
   const [imageIndex, setImageIndex] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageDescription, setImageDescription] = useState<string | null>(null);
   const [totalImages, setTotalImages] = useState(5);
   const [timeLeft, setTimeLeft] = useState(10);
   const [gameOver, setGameOver] = useState(false);
@@ -62,6 +64,8 @@ export default function StoryChainGame() {
         case "new_image":
           setImageIndex(data.image_index);
           setTotalImages(data.total_images);
+          setImageUrl(data.image_url || null);
+          setImageDescription(data.image_description || null);
           break;
 
         case "game_start":
@@ -120,6 +124,20 @@ export default function StoryChainGame() {
           <p key={i}>{line}</p>
         ))}
       </div>
+
+      {imageUrl && (
+        <div className="mt-4 text-center">
+          <img
+            src={`http://127.0.0.1:8000${imageUrl}`}
+            alt="Story scene"
+            className="rounded-lg mx-auto shadow-md max-h-64 object-contain"
+          />
+          {/* optional — remove if you don't want to show this */}
+          <p className="mt-2 text-sm italic text-gray-600">
+            {imageDescription}
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-between items-center mt-3">
         <p>🧑‍🤝‍🧑 Players: {players.join(", ") || "Waiting..."}</p>

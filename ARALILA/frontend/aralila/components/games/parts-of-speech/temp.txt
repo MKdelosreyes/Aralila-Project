@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, X, CheckCircle2, XCircle, Zap, Volume2 } from "lucide-react";
 import {
@@ -14,46 +13,6 @@ import Image from "next/image";
 import { ConfirmationModal } from "../confirmation-modal";
 
 type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thumbsup";
-
-const DraggableWord = ({ word }: { word: string }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: word });
-
-  return (
-    <span
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      style={{
-        transform: transform
-          ? `translate(${transform.x}px, ${transform.y}px)`
-          : undefined,
-        opacity: isDragging ? 0.5 : 1,
-      }}
-      className="bg-purple-200 border-2 shadow-md border-purple-400 px-4 py-1 rounded-lg font-bold text-purple-800 cursor-grab active:cursor-grabbing"
-    >
-      {word}
-    </span>
-  );
-};
-
-const DropZone = ({ option }: { option: string }) => {
-  const { setNodeRef, isOver } = useDroppable({ id: option });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`p-6 rounded-2xl border-2 shadow-md transition-all text-lg font-semibold text-center
-        ${
-          isOver
-            ? "bg-purple-100 border-purple-400"
-            : "bg-white border-slate-300"
-        }`}
-    >
-      {option}
-    </div>
-  );
-};
 
 export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   questions,
@@ -134,14 +93,12 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     }
   }, [currentQuestionIndex, questions.length, finishGame]);
 
-  const handleDragEnd = (event: any) => {
-    if (!event.over) return;
+  const handleAnswerSelect = (answer: string) => {
+    if (showFeedback) return;
 
-    const droppedOn = event.over.id;
-    const word = event.active.id; // dragged word
-    const correct = droppedOn === currentQ.correctAnswer;
+    setSelectedAnswer(answer);
+    const correct = answer === currentQ.correctAnswer;
 
-    setSelectedAnswer(droppedOn);
     setIsCorrect(correct);
     setShowFeedback(true);
 
@@ -155,12 +112,12 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
       newScore += points;
       newStreak += 1;
       newTimeLeft += bonus;
-      setLilaState("happy");
+      setLilaState(happyStates[Math.floor(Math.random() * happyStates.length)]);
     } else {
       newStreak = 0;
       const penalty = currentSettings.wrongPenalty;
       newTimeLeft = Math.max(0, newTimeLeft - penalty);
-      setLilaState("sad");
+      setLilaState(sadStates[Math.floor(Math.random() * sadStates.length)]);
     }
 
     setScore(newScore);
@@ -170,18 +127,16 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
       ...prev,
       {
         question: currentQ,
-        userAnswer: droppedOn,
+        userAnswer: answer,
         isCorrect: correct,
         skipped: false,
         hintUsed: false,
       },
     ]);
 
-    // Wait before moving on to the next question
     setTimeout(() => {
-      setLilaState("neutral"); // reset mascot only now
       nextQuestion();
-    }, 2000);
+    }, 2500);
   };
 
   const skipQuestion = () => {
@@ -218,25 +173,20 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     }
   };
 
-  const renderSentence = (sentence: string, targetWord: string) => {
-    return sentence.split(" ").map((part, i) => {
-      const clean = part.replace(/[.,!?]/g, "");
-      if (clean.toLowerCase() === targetWord.toLowerCase()) {
-        return (
-          <span key={i} className="relative inline-block mx-1">
-            {/* Placeholder keeps sentence intact */}
-            <span className="text-gray-400 font-bold">{clean}</span>
-            {/* Actual draggable sits on top */}
-            <DraggableWord word={clean} />
-          </span>
-        );
-      }
-      return (
-        <span key={i} className="mx-1">
-          {part}
-        </span>
-      );
-    });
+  const renderSentenceWithHighlight = (sentence: string, word: string) => {
+    const parts = sentence.split(new RegExp(`(\\b${word}\\b)`, "gi"));
+    return parts.map((part, index) => (
+      <span
+        key={index}
+        className={
+          part.toLowerCase() === word.toLowerCase()
+            ? "bg-purple-200 px-2 py-1 rounded-lg font-bold text-purple-800"
+            : ""
+        }
+      >
+        {part}
+      </span>
+    ));
   };
 
   const getAnswerButtonClass = (option: string) => {
@@ -310,55 +260,124 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         </div>
 
         {/* Main Game Content */}
-        <DndContext onDragEnd={handleDragEnd}>
-          <div className="flex-grow w-full flex flex-col items-center justify-center">
-            {/* Character + Question */}
-            <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
-              {/* Lila */}
-              <motion.div
-                className="relative"
-                key={lilaState}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-              >
-                <Image
-                  src={`/images/character/lila-${lilaState}.png`}
-                  alt="Lila"
-                  width={150}
-                  height={150}
-                />
-              </motion.div>
-
-              {/* Sentence with draggable word */}
+        <div className="flex-grow w-full flex flex-col items-center justify-center">
+          {/* Lila Character and Question */}
+          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
+            <motion.div
+              className="relative"
+              key={lilaState}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            >
+              <Image
+                src={lilaImage}
+                alt="Lila"
+                width={150}
+                height={150}
+                priority
+              />
+            </motion.div>
+            <motion.div
+              key={animationKey}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="text-center w-full max-w-3xl flex flex-col items-center"
+            >
+              {/* <h2 className="text-lg text-slate-600 mb-6 font-semibold">
+                Identify the part of speech for the highlighted word:
+              </h2> */}
+              {/* ======== SENTENCE: Corrected Layout to prevent icon overlap ======== */}
               <div className="text-2xl text-slate-800 font-medium leading-relaxed bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm w-full flex items-center justify-between gap-4">
-                <div className="flex gap-4 flex-wrap justify-center">
-                  {currentQ.sentence.split(" ").map((part, i) =>
-                    part.toLowerCase() === currentQ.word.toLowerCase() ? (
-                      <DraggableWord key={i} word={part} />
-                    ) : (
-                      <span key={i} className="mx-1">
-                        {part}
-                      </span>
-                    )
+                {/* Sentence text */}
+                <span>
+                  {renderSentenceWithHighlight(
+                    currentQ.sentence,
+                    currentQ.word
                   )}
-                </div>
+                </span>
+                {/* Speaker Button - no longer absolute */}
                 <button
                   onClick={handleListen}
-                  className="p-2 bg-purple-100 hover:bg-purple-200 border border-purple-200 rounded-full text-purple-700"
+                  className="p-2 bg-purple-100/80 hover:bg-purple-200/80 border border-purple-200 rounded-full text-purple-700 transition-all transform hover:scale-110 flex-shrink-0"
+                  aria-label="Listen to sentence"
                 >
                   <Volume2 className="w-5 h-5" />
                 </button>
               </div>
-            </div>
-
-            {/* Drop Zones */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-2xl">
-              {currentQ.options.map((option) => (
-                <DropZone key={option} option={option} />
-              ))}
-            </div>
+            </motion.div>
           </div>
-        </DndContext>
+
+          {/* Answer Options */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-2xl">
+            {currentQ.options.map((option) => (
+              <button
+                key={option}
+                onClick={() => handleAnswerSelect(option)}
+                disabled={showFeedback}
+                className={`p-4 rounded-2xl border-2 transition-all duration-300 font-semibold text-lg shadow-sm ${getAnswerButtonClass(
+                  option
+                )} ${
+                  !showFeedback
+                    ? "hover:transform hover:scale-105 active:scale-95"
+                    : ""
+                } disabled:cursor-not-allowed`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {/* Feedback */}
+          <div className="absolute flex items-center justify-center h-24 my-4 z-50">
+            <AnimatePresence mode="wait">
+              {showFeedback && (
+                <motion.div
+                  key={selectedAnswer}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  {isCorrect && selectedAnswer !== "skipped" && (
+                    <div className="flex flex-col items-center gap-2">
+                      <CheckCircle2 className="w-12 h-12 text-green-500" />
+                      <p className="text-xl font-bold text-green-600">
+                        Correct!
+                      </p>
+                      {streak > 1 && (
+                        <p className="text-green-600">Streak bonus applied!</p>
+                      )}
+                    </div>
+                  )}
+                  {!isCorrect && selectedAnswer !== "skipped" && (
+                    <div className="flex flex-col items-center gap-2">
+                      <XCircle className="w-12 h-12 text-red-500" />
+                      <p className="text-lg text-slate-600">
+                        Correct answer:{" "}
+                        <span className="font-bold text-purple-700">
+                          {currentQ.correctAnswer}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  {selectedAnswer === "skipped" && (
+                    <div className="flex flex-col items-center gap-2">
+                      <XCircle className="w-12 h-12 text-orange-500" />
+                      <p className="text-lg text-slate-600">
+                        Skipped:{" "}
+                        <span className="font-bold text-purple-700">
+                          {currentQ.correctAnswer}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
         {/* Bottom Action Buttons */}
         <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">

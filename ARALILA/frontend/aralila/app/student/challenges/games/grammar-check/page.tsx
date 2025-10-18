@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import AnimatedBackground from "@/components/bg/animatedforest-bg"; // Assuming you have this
 import { GrammarCheckIntro } from "@/components/games/grammar-check/intro";
 import { GrammarCheckGame } from "@/components/games/grammar-check/game";
-import { GrammarCheckSummary, GrammarResult } from "@/components/games/grammar-check/summary";
+import {
+  GrammarCheckSummary,
+  GrammarResult,
+} from "@/components/games/grammar-check/summary";
 import { grammarAccuracyQuestions } from "@/data/GrammarAccuracyData";
 
 type GameState = "intro" | "playing" | "summary";
@@ -19,7 +22,13 @@ const GrammarCheckPage = () => {
     setGameState("playing");
   };
 
-  const handleGameComplete = ({ score, results }: { score: number; results: GrammarResult[] }) => {
+  const handleGameComplete = ({
+    score,
+    results,
+  }: {
+    score: number;
+    results: GrammarResult[];
+  }) => {
     setFinalScore(score);
     setFinalResults(results);
     setGameState("summary");

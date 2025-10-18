@@ -55,3 +55,14 @@ class UserBadge(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.badge.name}"
+
+
+class MultiplayerStats(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="multiplayer_stats")
+    total_rooms_played = models.PositiveIntegerField(default=0)
+    total_rounds_played = models.PositiveIntegerField(default=0)
+    average_sentence_score = models.FloatField(default=0.0)
+    total_score = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.email} Multiplayer Stats"

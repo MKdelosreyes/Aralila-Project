@@ -9,3 +9,6 @@ pytz
 sqlparse
 psycopg2-binary
 python-dotenv
+channels
+channels_redis
+daphne

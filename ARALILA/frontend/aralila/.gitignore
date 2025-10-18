@@ -40,5 +40,20 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-virtenv/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
 ARALILA/virtenv/
+virtenv/
+venv/
+.env
+*.env
+
+# Node / React
+node_modules/
+build/
+dist/

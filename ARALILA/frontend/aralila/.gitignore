@@ -40,6 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.pyc
@@ -57,3 +58,7 @@ venv/
 node_modules/
 build/
 dist/
+=======
+/virtenv/
+.env
+>>>>>>> karylle

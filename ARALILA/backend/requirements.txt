@@ -13,3 +13,4 @@ channels
 channels_redis
 daphne
 openai
+whitenoise

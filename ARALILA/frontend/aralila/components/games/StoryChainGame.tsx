@@ -25,7 +25,10 @@ export default function StoryChainGame() {
   useEffect(() => {
     if (!room) return;
 
-    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/story/${room}/`);
+    // const ws = new WebSocket(`ws://127.0.0.1:8000/ws/story/${room}/`);
+    const ws = new WebSocket(
+      `wss://${process.env.NEXT_PUBLIC_BACKEND_WS_URL}/ws/story/${room}/`
+    );
     setSocket(ws);
 
     ws.onopen = () => {

@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Filter, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface CustomButtonProps {
   text: string;

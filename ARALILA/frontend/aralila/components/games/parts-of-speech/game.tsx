@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
-import { motion, AnimatePresence } from "framer-motion";
-import { Star, X, CheckCircle2, XCircle, Zap, Volume2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Star, X, Zap, Volume2 } from "lucide-react";
 import {
   PartsOfSpeechQuestion,
   PartsOfSpeechGameProps,
@@ -70,7 +70,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [animationKey, setAnimationKey] = useState(0);
+  const [_animationKey, setAnimationKey] = useState(0);
   const [results, setResults] = useState<PartsOfSpeechResult[]>([]);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
@@ -81,8 +81,8 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const currentSettings = PARTS_OF_SPEECH_DIFFICULTY_SETTINGS[difficulty];
   const progress = (timeLeft / currentSettings.initialTime) * 100;
 
-  const happyStates: LilaState[] = ["happy", "thumbsup"];
-  const sadStates: LilaState[] = ["sad", "crying"];
+  // const happyStates: LilaState[] = ["happy", "thumbsup"];
+  // const sadStates: LilaState[] = ["sad", "crying"];
 
   const finishGame = useCallback(() => {
     if (timerRef.current) {
@@ -138,7 +138,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     if (!event.over) return;
 
     const droppedOn = event.over.id;
-    const word = event.active.id; // dragged word
+    // const word = event.active.id; // dragged word
     const correct = droppedOn === currentQ.correctAnswer;
 
     setSelectedAnswer(droppedOn);
@@ -218,43 +218,43 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     }
   };
 
-  const renderSentence = (sentence: string, targetWord: string) => {
-    return sentence.split(" ").map((part, i) => {
-      const clean = part.replace(/[.,!?]/g, "");
-      if (clean.toLowerCase() === targetWord.toLowerCase()) {
-        return (
-          <span key={i} className="relative inline-block mx-1">
-            {/* Placeholder keeps sentence intact */}
-            <span className="text-gray-400 font-bold">{clean}</span>
-            {/* Actual draggable sits on top */}
-            <DraggableWord word={clean} />
-          </span>
-        );
-      }
-      return (
-        <span key={i} className="mx-1">
-          {part}
-        </span>
-      );
-    });
-  };
+  // const renderSentence = (sentence: string, targetWord: string) => {
+  //   return sentence.split(" ").map((part, i) => {
+  //     const clean = part.replace(/[.,!?]/g, "");
+  //     if (clean.toLowerCase() === targetWord.toLowerCase()) {
+  //       return (
+  //         <span key={i} className="relative inline-block mx-1">
+  //           {/* Placeholder keeps sentence intact */}
+  //           <span className="text-gray-400 font-bold">{clean}</span>
+  //           {/* Actual draggable sits on top */}
+  //           <DraggableWord word={clean} />
+  //         </span>
+  //       );
+  //     }
+  //     return (
+  //       <span key={i} className="mx-1">
+  //         {part}
+  //       </span>
+  //     );
+  //   });
+  // };
 
-  const getAnswerButtonClass = (option: string) => {
-    if (!showFeedback) {
-      return selectedAnswer === option
-        ? "bg-purple-100 border-purple-400 transform scale-95"
-        : "bg-white border-slate-300 hover:bg-purple-50 hover:border-purple-300";
-    }
+  // const getAnswerButtonClass = (option: string) => {
+  //   if (!showFeedback) {
+  //     return selectedAnswer === option
+  //       ? "bg-purple-100 border-purple-400 transform scale-95"
+  //       : "bg-white border-slate-300 hover:bg-purple-50 hover:border-purple-300";
+  //   }
 
-    if (option === currentQ.correctAnswer) {
-      return "bg-green-100 border-green-400 text-green-700";
-    } else if (option === selectedAnswer && !isCorrect) {
-      return "bg-red-100 border-red-400 text-red-700";
-    }
-    return "bg-slate-100 border-slate-300 opacity-60";
-  };
+  //   if (option === currentQ.correctAnswer) {
+  //     return "bg-green-100 border-green-400 text-green-700";
+  //   } else if (option === selectedAnswer && !isCorrect) {
+  //     return "bg-red-100 border-red-400 text-red-700";
+  //   }
+  //   return "bg-slate-100 border-slate-300 opacity-60";
+  // };
 
-  const lilaImage = `/images/character/lila-${lilaState}.png`;
+  // const lilaImage = `/images/character/lila-${lilaState}.png`;
 
   return (
     <div className="relative z-10 max-w-4xl w-full mx-auto">

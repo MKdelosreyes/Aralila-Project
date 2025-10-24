@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
 import Image from "next/image";
 
 export default function Header({ user }) {

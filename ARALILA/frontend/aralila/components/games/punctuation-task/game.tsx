@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, Star, Zap, X, RotateCcw } from "lucide-react";
+import { CheckCircle2, XCircle, Star, Zap, X } from "lucide-react";
 import { PunctuationData, PunctuationResult } from "@/types/games"; // Use your types
 import { PUNCTUATION_MARKS } from "@/data/games/punctuation-task";
 import { ConfirmationModal } from "../confirmation-modal"; // Adjust path as needed
@@ -28,7 +28,7 @@ const parseSentence = (
     correctPunctuation.map((p) => p.position)
   );
 
-  let wordIndex = 0;
+  // let wordIndex = 0;
   for (let i = 0; i < words.length; i++) {
     elements.push(words[i]);
     // A "position" corresponds to the space *after* a word.
@@ -69,9 +69,9 @@ export const PunctuationChallengeGame = ({
   const [placedAnswers, setPlacedAnswers] = useState<{ [key: number]: string }>(
     {}
   );
-  const [selectedPunctuation, setSelectedPunctuation] = useState<string | null>(
-    null
-  );
+  // const [selectedPunctuation, setSelectedPunctuation] = useState<string | null>(
+  //   null
+  // );
 
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);

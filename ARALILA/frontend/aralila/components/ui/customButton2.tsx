@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { Filter, Plus } from "lucide-react";
 
 const CustomButton2 = ({
   onClick,

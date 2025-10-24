@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Award, TrendingUp, BookOpen, Users } from "lucide-react";
+import { Award, TrendingUp, BookOpen } from "lucide-react";
 // import "../../styles/colors.css";
 
 const ProficiencyDistribution = ({

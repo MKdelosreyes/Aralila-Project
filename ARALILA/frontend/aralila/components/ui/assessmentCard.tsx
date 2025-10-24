@@ -2,13 +2,7 @@
 import React from "react";
 // import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Icon,
-  MoreHorizontal,
-  UserCheck2Icon,
-  Calendar,
-  Eye,
-} from "lucide-react";
+import { MoreHorizontal, UserCheck2Icon, Calendar, Eye } from "lucide-react";
 
 const AssessmentCard = ({ classID, assessment, Icon }) => {
   const router = useRouter();
@@ -30,18 +24,18 @@ const AssessmentCard = ({ classID, assessment, Icon }) => {
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case "active":
-        return "Aktibo";
-      case "draft":
-        return "Draft";
-      case "completed":
-        return "Natapos";
-      default:
-        return "Hindi alam";
-    }
-  };
+  // const getStatusText = (status) => {
+  //   switch (status) {
+  //     case "active":
+  //       return "Aktibo";
+  //     case "draft":
+  //       return "Draft";
+  //     case "completed":
+  //       return "Natapos";
+  //     default:
+  //       return "Hindi alam";
+  //   }
+  // };
 
   return (
     <div

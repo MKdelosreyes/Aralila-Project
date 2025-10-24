@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { Calendar, Plus, X, Gamepad2, Clock, BookOpen } from "lucide-react";
+import { Plus, X, Gamepad2, Clock, BookOpen } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { set } from "date-fns";
 
 type Entry = {
   description: string;
@@ -62,7 +61,7 @@ const AssignmentCreationModal = ({
   onCreateAssignment,
   asDrawer,
 }) => {
-  const [open, setIsOpen] = useState(true);
+  const [_open, setIsOpen] = useState(true);
   const [gameType, setGameType] = useState("");
   const [title, setTitle] = useState("");
   const [instructions, setInstructions] = useState("");

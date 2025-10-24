@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import AnimatedBackground from "@/components/bg/animatedforest-bg"; // Assuming you have this
 import { GrammarCheckIntro } from "@/components/games/grammar-check/intro";

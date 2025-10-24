@@ -1,21 +1,14 @@
 "use client";
 import { useState } from "react";
-import Image from "next/image";
 import {
   X,
   Menu,
   Home,
-  Book,
   BookOpen,
   Settings,
   LogOut,
-  LayoutDashboard,
-  BarChart,
   ListTodo,
-  FileClock,
   IdCard,
-  PanelTop,
-  Grid,
   LayoutGrid,
 } from "lucide-react";
 import NavItem from "../ui/navItem";

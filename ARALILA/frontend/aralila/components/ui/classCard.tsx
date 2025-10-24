@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Users,
-  Clock,
-  BookOpen,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  MoreHorizontal,
-} from "lucide-react";
+import { Users, BookOpen } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -20,14 +12,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useRouter } from "next/navigation";
-import { classroomAPI } from "@/lib/api/classroom";
-import Link from "next/link";
 
 export function ClassCard({ classInfo }) {
   const [expanded, setExpanded] = useState(false);
-  const [classroom, setClassroom] = useState(null);
   const router = useRouter();
 
   const handleClick = () => {
@@ -37,9 +25,9 @@ export function ClassCard({ classInfo }) {
     router.push(`/teacher/classroom/${classInfo.id}/dashboard`);
   };
 
-  const toggleExpanded = () => {
-    setExpanded(!expanded);
-  };
+  // const toggleExpanded = () => {
+  //   setExpanded(!expanded);
+  // };
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow gap-4">

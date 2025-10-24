@@ -2,16 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Star,
-  Zap,
-  X,
-  SkipForward,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { Star, Zap, X } from "lucide-react";
 import { ConfirmationModal } from "../confirmation-modal";
 import { emojiSentenceAPI } from "@/lib/api/emojiSentenceConstruction";
 

@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Zap, CheckCircle2, XCircle, X, Volume2 } from "lucide-react";
 import { SpellingChallengeGameProps } from "@/types/games";
 import { SpellingResult } from "./summary";
-import { ConfirmationModal } from "../confirmation-modal";
-import { LEFT } from "react-swipeable";
+// import { LEFT } from "react-swipeable";
 
 const TIME_LIMIT = 120;
 const BONUS_TIME = 10;
@@ -40,7 +38,7 @@ export const SpellingChallengeGame = ({
 }: SpellingChallengeGameProps & { onExit: () => void }) => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [builtWord, setBuiltWord] = useState("");
-  const [nextExpectedIndex, setNextExpectedIndex] = useState(0);
+  const [_nextExpectedIndex, setNextExpectedIndex] = useState(0);
   const [results, setResults] = useState<SpellingResult[]>([]);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);
@@ -48,12 +46,11 @@ export const SpellingChallengeGame = ({
   const [feedback, setFeedback] = useState<{
     type: "success" | "error" | "skipped";
   } | null>(null);
-  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [fallingLetters, setFallingLetters] = useState<FallingLetter[]>([]);
   const [catcherPosition, setCatcherPosition] = useState(GAME_AREA_HEIGHT / 2);
-  const [gameWidth, setGameWidth] = useState(0);
+  const [_gameWidth, setGameWidth] = useState(0);
   const nextId = useRef<number>(0);
   var gameAreaRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +111,7 @@ export const SpellingChallengeGame = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const gameArea = document.getElementById("mainGameArea");
-      const gameWidth = gameArea?.offsetWidth || 730;
+      // const gameWidth = gameArea?.offsetWidth || 730;
 
       var fullWidth = 0;
       if (gameArea) {

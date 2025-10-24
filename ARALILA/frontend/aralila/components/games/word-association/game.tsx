@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, HelpCircle, Star, Zap, X } from "lucide-react";
+import { CheckCircle2, XCircle, Star, Zap, X } from "lucide-react";
 import { ConfirmationModal } from "../confirmation-modal";
 
 export interface WordAssociationQuestion {
@@ -63,7 +63,7 @@ export const WordAssociationGame = ({
 
   const currentQuestion = shuffledQuestions[currentIndex];
   const happyStates: LilaState[] = ["happy", "thumbsup"];
-  const sadStates: LilaState[] = ["sad"];
+  // const sadStates: LilaState[] = ["sad"];
 
   useEffect(() => {
     setShuffledQuestions(shuffleArray(questions).slice(0, 10));
@@ -96,11 +96,11 @@ export const WordAssociationGame = ({
       setLilaState("worried");
       setDialogue("Uh oh, the clock is ticking!");
     }
-    
+
     if (timeLeft <= 0) {
       handleEndGame();
     }
-    
+
     if (timeLeft > 0 && !feedback) {
       const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
       return () => clearTimeout(timer);
@@ -117,7 +117,7 @@ export const WordAssociationGame = ({
       setAnimationKey((prev) => prev + 1);
     }
   }, [currentIndex, shuffledQuestions.length, handleEndGame]);
-  
+
   // Updated answer processing with dialogue changes
   const processAnswer = (
     userWord: string,
@@ -244,20 +244,15 @@ export const WordAssociationGame = ({
 
         {/* Main Content Area:*/}
         <div className="flex-grow w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 py-2">
-            
           <motion.div
             key={animationKey}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center justify-center gap-4 order-2 lg:order-1"
           >
-    
             <div className="relative bg-purple-50 border border-purple-200 p-3 rounded-xl shadow-md max-w-[200px] text-center">
-              
-              <p className="text-md text-slate-800">
-                {dialogue}
-              </p>
-            
+              <p className="text-md text-slate-800">{dialogue}</p>
+
               <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-purple-50"></div>
             </div>
             <motion.div
@@ -275,7 +270,6 @@ export const WordAssociationGame = ({
             </motion.div>
           </motion.div>
 
-    
           <div className="flex flex-col items-center justify-center w-full max-w-lg order-1 lg:order-2">
             <div className="w-full grid grid-cols-2 gap-2 mb-4">
               {currentQuestion.images.map((src, idx) => (

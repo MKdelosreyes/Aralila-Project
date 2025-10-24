@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Filter, Plus } from "lucide-react";
+import { Filter } from "lucide-react";
 
 const Filters = ({ sortBy, setSortBy }) => {
   return (

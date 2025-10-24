@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { classroomAPI } from "@/lib/api/classroom";
 import { useRouter } from "next/navigation";
 
 export default function CreateClassroomModal({
@@ -24,8 +23,7 @@ export default function CreateClassroomModal({
   const [name, setName] = useState("");
   const [section, setSection] = useState("");
   const [classKey, setClassKey] = useState(generateClassKey());
-  const [teacherID, setTeacherID] = useState("");
-  const router = useRouter();
+  const [teacherID, setTeacherID] = useState("");\
 
   function generateClassKey() {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

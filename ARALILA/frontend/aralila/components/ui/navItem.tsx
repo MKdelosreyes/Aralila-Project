@@ -18,8 +18,6 @@ export default function NavItem({
   href,
   matchPath,
 }: NavItemProps) {
-  const router = useRouter();
-
   // Match either the exact href or a custom match string
 
   const pathname = usePathname(); // returns string like "/teacher/classroom/123/dashboard"

@@ -11,7 +11,7 @@ export default function Lobby() {
   const roomKey = searchParams.get("room");
   const isHost = searchParams.get("isHost") === "true";
 
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [_socket, setSocket] = useState<WebSocket | null>(null);
   const [players, setPlayers] = useState<string[]>([]);
   const [isStarting, setIsStarting] = useState(false);
 

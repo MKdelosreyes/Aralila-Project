@@ -5,14 +5,14 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 
 const MouseFollower = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [_mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState([]);
   const particleId = useRef(0);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
-      
+
       // Create new particle
       const newParticle = {
         id: particleId.current++,
@@ -20,51 +20,53 @@ const MouseFollower = () => {
         y: e.clientY,
         life: 1,
       };
-      
-      setParticles(prev => [...prev.slice(-15), newParticle]);
+
+      setParticles((prev) => [...prev.slice(-15), newParticle]);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    
+    window.addEventListener("mousemove", handleMouseMove);
+
     // Animate particles
     const interval = setInterval(() => {
-      setParticles(prev => 
-        prev.map(particle => ({
-          ...particle,
-          life: particle.life - 0.02
-        })).filter(particle => particle.life > 0)
+      setParticles((prev) =>
+        prev
+          .map((particle) => ({
+            ...particle,
+            life: particle.life - 0.02,
+          }))
+          .filter((particle) => particle.life > 0)
       );
     }, 16);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener("mousemove", handleMouseMove);
       clearInterval(interval);
     };
   }, []);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-20">
-      {particles.map(particle => (
+      {particles.map((particle) => (
         <motion.div
           key={particle.id}
           className="absolute w-3 h-3 bg-purple-400 rounded-full"
-          initial={{ 
-            x: particle.x - 6, 
+          initial={{
+            x: particle.x - 6,
             y: particle.y - 6,
             scale: 0.8,
-            opacity: 0.8
+            opacity: 0.8,
           }}
           animate={{
             scale: 0,
             opacity: 0,
-            y: particle.y - 30
+            y: particle.y - 30,
           }}
           transition={{
             duration: 1,
-            ease: "easeOut"
+            ease: "easeOut",
           }}
           style={{
-            boxShadow: `0 0 10px rgba(147, 51, 234, ${particle.life})`
+            boxShadow: `0 0 10px rgba(147, 51, 234, ${particle.life})`,
           }}
         />
       ))}
@@ -99,7 +101,6 @@ const Particle = ({ delay = 0 }) => {
     />
   );
 };
-
 
 const FloatingParticles = () => {
   const [particles, setParticles] = useState([]);
@@ -143,31 +144,31 @@ const AnimatedBackground = () => {
 
       {/* Dark purple overlay gradient */}
       <div className="min-h-screen absolute inset-0 bg-gradient-to-b from-purple-950/90 via-purple-900/70 to-black/90" />
-      
+
       {/* Additional dark purple glow effects */}
-      <motion.div 
+      <motion.div
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-800/20 rounded-full blur-3xl"
         animate={{
           scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3]
+          opacity: [0.3, 0.5, 0.3],
         }}
         transition={{
           duration: 4,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
       />
-      <motion.div 
+      <motion.div
         className="absolute bottom-1/3 right-1/3 w-64 h-64 bg-purple-700/15 rounded-full blur-2xl"
         animate={{
           scale: [1.2, 1, 1.2],
-          opacity: [0.2, 0.4, 0.2]
+          opacity: [0.2, 0.4, 0.2],
         }}
         transition={{
           duration: 3,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 1
+          delay: 1,
         }}
       />
     </div>
@@ -180,7 +181,7 @@ const NotFoundPage = () => {
       <AnimatedBackground />
       <MouseFollower />
       <FloatingParticles />
-      
+
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
         {/* Main 404 Text */}
         <motion.div
@@ -189,23 +190,23 @@ const NotFoundPage = () => {
           transition={{ duration: 1, ease: "easeOut" }}
           className="text-center mb-8"
         >
-          <motion.h1 
+          <motion.h1
             className="text-8xl md:text-9xl lg:text-[12rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-purple-600 to-purple-800 drop-shadow-2xl"
             animate={{
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
             }}
             transition={{
               duration: 3,
               repeat: Infinity,
-              ease: "linear"
+              ease: "linear",
             }}
             style={{
-              backgroundSize: "200% 200%"
+              backgroundSize: "200% 200%",
             }}
           >
             404
           </motion.h1>
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -223,23 +224,23 @@ const NotFoundPage = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0, rotate: -180 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ 
-            duration: 1.2, 
+          transition={{
+            duration: 1.2,
             delay: 1,
             type: "spring",
-            stiffness: 100
+            stiffness: 100,
           }}
           className="mb-8"
         >
           <motion.div
-            animate={{ 
+            animate={{
               y: [0, -20, 0],
-              rotate: [0, 5, -5, 0]
+              rotate: [0, 5, -5, 0],
             }}
             transition={{
               duration: 4,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
             className="relative"
           >
@@ -251,18 +252,18 @@ const NotFoundPage = () => {
                 className="object-contain drop-shadow-2xl"
                 priority
               />
-              
+
               {/* Glow effect around character */}
               <motion.div
                 className="absolute inset-0 bg-purple-700/30 rounded-full blur-2xl"
                 animate={{
                   scale: [1, 1.1, 1],
-                  opacity: [0.3, 0.6, 0.3]
+                  opacity: [0.3, 0.6, 0.3],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               />
             </div>
@@ -277,14 +278,14 @@ const NotFoundPage = () => {
           className="text-center max-w-md"
         >
           <p className="text-gray-300 text-lg md:text-xl mb-8 leading-relaxed">
-            Oops! Looks like this page got lost in the forest. 
-            Let&apos;s get you back on track!
+            Oops! Looks like this page got lost in the forest. Let&apos;s get
+            you back on track!
           </p>
-          
+
           <motion.button
-            whileHover={{ 
+            whileHover={{
               scale: 1.05,
-              boxShadow: "0 20px 40px rgba(88, 28, 135, 0.4)"
+              boxShadow: "0 20px 40px rgba(88, 28, 135, 0.4)",
             }}
             whileTap={{ scale: 0.95 }}
             className="bg-gradient-to-r from-purple-700 to-purple-900 hover:from-purple-800 hover:to-purple-950 text-white font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-purple-700/50"
@@ -295,13 +296,13 @@ const NotFoundPage = () => {
                 textShadow: [
                   "0 0 0px rgba(255,255,255,0)",
                   "0 0 10px rgba(255,255,255,0.5)",
-                  "0 0 0px rgba(255,255,255,0)"
-                ]
+                  "0 0 0px rgba(255,255,255,0)",
+                ],
               }}
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
               }}
             >
               GO BACK
@@ -317,7 +318,7 @@ const NotFoundPage = () => {
             className="w-8 h-8 border-2 border-purple-400 rounded-full"
           />
         </div>
-        
+
         <div className="absolute bottom-20 right-20">
           <motion.div
             animate={{ rotate: -360 }}

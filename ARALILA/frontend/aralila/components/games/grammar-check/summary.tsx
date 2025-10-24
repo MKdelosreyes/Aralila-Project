@@ -158,7 +158,7 @@ export const GrammarCheckSummary = ({
     };
   }
 
-  const incorrectResults = results.filter((r) => !r.isCorrect);
+  // const incorrectResults = results.filter((r) => !r.isCorrect);
 
   return (
     <>

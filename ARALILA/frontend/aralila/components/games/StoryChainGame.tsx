@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function StoryChainGame() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const player = searchParams.get("player") || "Player";
   const room = searchParams.get("room") || "default";

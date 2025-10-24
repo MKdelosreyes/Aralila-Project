@@ -1,12 +1,12 @@
 "use client";
 import Sidebar from "./sidebar";
-import Header from "./header";
+import Header, { User } from "./header";
 import { ReactNode } from "react";
 
 interface LayoutProps {
   sidebar: ReactNode;
   id: number;
-  user: ReactNode;
+  user: User;
   children: ReactNode;
   activeTab?: number;
 }

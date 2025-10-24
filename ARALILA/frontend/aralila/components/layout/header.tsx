@@ -2,7 +2,7 @@
 import { Bell } from "lucide-react";
 import Image from "next/image";
 
-interface User {
+export interface User {
   first_name: string;
   last_name: string;
   profile_pic: string;

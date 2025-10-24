@@ -75,6 +75,17 @@ const enhancedActivities = [
   },
 ];
 
+interface CircularProgressProps {
+  value: number;
+  maxValue: number;
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+  color?: string;
+  label?: string;
+  sublabel?: string;
+}
+
 // Circular Progress Component
 const CircularProgress = ({
   value,
@@ -84,7 +95,7 @@ const CircularProgress = ({
   color = "#6d28d9",
   label,
   sublabel,
-}) => {
+}: CircularProgressProps) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const progress = (value / maxValue) * 100;
@@ -130,13 +141,20 @@ const CircularProgress = ({
   );
 };
 
+interface TimerProgressProps {
+  timeRemaining: number;
+  totalTime: number;
+  size: number;
+  strokeWidth: number;
+}
+
 // Timer Progress Component
 const TimerProgress = ({
   timeRemaining,
   totalTime,
   size = 90,
   strokeWidth = 10,
-}) => {
+}: TimerProgressProps) => {
   const [currentTime, setCurrentTime] = useState(timeRemaining);
 
   useEffect(() => {
@@ -412,8 +430,15 @@ const ActivitiesTab = () => (
   </div>
 );
 
+interface TabButtonProps {
+  label: string;
+  icon: React.ReactNode;
+  isActive: boolean;
+  onClick: () => void;
+}
+
 // Refined Tab Button Component
-const TabButton = ({ label, icon, isActive, onClick }) => (
+const TabButton = ({ label, icon, isActive, onClick }: TabButtonProps) => (
   <motion.button
     onClick={onClick}
     className="flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-xl transition-colors duration-300 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-black/30"
@@ -479,8 +504,13 @@ const DiscussionTab = () => (
   </div>
 );
 
+interface ClassInfoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
 // Class Info Modal Component
-const ClassInfoModal = ({ isOpen, onClose }) => {
+const ClassInfoModal = ({ isOpen, onClose }: ClassInfoModalProps) => {
   const teachers = classroomData.people.filter((p) => p.role === "Teacher");
   const students = classroomData.people.filter((p) => p.role === "Student");
 
@@ -567,8 +597,17 @@ const ClassInfoModal = ({ isOpen, onClose }) => {
   );
 };
 
+interface PersonCardProps {
+  person: {
+    id: string;
+    name: string;
+    role: string;
+    avatar: string;
+  };
+}
+
 // Person Card for Modal
-const PersonCard = ({ person }) => (
+const PersonCard = ({ person }: PersonCardProps) => (
   <div className="flex items-center space-x-4 p-3 rounded-lg bg-slate-100/80 dark:bg-black/20 hover:bg-slate-200/80 dark:hover:bg-white/10 transition-colors">
     <div className="relative">
       <Image

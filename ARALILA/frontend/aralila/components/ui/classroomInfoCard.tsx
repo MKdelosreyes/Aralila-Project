@@ -3,7 +3,24 @@
 import React, { useState } from "react";
 import { Users, Trophy, BookOpen, Check, Copy } from "lucide-react";
 
-const ClassroomInfoCard = ({ classInfo, studentSize }) => {
+// Define the shape of classroom information
+interface ClassInfo {
+  class_name: string;
+  section: string;
+  class_key: string;
+  status: boolean;
+}
+
+// Define the component props
+interface ClassroomInfoCardProps {
+  classInfo: ClassInfo;
+  studentSize?: number;
+}
+
+const ClassroomInfoCard: React.FC<ClassroomInfoCardProps> = ({
+  classInfo,
+  studentSize,
+}) => {
   const [copied, setCopied] = useState(false);
   const sampleStudentSize = studentSize || 28;
 

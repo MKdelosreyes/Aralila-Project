@@ -1,7 +1,21 @@
 "use client";
 import React from "react";
+import { LucideIcon } from "lucide-react";
 
-const CustomButton2 = ({
+// Define valid variant and size types
+type ButtonVariant = "primary" | "secondary" | "success";
+type ButtonSize = "sm" | "md" | "lg";
+
+// Define props interface
+interface CustomButton2Props {
+  onClick: () => void;
+  text: string;
+  variant?: ButtonVariant;
+  icon?: LucideIcon;
+  size?: ButtonSize;
+}
+
+const CustomButton2: React.FC<CustomButton2Props> = ({
   onClick,
   text,
   variant = "primary",

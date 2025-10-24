@@ -1,6 +1,16 @@
 "use client";
 
-export default function CategoryFilter({ categories, selected, onSelect }) {
+interface CategoryFilterProps {
+  categories: string[];
+  selected: string;
+  onSelect: (category: string) => void;
+}
+
+export default function CategoryFilter({
+  categories,
+  selected,
+  onSelect,
+}: CategoryFilterProps) {
   return (
     <div className="mb-6 flex flex-wrap gap-2">
       {categories.map((category) => (

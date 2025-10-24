@@ -179,7 +179,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
     // Wait before moving on to the next question
     setTimeout(() => {
-      setLilaState("neutral"); // reset mascot only now
+      setLilaState("normal"); // reset mascot only now
       nextQuestion();
     }, 2000);
   };

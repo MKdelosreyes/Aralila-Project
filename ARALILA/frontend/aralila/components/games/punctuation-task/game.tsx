@@ -69,9 +69,9 @@ export const PunctuationChallengeGame = ({
   const [placedAnswers, setPlacedAnswers] = useState<{ [key: number]: string }>(
     {}
   );
-  // const [selectedPunctuation, setSelectedPunctuation] = useState<string | null>(
-  //   null
-  // );
+  const [_selectedPunctuation, setSelectedPunctuation] = useState<
+    string | null
+  >(null);
 
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);

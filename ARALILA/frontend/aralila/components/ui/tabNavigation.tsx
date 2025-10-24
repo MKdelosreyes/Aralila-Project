@@ -1,8 +1,26 @@
 "use client";
 import React from "react";
 
-const TabNavigation = ({ activeTab, setActiveTab }) => {
-  const tabs = [
+// Define the type for tab IDs
+type TabId = "all" | "active" | "completed";
+
+// Define the interface for tab items
+interface Tab {
+  id: TabId;
+  label: string;
+}
+
+// Define the props interface
+interface TabNavigationProps {
+  activeTab: TabId;
+  setActiveTab: (tabId: TabId) => void;
+}
+
+const TabNavigation: React.FC<TabNavigationProps> = ({
+  activeTab,
+  setActiveTab,
+}) => {
+  const tabs: Tab[] = [
     { id: "all", label: "Lahat ng Gawain" },
     { id: "active", label: "Aktibo" },
     { id: "completed", label: "Natapos" },

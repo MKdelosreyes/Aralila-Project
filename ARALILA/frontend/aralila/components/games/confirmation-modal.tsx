@@ -8,12 +8,16 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  title?: string;
+  description?: string;
 }
 
 export const ConfirmationModal = ({
   isOpen,
   onClose,
   onConfirm,
+  title = "Sigurado ka ba?", // Default value
+  description = "Gusto mo bang umalis sa larong ito?", // Default value
 }: ConfirmationModalProps) => {
   return (
     <AnimatePresence>

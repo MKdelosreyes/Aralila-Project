@@ -2,7 +2,17 @@
 import { Bell } from "lucide-react";
 import Image from "next/image";
 
-export default function Header({ user }) {
+interface User {
+  first_name: string;
+  last_name: string;
+  profile_pic: string;
+}
+
+interface HeaderProps {
+  user: User;
+}
+
+export default function Header({ user }: HeaderProps) {
   return (
     <header className="bg-white shadow-sm h-16 flex items-center px-6 justify-between">
       <Image

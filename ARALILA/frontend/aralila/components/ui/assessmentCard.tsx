@@ -4,14 +4,40 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, UserCheck2Icon, Calendar, Eye } from "lucide-react";
 
-const AssessmentCard = ({ classID, assessment, Icon }) => {
+// Define the status type
+type AssessmentStatus = "active" | "draft" | "completed";
+
+// Define the assessment interface
+interface Assessment {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  status: AssessmentStatus;
+  students: number;
+  avgScore: number;
+  dueAt: string;
+}
+
+// Define the props interface
+interface AssessmentCardProps {
+  classID: string;
+  assessment: Assessment;
+  Icon: React.ElementType;
+}
+
+const AssessmentCard: React.FC<AssessmentCardProps> = ({
+  classID,
+  assessment,
+  Icon,
+}) => {
   const router = useRouter();
   const handleClick = () => {
     router.push(
       `/teacher/classroom/${classID}/activities/activity/${assessment?.id}`
     );
   };
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: AssessmentStatus): string => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800 border-green-200";

@@ -14,8 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 
-export function ClassCard({ classInfo }) {
-  const [expanded, setExpanded] = useState(false);
+interface ClassInfo {
+  id: string;
+  class_name: string;
+  section: string;
+  icon: "Users" | "BookOpen";
+  isActive: boolean;
+  totalStudents: number;
+}
+
+interface ClassCardProps {
+  classInfo: ClassInfo;
+}
+
+export function ClassCard({ classInfo }: ClassCardProps) {
+  // const [expanded, setExpanded] = useState(false);
   const router = useRouter();
 
   const handleClick = () => {

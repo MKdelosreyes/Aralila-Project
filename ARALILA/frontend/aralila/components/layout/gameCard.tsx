@@ -17,22 +17,38 @@ import {
   Shuffle,
   MessageCircle,
   Zap,
+  Gamepad2,
 } from "lucide-react";
 import CustomButton2 from "../ui/customButton2";
+import { useState } from "react";
 
-const GameCard = ({ game, classID }) => {
-  const [showDropdown, setShowDropdown] = useState(false);
+const gameIcons = {
+  "Spelling Challenge": PenTool,
+  "Punctuation Task": CheckCircle2,
+  "Parts of Speech": Target,
+  "Word Association": Link,
+  "Word Matching": Shuffle,
+  "Grammar Check": Edit3,
+  "Sentence Construction": MessageCircle,
+  "Emoji Sentence": Zap,
+};
 
-  const gameIcons = {
-    "Spelling Challenge": PenTool,
-    "Punctuation Task": CheckCircle2,
-    "Parts of Speech": Target,
-    "Word Association": Link,
-    "Word Matching": Shuffle,
-    "Grammar Check": Edit3,
-    "Sentence Construction": MessageCircle,
-    "Emoji Sentence": Zap,
+interface GameCardProps {
+  game: {
+    type: keyof typeof gameIcons; // This ensures type matches available icons
+    title: string;
+    gradient: string;
+    status: "Aktibo" | "Nakatigil" | "Draft";
+    participants: number;
+    avgScore: number;
+    duration: string;
+    topStudents: string[];
   };
+  classID: string;
+}
+
+const GameCard: React.FC<GameCardProps> = ({ game, classID }) => {
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const GameIcon = gameIcons[game.type] || Gamepad2;
 

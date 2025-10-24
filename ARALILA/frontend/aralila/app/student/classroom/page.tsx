@@ -195,18 +195,27 @@ export default function ClassroomPage() {
   const [isInfoHovered, setInfoHovered] = useState(false);
 
   const tabContentVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: {
+      opacity: 0,
+      y: 20,
+    },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4, ease: "easeInOut" },
+      transition: {
+        duration: 0.4,
+        ease: [0.4, 0, 0.2, 1], // Using cubic-bezier instead of string
+      },
     },
     exit: {
       opacity: 0,
       y: -20,
-      transition: { duration: 0.3, ease: "easeInOut" },
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1],
+      },
     },
-  };
+  } as const;
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black text-white">
@@ -441,13 +450,20 @@ interface TabButtonProps {
 const TabButton = ({ label, icon, isActive, onClick }: TabButtonProps) => (
   <motion.button
     onClick={onClick}
-    className="flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-xl transition-colors duration-300 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 dark:focus-visible:ring-offset-black/30"
+    className={`
+      flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-xl 
+      transition-colors duration-300 relative focus:outline-none 
+      focus-visible:ring-2 focus-visible:ring-purple-500 
+      focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 
+      dark:focus-visible:ring-offset-black/30
+      ${isActive ? "text-white" : "text-[hsl(222,12%,43%)]"}
+    `}
     whileHover={{ scale: isActive ? 1.05 : 1.1 }}
     whileTap={{ scale: 0.95 }}
-    style={{
-      color: isActive ? "white" : "var(--text-color)",
-      "--text-color": "hsl(222, 12%, 43%)", // Default text color
-    }}
+    // style={{
+    //   color: isActive ? "white" : "var(--text-color)",
+    //   "--text-color": "hsl(222, 12%, 43%)", // Default text color
+    // }}
   >
     <AnimatePresence>
       {isActive && (
@@ -558,12 +574,12 @@ const ClassInfoModal = ({ isOpen, onClose }: ClassInfoModalProps) => {
                   </strong>{" "}
                   {classroomData.name}
                 </p>
-                <p>
+                {/* <p>
                   <strong className="font-medium text-slate-600 dark:text-slate-300">
                     Subject:
                   </strong>{" "}
                   {classroomData.subject}
-                </p>
+                </p> */}
               </div>
 
               {/* Teachers List */}

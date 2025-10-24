@@ -10,7 +10,7 @@ const MouseFollower = () => {
   const particleId = useRef(0);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
 
       // Create new particle

@@ -3,13 +3,30 @@ import { MoreHorizontal } from "lucide-react";
 import ProgressBar from "./progressBar";
 import { Book, MessageSquare } from "lucide-react";
 
-// Map of icon names to components
-const iconMap = {
+// Define available icon types
+type IconType = "Book" | "MessageSquare";
+
+// Define the exercise interface
+interface Exercise {
+  icon: IconType;
+  title: string;
+  description: string;
+  progress: number;
+  isNew?: boolean;
+}
+
+// Define props interface
+interface ExerciseCardProps {
+  exercise: Exercise;
+}
+
+// Map of icon names to components with proper typing
+const iconMap: Record<IconType, React.ReactElement> = {
   Book: <Book className="h-8 w-8 text-purple-500" />,
   MessageSquare: <MessageSquare className="h-8 w-8 text-purple-500" />,
 };
 
-export default function ExerciseCard({ exercise }) {
+export default function ExerciseCard({ exercise }: ExerciseCardProps) {
   const icon = iconMap[exercise.icon];
 
   return (

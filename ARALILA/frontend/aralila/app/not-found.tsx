@@ -6,7 +6,9 @@ import { useEffect, useState, useRef } from "react";
 
 const MouseFollower = () => {
   const [_mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [particles, setParticles] = useState([]);
+  const [particles, setParticles] = useState<
+    { id: number; x: number; y: number; life: number }[]
+  >([]);
   const particleId = useRef(0);
 
   useEffect(() => {

@@ -1,6 +1,10 @@
 "use client";
 
-export default function ProgressBar({ progress }) {
+interface ProgressBarProps {
+  progress: number;
+}
+
+export default function ProgressBar({ progress }: ProgressBarProps) {
   return (
     <div className="w-full bg-gray-200 rounded-full h-2">
       <div

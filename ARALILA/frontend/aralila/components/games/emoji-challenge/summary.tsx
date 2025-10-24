@@ -11,9 +11,8 @@ import { Target, Trophy, CheckCircle2, XCircle } from "lucide-react";
 interface Question {
   id: number;
   emojis: string[];
-  correctSentence: string;
-  hint: string;
-  category: string;
+  keywords: string[];
+  translation: string;
 }
 export interface GameResult {
   questionData: Question;
@@ -195,7 +194,7 @@ export const EmojiChallengeSummary = ({ score, results }: SummaryProps) => {
                     <XCircle size={24} />
                   )}
                 </div>
-                <div className="flex-1">
+                {/* <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     {result.questionData.emojis.map((e, i) => (
                       <span key={i} className="text-2xl">
@@ -209,7 +208,7 @@ export const EmojiChallengeSummary = ({ score, results }: SummaryProps) => {
                   <p className="text-sm text-slate-500 mt-1">
                     ({result.questionData.hint})
                   </p>
-                </div>
+                </div> */}
               </motion.div>
             ))}
           </div>

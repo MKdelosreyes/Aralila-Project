@@ -9,7 +9,7 @@ import { PlayCircle } from "lucide-react";
 
 interface PunctuationChallengeIntroProps {
   onStartChallenge: () => void;
-  onReviewLessons: () => void; 
+  // onReviewLessons: () => void;
 }
 
 export const PunctuationChallengeIntro = ({
@@ -27,11 +27,13 @@ export const PunctuationChallengeIntro = ({
           src="/images/character/lila-normal.png"
           alt="Lila the teacher"
           width={300}
-          height={300} 
+          height={300}
           className="mx-auto"
         />
-        <h1 className="text-7xl font-bold text-white mb-4">Punctuation Power!</h1> 
-        <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md"> 
+        <h1 className="text-7xl font-bold text-white mb-4">
+          Punctuation Power!
+        </h1>
+        <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
           GRAMMAR
         </div>
       </motion.div>
@@ -58,7 +60,8 @@ export const PunctuationChallengeIntro = ({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
-          <PlayCircle className="w-36 h-36 text-white cursor-pointer" /> {/* Increased size */}
+          <PlayCircle className="w-36 h-36 text-white cursor-pointer" />{" "}
+          {/* Increased size */}
           {/* Start tooltip */}
           <div
             className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"

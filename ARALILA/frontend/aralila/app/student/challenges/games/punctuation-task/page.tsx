@@ -21,7 +21,13 @@ const PunctuationChallengePage = () => {
     setGameState("playing");
   };
 
-  const handleGameComplete = ({ score, results }: { score: number; results: PunctuationResult[] }) => {
+  const handleGameComplete = ({
+    score,
+    results,
+  }: {
+    score: number;
+    results: PunctuationResult[];
+  }) => {
     setFinalScore(score);
     setFinalResults(results);
     setGameState("summary");

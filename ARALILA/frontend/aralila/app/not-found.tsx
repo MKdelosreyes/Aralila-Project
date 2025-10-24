@@ -105,7 +105,7 @@ const Particle = ({ delay = 0 }) => {
 };
 
 const FloatingParticles = () => {
-  const [particles, setParticles] = useState([]);
+  const [particles, setParticles] = useState<React.ReactElement[]>([]);
 
   useEffect(() => {
     const particleArray = Array.from({ length: 50 }, (_, i) => (

@@ -69,6 +69,6 @@ export interface WordAssociationQuestion {
   images: string[];
   options: string[];
   correctAnswer: string;
-  hint?: string;
+  hint: string;
   explanation?: string;
 }

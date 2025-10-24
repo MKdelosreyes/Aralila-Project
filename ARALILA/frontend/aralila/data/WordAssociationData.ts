@@ -2,7 +2,7 @@ export interface GameItem {
   id: number;
   images: string[];
   answer: string;
-  hint?: string;
+  hint: string;
   difficulty: "easy" | "medium" | "hard";
 }
 

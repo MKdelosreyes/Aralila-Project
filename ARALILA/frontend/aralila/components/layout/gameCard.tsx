@@ -10,6 +10,13 @@ import {
   Trophy,
   Clock,
   Play,
+  PenTool,
+  CheckCircle2,
+  Target,
+  Link,
+  Shuffle,
+  MessageCircle,
+  Zap,
 } from "lucide-react";
 import CustomButton2 from "../ui/customButton2";
 

@@ -23,7 +23,7 @@ export default function CreateClassroomModal({
   const [name, setName] = useState("");
   const [section, setSection] = useState("");
   const [classKey, setClassKey] = useState(generateClassKey());
-  const [teacherID, setTeacherID] = useState("");\
+  const [teacherID, setTeacherID] = useState("");
 
   function generateClassKey() {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

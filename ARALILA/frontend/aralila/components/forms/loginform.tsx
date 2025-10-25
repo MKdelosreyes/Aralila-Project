@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/api/auth";
+import { useAuth } from "@/contexts/AuthContext";
+// import { toast } from "sonner";
 
-// import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -28,7 +29,9 @@ const formSchema = z.object({
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -40,18 +43,25 @@ export default function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
-    // Handle login logic here (e.g., call Supabase auth)
+    setIsLoading(true);
+
     try {
-      const response = await authAPI.login(values);
-      console.log("User logged in successfully:", response);
-      localStorage.setItem("ACCESS_TOKEN", response.access);
+      await login(values.email, values.password);
+
+      // Get fresh user data to determine role
+      const { authAPI } = await import("@/lib/api/auth");
       const profile = await authAPI.getProfile();
-      console.log("User profile:", profile);
-      console.log(profile.role);
-      if (profile.role === "teacher") router.push("/teacher");
-      else router.push("/student/dashboard");
-    } catch (error) {
-      console.log("Error logging in...", error);
+
+      console.log("User logged in successfully:", profile);
+
+      router.push("/student/dashboard");
+    } catch (error: any) {
+      console.error("Error logging in:", error);
+      // Optional: Show error toast
+      // toast.error(error.message || "Login failed");
+      alert(error.message || "Login failed"); // Simple fallback
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -74,6 +84,7 @@ export default function LoginForm() {
                   placeholder="Enter your email"
                   {...field}
                   className="h-14 font-medium"
+                  disabled={isLoading}
                 />
               </FormControl>
               <FormMessage />
@@ -96,6 +107,7 @@ export default function LoginForm() {
                     placeholder="Enter your password"
                     {...field}
                     className="h-14 font-medium pr-10"
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
@@ -113,17 +125,24 @@ export default function LoginForm() {
         />
 
         <h1 className="text-xs font-semibold text-purple-700 text-right hover:underline">
-          <Link href="">Forgot Password?</Link>
+          <Link href="/forgot-password">Forgot Password?</Link>
         </h1>
 
-        <Link href="/student/dashboard">
+        {/* <Link href="/student/dashboard">
           <Button
             type="submit"
             className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md cursor-pointer"
           >
             Login
           </Button>
-        </Link>
+        </Link> */}
+        <Button
+          type="submit"
+          className="w-full bg-purple-500 text-white hover:bg-purple-800 rounded-full h-14 font-bold text-md cursor-pointer"
+          disabled={isLoading}
+        >
+          {isLoading ? "Logging in..." : "Login"}
+        </Button>
       </form>
     </Form>
   );

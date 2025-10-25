@@ -1,15 +1,15 @@
 "use client";
 
-import {  useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
-import { GraduationCap, User, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { authAPI } from "@/lib/api/auth";
-
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -21,10 +21,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-// import { useRouter } from "next/router";
 
 // Define validation schemas for each step
-// Define the schema types for better TypeScript integration
 const stepOneSchema = z
   .object({
     email: z.string().email({ message: "Please enter a valid email address" }),
@@ -38,31 +36,23 @@ const stepOneSchema = z
     path: ["confirmPassword"],
   });
 
-// Create type from schema
 type StepOneFormValues = z.infer<typeof stepOneSchema>;
 
-const stepTwoSchema = z
-  .object({
-    role: z.enum(["student", "teacher"], {
-      required_error: "Please select a role",
-    }),
-    first_name: z.string().min(1, { message: "First name is required" }),
-    last_name: z.string().min(1, { message: "Last name is required" }),
-    school_name: z.string().optional(),
-  })
-  .refine((data) => !(data.role === "teacher" && !data.school_name), {
-    message: "University is required for teachers",
-    path: ["university"],
-  });
+const stepTwoSchema = z.object({
+  first_name: z.string().min(1, { message: "First name is required" }),
+  last_name: z.string().min(1, { message: "Last name is required" }),
+  school_name: z.string().optional(),
+});
 
-// Create type from schema
 type StepTwoFormValues = z.infer<typeof stepTwoSchema>;
 
 export default function SignupForm() {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   // Form for step 1
   const stepOneForm = useForm<StepOneFormValues>({
@@ -78,7 +68,6 @@ export default function SignupForm() {
   const stepTwoForm = useForm<StepTwoFormValues>({
     resolver: zodResolver(stepTwoSchema),
     defaultValues: {
-      role: undefined,
       first_name: "",
       last_name: "",
       school_name: "",
@@ -91,20 +80,28 @@ export default function SignupForm() {
   };
 
   const handleStepTwoSubmit = async (data: StepTwoFormValues) => {
-    // Combine data from both forms for final submission
     const formData = {
       ...stepOneForm.getValues(),
       ...data,
+      confirmPassword: undefined,
     };
+
     console.log("Form submitted with data:", formData);
+    setIsLoading(true);
+
     try {
-      const response = await authAPI.register(formData);
-      if (response.role === "student") {
-      }
-      console.log("User registered successfully:", response);
-      router.push("/login");
-    } catch (error) {
+      await authAPI.register(formData);
+      console.log("User registered successfully");
+
+      await login(formData.email, formData.password);
+
+      // Redirect to dashboard (no role-based routing)
+      router.push("/student/dashboard");
+    } catch (error: any) {
       console.error("Registration failed:", error);
+      alert(error.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -142,7 +139,9 @@ export default function SignupForm() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold text-gray-800 ">Email</FormLabel>
+                      <FormLabel className="text-md font-semibold text-gray-800 ">
+                        Email
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -161,7 +160,9 @@ export default function SignupForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold text-gray-800">Password</FormLabel>
+                      <FormLabel className="text-md font-semibold text-gray-800">
+                        Password
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -194,7 +195,9 @@ export default function SignupForm() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-md font-semibold text-gray-800">Confirm Password</FormLabel>
+                      <FormLabel className="text-md font-semibold text-gray-800">
+                        Confirm Password
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -269,118 +272,74 @@ export default function SignupForm() {
               >
                 <FormField
                   control={stepTwoForm.control}
-                  name="role"
+                  name="first_name"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex justify-center gap-4 mb-4">
-                        <Button
-                          type="button"
-                          onClick={() =>
-                            stepTwoForm.setValue("role", "student")
-                          }
-                          variant="ghost"
-                          className={`h-20 w-52 text-xl font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer
-                            ${
-                              field.value === "student"
-                                ? "bg-purple-600 text-white pointer-events-none"
-                                : "text-purple-500 border-2 border-purple-500 hover:text-purple-500 hover:bg-purple-100 hover:shadow-lg hover:scale-105 transition-transform duration-300 ease-in-out"
-                            }`}
-                        >
-                          <User size={32} />
-                          Student
-                        </Button>
-
-                        <Button
-                          type="button"
-                          onClick={() =>
-                            stepTwoForm.setValue("role", "teacher")
-                          }
-                          variant="ghost"
-                          className={`h-20 w-52 text-xl font-semibold flex items-center justify-center gap-3 transition-colors cursor-pointer
-                            ${
-                              field.value === "teacher"
-                                ? "bg-purple-600 text-white pointer-events-none"
-                                : "text-purple-500 border-2 border-purple-500 hover:text-purple-500 hover:bg-purple-100 hover:shadow-lg hover:scale-105 transition-transform duration-300 ease-in-out"
-                            }`}
-                        >
-                          <GraduationCap size={32} />
-                          Teacher
-                        </Button>
-                      </div>
+                      <FormLabel className="text-md font-semibold text-gray-800">
+                        First Name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="Juan"
+                          className="h-12 font-medium"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {stepTwoForm.watch("role") && (
-                  <>
-                    <FormField
-                      control={stepTwoForm.control}
-                      name="first_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-md font-semibold text-gray-800">First Name</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="text"
-                              placeholder="Juan"
-                              className="h-12 font-medium"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={stepTwoForm.control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-md font-semibold text-gray-800">
+                        Last Name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="Dela Cruz"
+                          className="h-12 font-medium"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={stepTwoForm.control}
-                      name="last_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-md font-semibold text-gray-800">Last Name</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="text"
-                              placeholder="Dela Cruz"
-                              className="h-12 font-medium"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={stepTwoForm.control}
+                  name="school_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-md font-semibold text-gray-800">
+                        School/University (Optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="Your school name"
+                          className="h-12 font-medium"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    {stepTwoForm.watch("role") === "teacher" && (
-                      <FormField
-                        control={stepTwoForm.control}
-                        name="school_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-md font-semibold text-gray-800">University</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="text"
-                                placeholder="Example University"
-                                className="h-12 font-medium"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    <Button
-                      type="submit"
-                      className="w-full bg-purple-500 text-white hover:bg-purple-700 h-12 rounded-full font-bold text-md cursor-pointer"
-                    >
-                      Create Account
-                    </Button>
-                  </>
-                )}
+                <Button
+                  type="submit"
+                  className="w-full bg-purple-500 text-white hover:bg-purple-700 h-12 rounded-full font-bold text-md cursor-pointer"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating Account..." : "Create Account"}
+                </Button>
               </form>
             </Form>
 

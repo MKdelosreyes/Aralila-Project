@@ -4,7 +4,7 @@ from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    full_name = serializers.ReadOnlyField()  # Since it's a @property and not a model field
+    full_name = serializers.ReadOnlyField()  
     # date_joined = serializers.DateField(format="%Y-%m-%d", read_only=True)
 
     class Meta:

@@ -117,7 +117,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = "backend.asgi.application"
 
 # CHANGED: Use Redis URL from environment variable
-REDIS_URL = os.getenv('REDIS_URL', 'redis://red-d3qvj4u3jp1c738tl0p0:6379')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
 
 # WebSocket Configuration
 WEBSOCKET_ALLOWED_ORIGINS = [

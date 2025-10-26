@@ -124,6 +124,7 @@ WEBSOCKET_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://aralila.vercel.app',
+    'https://aralila-project.vercel.app',
 ]
 
 # Channel layer configuration (using Redis)
@@ -223,24 +224,38 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CHANGED: Secure CORS configuration
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
+CORS_ALLOW_ALL_ORIGINS = DEBUG  
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://aralila.vercel.app",  # Your production frontend
+    os.getenv('FRONTEND_URL', 'http://localhost:3000'),
+    "https://aralila.vercel.app", 
+    "https://aralila-backend.onrender.com",
+    "https://aralila-project.vercel.app",
 ]
 
-CORS_ALLOW_CREDENTIALS = True  # FIXED typo: was CORS_ALLOWS_CREDENTIALS
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # ADD: CSRF trusted origins for production
 CSRF_TRUSTED_ORIGINS = [
     FRONTEND_URL,
     'https://aralila.vercel.app',
+    "https://aralila-project.vercel.app",
     'https://aralila-backend.onrender.com',
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://aralila.vercel.app",
 ]
 
 # ADD: Production security settings

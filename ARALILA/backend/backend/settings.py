@@ -38,6 +38,8 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'aralila-backend.onrender.com',
+    '.onrender.com',
+    '.vercel.app',
 ] + [host.strip() for host in os.getenv('ALLOWED_HOSTS', '').split(',') if host.strip()]
 
 REST_FRAMEWORK = {
@@ -118,6 +120,16 @@ ASGI_APPLICATION = "backend.asgi.application"
 
 # CHANGED: Use Redis URL from environment variable
 REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+
+print(f"🔧 Redis URL: {REDIS_URL}")
+
+try:
+    import redis
+    r = redis.from_url(REDIS_URL)
+    r.ping()
+    print("✅ Redis connected successfully")
+except Exception as e:
+    print(f"❌ Redis connection failed: {e}")
 
 # WebSocket Configuration
 WEBSOCKET_ALLOWED_ORIGINS = [

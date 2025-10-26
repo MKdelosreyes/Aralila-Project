@@ -1,18 +1,12 @@
-import asyncio
-import websockets
+import redis
+import os
 
-async def test_lobby():
-    uri = "ws://localhost:8000/ws/lobby/TEST123/?player=TestPlayer"
-    print(f"🔌 Testing: {uri}")
-    
-    try:
-        async with websockets.connect(uri) as ws:
-            print("✅ Connected!")
-            msg = await ws.recv()
-            print(f"📨 Received: {msg}")
-    except websockets.exceptions.InvalidStatusCode as e:
-        print(f"❌ HTTP Error {e.status_code}: {e}")
-    except Exception as e:
-        print(f"❌ Error: {type(e).__name__}: {e}")
+redis_url = os.getenv('REDIS_URL')
+print(f"Testing: {redis_url}")
 
-asyncio.run(test_lobby())
+try:
+    r = redis.from_url(redis_url)
+    r.ping()
+    print("✅ Redis OK")
+except Exception as e:
+    print(f"❌ Redis failed: {e}")

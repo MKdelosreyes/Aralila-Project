@@ -6,3 +6,5 @@ websocket_urlpatterns = [
     re_path(r'^ws/story/(?P<room_name>\w+)/$', StoryChainConsumer.as_asgi()),
     re_path(r'^ws/lobby/(?P<room_code>\w+)/$', LobbyConsumer.as_asgi()),
 ]
+
+print("✅ WebSocket routes configured:", websocket_urlpatterns)

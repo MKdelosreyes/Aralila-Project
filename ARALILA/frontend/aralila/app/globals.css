@@ -147,11 +147,16 @@
   * {
     @apply border-border outline-ring/50;
   }
-  50% {
-    background-position: 100% 50%;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
-  100% {
-    background-position: 0% 50%;
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
   }
 }
 

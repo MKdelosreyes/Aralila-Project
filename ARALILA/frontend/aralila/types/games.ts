@@ -12,17 +12,32 @@ export type SpellingChallengeGameProps = {
 };
 
 // punctuation
+// export interface PunctuationData {
+//   id: number;
+//   sentence: string;
+//   correctPunctuation: { position: number; mark: string }[];
+//   hint: string;
+// }
+
+// export interface PunctuationResult {
+//   sentenceData: PunctuationData;
+//   userAnswer: { position: number; mark: string }[];
+//   isCorrect: boolean;
+// }
+
 export interface PunctuationData {
   id: number;
   sentence: string;
   correctPunctuation: { position: number; mark: string }[];
   hint: string;
+  // words: string[]; // NEW: Pre-split words for platform display
 }
 
 export interface PunctuationResult {
   sentenceData: PunctuationData;
   userAnswer: { position: number; mark: string }[];
   isCorrect: boolean;
+  completedGaps: number; // NEW: Track how many gaps were filled correctly
 }
 
 export interface PunctuationChallengeGameProps {

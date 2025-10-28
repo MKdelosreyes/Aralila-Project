@@ -243,15 +243,48 @@ export const WordAssociationGame = ({
         </div>
 
         {/* Main Content Area:*/}
-        <div className="flex-grow w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 py-2">
+        <div className="flex-grow w-full flex flex-row items-center justify-center gap-6 py-2">
+          {/* Lila Character with Dialogue */}
           <motion.div
             key={animationKey}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center justify-center gap-4 order-2 lg:order-1"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-4"
           >
-            <div className="relative bg-purple-50 border border-purple-200 p-3 rounded-xl shadow-md max-w-[200px] text-center">
-              <p className="text-md text-slate-800">{dialogue}</p>
+            <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md max-w-[280px] text-center">
+              {/* Show feedback or dialogue */}
+              {feedback ? (
+                <div className="flex flex-col items-center gap-2">
+                  {feedback.type === "success" ? (
+                    <>
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">✓</span>
+                      </div>
+                      <p className="text-green-600 font-bold text-lg">Tama!</p>
+                      <p className="text-green-700 text-sm">
+                        +{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">✗</span>
+                      </div>
+                      <p className="text-red-600 font-bold text-lg">
+                        {feedback.type === "skipped" ? "Nilaktawan!" : "Mali!"}
+                      </p>
+                      <p className="text-red-700 text-sm">
+                        Ang tamang sagot:{" "}
+                        <span className="font-bold">
+                          {currentQuestion.answer}
+                        </span>
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <p className="text-md text-slate-800">{dialogue}</p>
+              )}
 
               <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-purple-50"></div>
             </div>
@@ -270,18 +303,18 @@ export const WordAssociationGame = ({
             </motion.div>
           </motion.div>
 
-          <div className="flex flex-col items-center justify-center w-full max-w-lg order-1 lg:order-2">
-            <div className="w-full grid grid-cols-2 gap-2 mb-4">
+          <div className="flex flex-col items-center justify-center w-full max-w-lg">
+            <div className="w-full grid grid-cols-2 gap-2 mb-4 px-15">
               {currentQuestion.images.map((src, idx) => (
                 <div
                   key={idx}
-                  className="w-full aspect-square rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm"
+                  className="w-full aspect-square rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm max-w-[200px] mx-auto"
                 >
                   <Image
                     src={src}
                     alt={`Clue ${idx + 1}`}
-                    width={256}
-                    height={256}
+                    width={150}
+                    height={150}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -303,48 +336,6 @@ export const WordAssociationGame = ({
                   disabled={!!feedback}
                 />
               ))}
-            </div>
-
-            {/* 3. Feedback Area */}
-            <div className="flex items-center justify-center h-16 mt-2">
-              <AnimatePresence mode="wait">
-                {feedback && (
-                  <motion.div
-                    key={feedback.type + currentIndex}
-                    className="text-center"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                  >
-                    {feedback.type === "success" && (
-                      <div className="flex flex-col items-center gap-1">
-                        <CheckCircle2 className="w-9 h-9 text-green-500" />
-                        <p className="text-md font-bold text-green-600">
-                          Correct!
-                        </p>
-                      </div>
-                    )}
-                    {(feedback.type === "error" ||
-                      feedback.type === "skipped") && (
-                      <div className="flex flex-col items-center gap-1">
-                        <XCircle
-                          className={`w-9 h-9 ${
-                            feedback.type === "error"
-                              ? "text-red-500"
-                              : "text-orange-500"
-                          }`}
-                        />
-                        <p className="text-sm text-slate-600">
-                          Answer:{" "}
-                          <span className="font-bold text-purple-700">
-                            {currentQuestion.answer}
-                          </span>
-                        </p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
         </div>

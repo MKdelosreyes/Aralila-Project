@@ -161,7 +161,6 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# CHANGED: Use DATABASE_URL from environment
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     # Use dj_database_url to parse connection string
@@ -184,6 +183,23 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',  
+#         'USER': 'postgres.dnrwenixinuxocwdlmwk',  
+#         'PASSWORD': 'F4-aralila-db*SR',
+#         'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
+#         'PORT': '6543',
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#             'connect_timeout': 10,
+#         },
+#         'CONN_MAX_AGE': 0,
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

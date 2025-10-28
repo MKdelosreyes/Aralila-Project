@@ -1,57 +1,20 @@
-// /components/punctuation-challenge/summary.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
-import { Trophy, Target, CheckCircle2, XCircle } from "lucide-react";
+import { Target, Trophy, CheckCircle2, XCircle } from "lucide-react";
+import { PunctuationResult } from "@/types/games";
+import { splitIntoWords } from "@/data/games/punctuation-task";
 
-export interface PunctuationResult {
-  sentenceData: {
-    sentence: string;
-    correctPunctuation: { mark: string; position: number }[];
-  };
-  userAnswer: { position: number; mark: string }[];
-  isCorrect: boolean;
-}
-
-interface SummaryProps {
-  score: number;
-  results: PunctuationResult[];
-  onRestart: () => void; // This prop is not used in the provided code, but kept for consistency.
-}
-
-// Helper
-const buildCorrectSentence = (result: PunctuationResult) => {
-  let sentence = result.sentenceData.sentence;
-  // Sort in reverse to insert punctuation without affecting subsequent positions
-  const sortedPunctuation = [...result.sentenceData.correctPunctuation].sort(
-    (a, b) => b.position - a.position
-  );
-  sortedPunctuation.forEach((p) => {
-    if (p.position === -1) {
-      // -1 typically means add to the end of the sentence
-      sentence += p.mark;
-    } else {
-      sentence =
-        sentence.slice(0, p.position) + p.mark + sentence.slice(p.position);
-    }
-  });
-  return sentence;
-};
-
-const ReviewModal = ({
-  isOpen,
-  onClose,
-  children,
-}: {
+interface ReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
-}) => {
+}
+
+const ReviewModal = ({ isOpen, onClose, children }: ReviewModalProps) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -72,7 +35,7 @@ const ReviewModal = ({
           >
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
               <h2 className="text-2xl font-bold text-slate-800">
-                Sentence Review
+                Question Review
               </h2>
               <button
                 onClick={onClose}
@@ -120,18 +83,44 @@ const StatCard = ({
   </motion.div>
 );
 
+interface SummaryProps {
+  score: number;
+  results: PunctuationResult[];
+  onRestart?: () => void;
+}
+
+const buildCorrectSentence = (result: PunctuationResult) => {
+  const words = splitIntoWords(result.sentenceData.sentence);
+  const gaps = [...result.sentenceData.correctPunctuation].sort((a, b) => {
+    const aa = a.position === -1 ? Number.MAX_SAFE_INTEGER : a.position;
+    const bb = b.position === -1 ? Number.MAX_SAFE_INTEGER : b.position;
+    return aa - bb;
+  });
+
+  let out: string[] = [];
+  let start = 0;
+  gaps.forEach((g) => {
+    const end = g.position === -1 ? words.length : g.position + 1;
+    out.push(words.slice(start, end).join(" "));
+    out.push(g.mark);
+    start = end;
+  });
+  if (start < words.length) out.push(words.slice(start).join(" "));
+  return out.join(" ").replace(/\s+([,;:?!."'])/g, "$1");
+};
+
 export const PunctuationChallengeSummary = ({
   score,
   results,
+  onRestart,
 }: SummaryProps) => {
-  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const totalSentences = results.length;
-  const correctSentences = results.filter((r) => r.isCorrect).length;
+  const totalQuestions = results.length;
+  const correctAnswers = results.filter((r) => r.isCorrect).length;
   const accuracy =
-    totalSentences > 0
-      ? Math.round((correctSentences / totalSentences) * 100)
+    totalQuestions > 0
+      ? Math.round((correctAnswers / totalQuestions) * 100)
       : 0;
 
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
@@ -150,7 +139,7 @@ export const PunctuationChallengeSummary = ({
   };
   if (accuracy === 100) {
     summaryContent = {
-      title: "Perfect Lesson!",
+      title: "Perfect Score!",
       imageSrc: "/images/character/lila-happy.png",
       showConfetti: true,
     };
@@ -198,6 +187,7 @@ export const PunctuationChallengeSummary = ({
           width={150}
           height={150}
           className="mx-auto mb-4"
+          priority
         />
         <h1 className="text-4xl font-bold text-purple-700 mb-2">
           {summaryContent.title}
@@ -225,7 +215,7 @@ export const PunctuationChallengeSummary = ({
 
         <div className="flex flex-col sm:flex-row-reverse items-center justify-center gap-4">
           <button
-            onClick={() => router.push("/student/challenges")}
+            onClick={onRestart}
             className="w-full sm:w-auto inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/30"
           >
             CONTINUE
@@ -234,7 +224,7 @@ export const PunctuationChallengeSummary = ({
             onClick={() => setIsModalOpen(true)}
             className="w-full sm:w-auto inline-block bg-transparent hover:bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-xl border-2 border-slate-300 transition-all duration-300"
           >
-            REVIEW LESSON
+            REVIEW ANSWERS
           </button>
         </div>
       </motion.div>
@@ -266,31 +256,33 @@ export const PunctuationChallengeSummary = ({
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xl font-bold text-slate-800">
-                      {result.sentenceData.sentence}
+                  <p className="text-lg font-bold text-slate-800 mb-2">
+                    {buildCorrectSentence(result)}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-slate-700 bg-slate-100 px-3 py-1.5 rounded-md">
+                      Your Answer:{" "}
+                      <span className="font-bold">
+                        {result.userAnswer.length > 0
+                          ? result.userAnswer.map((a) => `${a.mark}`).join(", ")
+                          : "No Answer"}
+                      </span>
                     </p>
                     {!result.isCorrect && (
-                      <p className="text-md text-red-700 bg-red-100 px-2 py-1 rounded-md mt-1 sm:mt-0">
-                        Your answer:{" "}
-                        <span className="font-mono font-bold">
-                          {result.userAnswer.map(() => {
-                            return (
-                              '"' +
-                              result.userAnswer.map((p) => p.mark).join("") +
-                              '"'
-                            );
-                          }) || '""'}
+                      <p className="text-sm text-red-700 bg-red-100 px-3 py-1.5 rounded-md">
+                        Correct Answer:{" "}
+                        <span className="font-bold">
+                          {result.sentenceData.correctPunctuation
+                            .map((p) => p.mark)
+                            .join(", ")}
                         </span>
                       </p>
                     )}
                   </div>
-                  <p className="text-slate-600 mt-1">
-                    Correct:{" "}
-                    <span className="font-mono font-bold">
-                      {buildCorrectSentence(result)}
-                    </span>
-                  </p>
+                  {/* <div className="mt-2 text-xs text-slate-500">
+                    Completed: {result.gapsCompleted} /{" "}
+                    {result.sentenceData.correctPunctuation.length}
+                  </div> */}
                 </div>
               </motion.div>
             ))}

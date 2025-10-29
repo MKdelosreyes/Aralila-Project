@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Star, Zap, Volume2, HandHelping } from "lucide-react";
 import { ConfirmationModal } from "../confirmation-modal";
+import { SpellingResult } from "@/types/games";
 
 // Constants
 const TIME_LIMIT = 120;
@@ -34,14 +35,14 @@ interface FallingLetter {
   speed: number;
 }
 
-interface SpellingResult {
-  wordData: {
-    word: string;
-    hint: string;
-  };
-  userAnswer: string;
-  isCorrect: boolean;
-}
+// interface SpellingResult {
+//   wordData: {
+//     word: string;
+//     hint: string;
+//   };
+//   userAnswer: string;
+//   isCorrect: boolean;
+// }
 
 interface SpellingChallengeGameProps {
   words: Array<{

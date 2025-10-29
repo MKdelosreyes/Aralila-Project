@@ -5,8 +5,9 @@ import React, { useState } from "react";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { SpellingChallengeIntro } from "@/components/games/spelling-challenge/intro";
 import { SpellingChallengeGame } from "@/components/games/spelling-challenge/game";
-import { SpellingChallengeSummary, SpellingResult } from "@/components/games/spelling-challenge/summary";
+import { SpellingChallengeSummary } from "@/components/games/spelling-challenge/summary";
 import { spellingChallengeData } from "@/data/games/spelling-challenge";
+import { SpellingResult } from "@/types/games";
 
 type GameState = "intro" | "playing" | "summary";
 
@@ -19,16 +20,21 @@ const SpellingChallengePage = () => {
     setGameState("playing");
   };
 
-const handleGameComplete = ({ score, results }: { score: number; results: SpellingResult[] }) => {
-  setFinalScore(score);
-  setFinalResults(results);
-  setGameState("summary");
-};
+  const handleGameComplete = ({
+    score,
+    results,
+  }: {
+    score: number;
+    results: SpellingResult[];
+  }) => {
+    setFinalScore(score);
+    setFinalResults(results);
+    setGameState("summary");
+  };
 
-
-const handleReviewLessons = () => {
-  console.log("Review lessons clicked");
-};
+  const handleReviewLessons = () => {
+    console.log("Review lessons clicked");
+  };
 
   const handleRestart = () => {
     setGameState("intro");
@@ -56,11 +62,12 @@ const handleReviewLessons = () => {
         );
       case "intro":
       default:
-        return <SpellingChallengeIntro
-  onStartChallenge={handleStart}
-  onReviewLessons={handleReviewLessons}
-/>
-
+        return (
+          <SpellingChallengeIntro
+            onStartChallenge={handleStart}
+            onReviewLessons={handleReviewLessons}
+          />
+        );
     }
   };
 

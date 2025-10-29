@@ -1,4 +1,11 @@
-import { SpellingResult } from "@/components/games/spelling-challenge/summary";
+export interface SpellingResult {
+  wordData: {
+    word: string;
+    hint: string;
+  };
+  userAnswer: string;
+  isCorrect: boolean;
+}
 
 export type SpellingWord = {
   word: string;

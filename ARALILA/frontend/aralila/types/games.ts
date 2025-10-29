@@ -18,20 +18,6 @@ export type SpellingChallengeGameProps = {
   onGameComplete: (data: { score: number; results: SpellingResult[] }) => void;
 };
 
-// punctuation
-// export interface PunctuationData {
-//   id: number;
-//   sentence: string;
-//   correctPunctuation: { position: number; mark: string }[];
-//   hint: string;
-// }
-
-// export interface PunctuationResult {
-//   sentenceData: PunctuationData;
-//   userAnswer: { position: number; mark: string }[];
-//   isCorrect: boolean;
-// }
-
 export interface PunctuationData {
   id: number;
   sentence: string;

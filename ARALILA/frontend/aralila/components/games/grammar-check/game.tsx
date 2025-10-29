@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { X, Star, Zap, CheckCircle2, XCircle } from "lucide-react";
+import { X, Star, Zap, CheckCircle2, XCircle, HandHelping } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -36,32 +36,49 @@ interface GrammarCheckGameProps {
 
 const TIME_LIMIT = 120;
 const BASE_POINTS = 20;
+const MAX_ASSISTS = 3;
 type LilaState = "normal" | "happy" | "sad" | "worried" | "crying";
 
 type WordItem = {
   id: string;
   text: string;
+  isLocked?: boolean;
 };
 
 // Sortable Item for drag-and-drop
-const SortableWord = ({ id, word }: { id: string; word: string }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+const SortableWord = ({
+  id,
+  word,
+  isLocked,
+}: {
+  id: string;
+  word: string;
+  isLocked?: boolean;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled: isLocked });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     padding: "8px 12px",
     margin: "4px",
-    background: "#fff",
-    border: "1px solid #ddd",
+    background: isLocked ? "#dcfce7" : "#fff",
+    border: isLocked ? "2px solid #4ade80" : "1px solid #ddd",
     borderRadius: "8px",
-    cursor: "grab",
+    cursor: isLocked ? "not-allowed" : "grab",
     fontSize: "1.25rem",
     fontWeight: 500,
+    opacity: isDragging ? 0.5 : 1,
   };
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {word}
+      {word} {isLocked}
     </div>
   );
 };
@@ -72,7 +89,6 @@ export const GrammarCheckGame = ({
   onExit,
 }: GrammarCheckGameProps) => {
   const [currentQIndex, setCurrentQIndex] = useState(0);
-  // const [words, setWords] = useState<string[]>(questions[0].jumbled);
   const [results, setResults] = useState<GrammarResult[]>([]);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);
@@ -85,11 +101,20 @@ export const GrammarCheckGame = ({
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [isFinished, setIsFinished] = useState(false);
 
+  // Assists system
+  const [assists, setAssists] = useState(MAX_ASSISTS);
+  const [showAssistAnimation, setShowAssistAnimation] = useState(false);
+  const [animatedWordId, setAnimatedWordId] = useState<string | null>(null);
+
   const currentQ = questions[currentQIndex];
 
   // Initialize word objects with unique IDs
   const [words, setWords] = useState<WordItem[]>(
-    currentQ.jumbled.map((w, i) => ({ id: `${i}-${w}`, text: w }))
+    currentQ.jumbled.map((w, i) => ({
+      id: `${i}-${w}`,
+      text: w,
+      isLocked: false,
+    }))
   );
 
   const sensors = useSensors(useSensor(PointerSensor));
@@ -102,6 +127,7 @@ export const GrammarCheckGame = ({
         questions[nextIndex].jumbled.map((w, i) => ({
           id: `${i}-${w}`,
           text: w,
+          isLocked: false,
         }))
       );
       setFeedback(null);
@@ -110,7 +136,7 @@ export const GrammarCheckGame = ({
     } else {
       setIsFinished(true);
     }
-  }, [currentQIndex, questions, onGameComplete, score, results]);
+  }, [currentQIndex, questions]);
 
   useEffect(() => {
     if (isFinished) {
@@ -147,6 +173,55 @@ export const GrammarCheckGame = ({
     lilaState,
   ]);
 
+  // Handle assist usage
+  const handleUseAssist = () => {
+    if (assists <= 0 || feedback) return;
+
+    // Find the first word that's not in the correct position and not locked
+    let targetWord: WordItem | null = null;
+    let targetCorrectIndex = -1;
+
+    for (let i = 0; i < currentQ.correct.length; i++) {
+      const correctWord = currentQ.correct[i];
+      const currentWord = words[i];
+
+      // If this position is incorrect and not locked
+      if (currentWord.text !== correctWord && !currentWord.isLocked) {
+        // Find the word that should be here
+        const wordToMove = words.find(
+          (w) => w.text === correctWord && !w.isLocked
+        );
+        if (wordToMove) {
+          targetWord = wordToMove;
+          targetCorrectIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (!targetWord || targetCorrectIndex === -1) return;
+
+    // Move the word to correct position
+    const currentIndex = words.findIndex((w) => w.id === targetWord!.id);
+    const newWords = arrayMove(words, currentIndex, targetCorrectIndex);
+
+    // Lock the moved word
+    const updatedWords = newWords.map((w, idx) =>
+      idx === targetCorrectIndex ? { ...w, isLocked: true } : w
+    );
+
+    setWords(updatedWords);
+    setAssists((prev) => prev - 1);
+
+    // Show animation
+    setAnimatedWordId(targetWord.id);
+    setShowAssistAnimation(true);
+    setTimeout(() => {
+      setShowAssistAnimation(false);
+      setAnimatedWordId(null);
+    }, 1000);
+  };
+
   // Drag-and-drop end handler
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -154,6 +229,10 @@ export const GrammarCheckGame = ({
       setWords((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
+
+        // Prevent moving locked items
+        if (items[oldIndex].isLocked) return items;
+
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -212,12 +291,19 @@ export const GrammarCheckGame = ({
 
   const lilaImage = `/images/character/lila-${lilaState}.png`;
 
+  // Check if there are any words that can be assisted
+  const canUseAssist = words.some(
+    (w, idx) => w.text !== currentQ.correct[idx] && !w.isLocked
+  );
+
   return (
     <div className="relative z-10 max-w-[950px] w-full mx-auto p-4">
       <ConfirmationModal
         isOpen={isExitModalOpen}
         onClose={() => setIsExitModalOpen(false)}
         onConfirm={onExit}
+        title={"Lumabas sa Laro?"}
+        description="Sigurado ka ba na gusto mong umalis? Hindi mase-save ang iyong score."
       />
 
       {/* Game container */}
@@ -256,6 +342,13 @@ export const GrammarCheckGame = ({
                 <span className="text-lg font-bold">{streak}x</span>
               </motion.div>
             )}
+            {/* Assists counter */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
+              <HandHelping className="w-5 h-5 text-purple-600" />
+              <span className="text-lg font-bold text-purple-600">
+                {assists}
+              </span>
+            </div>
           </div>
           <div className="text-slate-500 text-lg font-mono whitespace-nowrap">
             {currentQIndex + 1} / {questions.length}
@@ -296,7 +389,28 @@ export const GrammarCheckGame = ({
           </div>
 
           {/* Draggable Sentence */}
-          <div className="bg-slate-50 p-4 rounded-2xl w-full text-center">
+          <div className="bg-slate-50 p-4 rounded-2xl w-full text-center relative">
+            {/* Assist Animation Overlay */}
+            <AnimatePresence>
+              {showAssistAnimation && (
+                <motion.div
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-40 bg-white/50 rounded-2xl"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    className="text-6xl font-bold text-green-500"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: [1, 1.5, 1], rotate: 0 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                  >
+                    ✨
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -305,7 +419,29 @@ export const GrammarCheckGame = ({
               <SortableContext items={words.map((w) => w.id)}>
                 <div className="flex flex-wrap justify-center gap-2">
                   {words.map((word) => (
-                    <SortableWord key={word.id} id={word.id} word={word.text} />
+                    <motion.div
+                      key={word.id}
+                      initial={
+                        showAssistAnimation && animatedWordId === word.id
+                          ? { scale: 0, backgroundColor: "#10b981" }
+                          : {}
+                      }
+                      animate={
+                        showAssistAnimation && animatedWordId === word.id
+                          ? {
+                              scale: [1.5, 1],
+                              backgroundColor: ["#10b981", "#dcfce7"],
+                            }
+                          : {}
+                      }
+                      transition={{ duration: 0.5 }}
+                    >
+                      <SortableWord
+                        id={word.id}
+                        word={word.text}
+                        isLocked={word.isLocked}
+                      />
+                    </motion.div>
                   ))}
                 </div>
               </SortableContext>
@@ -367,6 +503,16 @@ export const GrammarCheckGame = ({
           >
             SKIP
           </button>
+
+          <button
+            onClick={handleUseAssist}
+            disabled={assists <= 0 || !!feedback || !canUseAssist}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+          >
+            <HandHelping className="w-5 h-5" />
+            <span>Gamitin Assist</span>
+          </button>
+
           <button
             onClick={checkAnswer}
             disabled={!!feedback}

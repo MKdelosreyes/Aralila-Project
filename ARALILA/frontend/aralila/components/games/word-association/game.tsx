@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, Star, Zap, X } from "lucide-react";
+import { CheckCircle2, XCircle, Star, Zap, X, HandHelping } from "lucide-react";
 import { ConfirmationModal } from "../confirmation-modal";
 
 export interface WordAssociationQuestion {
@@ -31,6 +31,7 @@ interface GameProps {
 const TIME_LIMIT = 90;
 const BASE_POINTS = 100;
 const BONUS_TIME = 5;
+const MAX_ASSISTS = 3;
 
 function shuffleArray<T>(array: T[]): T[] {
   return [...array].sort(() => Math.random() - 0.5);
@@ -58,21 +59,26 @@ export const WordAssociationGame = ({
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [animationKey, setAnimationKey] = useState(0);
-  // New state for dynamic dialogue
   const [dialogue, setDialogue] = useState("Let's find the common word!");
+
+  // Assists system
+  const [assists, setAssists] = useState(MAX_ASSISTS);
+  const [showAssistAnimation, setShowAssistAnimation] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState<Set<number>>(
+    new Set()
+  );
 
   const currentQuestion = shuffledQuestions[currentIndex];
   const happyStates: LilaState[] = ["happy", "thumbsup"];
-  // const sadStates: LilaState[] = ["sad"];
 
   useEffect(() => {
     setShuffledQuestions(shuffleArray(questions).slice(0, 10));
   }, [questions]);
 
-  // Set initial dialogue to the question's hint
   useEffect(() => {
     if (currentQuestion) {
       setUserLetters(Array(currentQuestion.answer.length).fill(""));
+      setRevealedIndices(new Set());
       setDialogue(currentQuestion.hint);
       setTimeout(() => document.getElementById("letter-0")?.focus(), 100);
     }
@@ -90,7 +96,6 @@ export const WordAssociationGame = ({
     onGameComplete({ score, results: finalResults });
   }, [score, results, currentIndex, shuffledQuestions, onGameComplete]);
 
-  // Updated timer logic with dialogue change
   useEffect(() => {
     if (timeLeft <= 15 && lilaState === "normal") {
       setLilaState("worried");
@@ -118,7 +123,6 @@ export const WordAssociationGame = ({
     }
   }, [currentIndex, shuffledQuestions.length, handleEndGame]);
 
-  // Updated answer processing with dialogue changes
   const processAnswer = (
     userWord: string,
     isCorrect: boolean,
@@ -153,6 +157,53 @@ export const WordAssociationGame = ({
     setTimeout(advanceToNext, 2000);
   };
 
+  const handleUseAssist = () => {
+    if (assists <= 0 || feedback) return;
+
+    // Find the next empty letter position
+    const emptyIndex = userLetters.findIndex(
+      (letter, idx) => !letter && !revealedIndices.has(idx)
+    );
+
+    if (emptyIndex === -1) return; // No empty slots
+
+    // Get the correct letter for that position
+    const correctLetter = currentQuestion.answer[emptyIndex].toUpperCase();
+
+    // Update the letters and mark this index as revealed
+    const newLetters = [...userLetters];
+    newLetters[emptyIndex] = correctLetter;
+    setUserLetters(newLetters);
+
+    const newRevealed = new Set(revealedIndices);
+    newRevealed.add(emptyIndex);
+    setRevealedIndices(newRevealed);
+
+    // Decrease assists
+    setAssists((prev) => prev - 1);
+
+    // Show animation
+    setShowAssistAnimation(true);
+    setTimeout(() => setShowAssistAnimation(false), 1000);
+
+    // Check if word is complete after assist
+    if (newLetters.every((letter) => letter)) {
+      setTimeout(() => {
+        handleSubmit();
+      }, 500);
+    } else {
+      // Focus on the next empty input
+      const nextEmptyIndex = newLetters.findIndex(
+        (letter, idx) => !letter && idx > emptyIndex
+      );
+      if (nextEmptyIndex !== -1) {
+        setTimeout(() => {
+          document.getElementById(`letter-${nextEmptyIndex}`)?.focus();
+        }, 100);
+      }
+    }
+  };
+
   const handleSubmit = () => {
     if (feedback) return;
     const userWord = userLetters.join("");
@@ -167,6 +218,9 @@ export const WordAssociationGame = ({
   };
 
   const updateLetter = (index: number, letter: string) => {
+    // Don't allow editing revealed letters
+    if (revealedIndices.has(index)) return;
+
     if (/^[a-zA-Z]$/.test(letter) || letter === "") {
       const newLetters = [...userLetters];
       newLetters[index] = letter.toUpperCase();
@@ -236,13 +290,20 @@ export const WordAssociationGame = ({
                 <span className="text-lg font-bold">{streak}x</span>
               </motion.div>
             )}
+            {/* Assists counter */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
+              <HandHelping className="w-5 h-5 text-purple-600" />
+              <span className="text-lg font-bold text-purple-600">
+                {assists}
+              </span>
+            </div>
           </div>
           <div className="text-slate-500 text-lg font-mono whitespace-nowrap">
             {currentIndex + 1} / {shuffledQuestions.length}
           </div>
         </div>
 
-        {/* Main Content Area:*/}
+        {/* Main Content Area */}
         <div className="flex-grow w-full flex flex-row items-center justify-center gap-6 py-2">
           {/* Lila Character with Dialogue */}
           <motion.div
@@ -252,7 +313,6 @@ export const WordAssociationGame = ({
             className="flex items-center justify-center gap-4"
           >
             <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md max-w-[280px] text-center">
-              {/* Show feedback or dialogue */}
               {feedback ? (
                 <div className="flex flex-col items-center gap-2">
                   {feedback.type === "success" ? (
@@ -303,7 +363,28 @@ export const WordAssociationGame = ({
             </motion.div>
           </motion.div>
 
-          <div className="flex flex-col items-center justify-center w-full max-w-lg">
+          <div className="flex flex-col items-center justify-center w-full max-w-lg relative">
+            {/* Assist Animation Overlay */}
+            <AnimatePresence>
+              {showAssistAnimation && (
+                <motion.div
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-40"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    className="text-6xl font-bold text-green-500"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: [1, 1.5, 1], rotate: 0 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                  >
+                    ✨
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="w-full grid grid-cols-2 gap-2 mb-4 px-15">
               {currentQuestion.images.map((src, idx) => (
                 <div
@@ -323,7 +404,7 @@ export const WordAssociationGame = ({
 
             <div className="flex justify-center gap-2 flex-nowrap w-full px-2 py-2 overflow-x-auto">
               {currentQuestion.answer.split("").map((_, index) => (
-                <input
+                <motion.input
                   key={index}
                   id={`letter-${index}`}
                   type="text"
@@ -331,9 +412,32 @@ export const WordAssociationGame = ({
                   value={userLetters[index] || ""}
                   onChange={(e) => updateLetter(index, e.target.value)}
                   onKeyDown={(e) => handleKeyPress(e, index)}
-                  className={`${boxSize} font-bold text-center text-slate-800 rounded-lg bg-slate-100 border-2 border-slate-300 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0`}
+                  initial={
+                    showAssistAnimation &&
+                    revealedIndices.has(index) &&
+                    userLetters[index]
+                      ? { scale: 0, backgroundColor: "#10b981" }
+                      : {}
+                  }
+                  animate={
+                    showAssistAnimation &&
+                    revealedIndices.has(index) &&
+                    userLetters[index]
+                      ? {
+                          scale: [1.5, 1],
+                          backgroundColor: ["#10b981", "#f1f5f9"],
+                        }
+                      : {}
+                  }
+                  transition={{ duration: 0.5 }}
+                  className={`${boxSize} font-bold text-center rounded-lg border-2 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0 ${
+                    revealedIndices.has(index)
+                      ? "bg-green-50 border-green-400 text-green-700 cursor-not-allowed"
+                      : "bg-slate-100 border-slate-300 text-slate-800"
+                  }`}
                   autoFocus={index === 0}
-                  disabled={!!feedback}
+                  disabled={!!feedback || revealedIndices.has(index)}
+                  readOnly={revealedIndices.has(index)}
                 />
               ))}
             </div>
@@ -349,6 +453,16 @@ export const WordAssociationGame = ({
           >
             SKIP
           </button>
+
+          <button
+            onClick={handleUseAssist}
+            disabled={assists <= 0 || !!feedback || userLetters.every((l) => l)}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+          >
+            <HandHelping className="w-5 h-5" />
+            <span>Gamitin Assist</span>
+          </button>
+
           <button
             onClick={handleSubmit}
             disabled={userLetters.some((l) => !l) || !!feedback}

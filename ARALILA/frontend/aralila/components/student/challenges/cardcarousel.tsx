@@ -11,84 +11,64 @@ import { useSwipeable } from "react-swipeable";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ChallengeCard from "./challengecard";
-
-const cards = [
-  {
-    id: 1,
-    title: "Spell Mo 'Yan",
-    slug: "spelling-challenge",
-    image: "/images/art/game-art-1.png",
-    category: "Spelling",
-    description:
-      "Subukan ang bilis mo sa paghahanap at pagtatama ng maling baybay ng mga salita sa pangungusap.",
-  },
-  {
-    id: 2,
-    title: "Puntuhang Puntos",
-    slug: "punctuation-task",
-    image: "/images/art/game-art-2.png",
-    category: "Punctuation",
-    description:
-      "Ilagay ang tamang bantas (tuldok o kuwit) sa mga pangungusap para makakuha ng puntos.",
-  },
-  {
-    id: 3,
-    title: "Salita't Uri",
-    slug: "parts-of-speech",
-    image: "/images/art/game-art-3.png",
-    category: "Parts of Speech",
-    description:
-      "Kilalanin at uriin ang mga salita (pangngalan, pandiwa, at iba pa.) sa loob ng pangungusap.",
-  },
-  {
-    id: 4,
-    title: "Apat na Larawan, Isang Salita",
-    slug: "word-association",
-    image: "/images/art/game-art-4.png",
-    category: "Word Association",
-    description:
-      "Hulaan ang salita na nagkokonekta sa mga ibinigay na pahiwatig o larawan.",
-  },
-  // { id: 5,
-  //   title: "Tugmahan Tayo",
-  //   slug: "word-matching",
-  //   image: "/images/art/game-art-5.png",
-  //   category: "Word Matching",
-  //   description: "Itugma ang mga salita sa kanilang kahulugan o tamang gamit sa mga pangungusap."
-  // },
-  {
-    id: 6,
-    title: "Gramatika Galore",
-    slug: "grammar-check",
-    image: "/images/art/game-art-6.png",
-    category: "Grammar",
-    description:
-      "Hanapin at itama ang mga mali sa mga pangungusap para maging perpekto ang gramatika.",
-  },
-  // { id: 7,
-  //   title: "Ayusin ang Pangungusap",
-  //   slug: "sentence-construction",
-  //   image: "/images/art/game-art-7.png",
-  //   category: "Sentence Structure",
-  //   description: "Ayusin ang mga nagulong salita para makabuo ng tama at buong pangungusap."
-  // },
-  {
-    id: 8,
-    title: "Kwento ng mga Emoji",
-    slug: "emoji-challenge",
-    image: "/images/art/game-art-8.png",
-    category: "Comprehension",
-    description:
-      "Hulaan kung anong pangungusap ang ibig sabihin ng mga emoji, at buuin ito sa Filipino!",
-  },
-];
+import { env } from "@/lib/env";
 
 const CARD_WIDTH = 352;
 const CARD_GAP = 32;
 
-const CardCarousel = () => {
+interface Game {
+  id: number;
+  name: string;
+  description: string;
+  game_type: string;
+  icon: string;
+  best_score: number;
+  completed: boolean;
+}
+
+interface CardCarouselProps {
+  areaId: number;
+  games?: Game[];
+}
+
+const CardCarousel = ({ areaId, games = [] }: CardCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const x = useMotionValue(0);
+
+  // Helper function to get valid image URL
+  const getImageUrl = (icon: string | null | undefined): string => {
+    if (!icon || icon.trim() === "") {
+      return "/images/art/game-art-1.png";
+    }
+
+    if (icon.startsWith("http://") || icon.startsWith("https://")) {
+      return icon;
+    }
+
+    if (icon.startsWith("/")) {
+      return icon;
+    }
+
+    if (icon.includes("media/")) {
+      return `${env.backendUrl}${icon.startsWith("/") ? "" : "/"}${icon}`;
+    }
+
+    return "/images/art/game-art-1.png";
+  };
+
+  // Map backend games to card format
+  const cards = games.map((game) => ({
+    id: game.id,
+    title: game.name,
+    slug: game.game_type,
+    image: getImageUrl(game.icon),
+    category: game.game_type,
+    description: game.description,
+    bestScore: game.best_score,
+    completed: game.completed,
+  }));
+
+  console.log("Mapped cards:", cards);
 
   const nextCard = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, cards.length - 1));
@@ -123,6 +103,14 @@ const CardCarousel = () => {
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
     exit: { opacity: 0, x: 10, transition: { duration: 0.2 } },
   };
+
+  if (cards.length === 0) {
+    return (
+      <div className="relative z-10 flex items-center justify-center min-h-screen w-full">
+        <p className="text-white text-xl">No games available in this area</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -176,6 +164,7 @@ const CardCarousel = () => {
               key={card.id}
               card={card}
               isActive={index === currentIndex}
+              areaId={areaId}
             />
           ))}
         </motion.div>

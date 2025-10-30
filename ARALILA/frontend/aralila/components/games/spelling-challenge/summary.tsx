@@ -253,7 +253,9 @@ export const SpellingChallengeSummary = ({
                       </p>
                     )}
                   </div>
-                  <p className="text-slate-600 mt-1">{result.wordData.hint}</p>
+                  <p className="text-slate-600 mt-1">
+                    {result.wordData.sentence}
+                  </p>
                 </div>
               </motion.div>
             ))}

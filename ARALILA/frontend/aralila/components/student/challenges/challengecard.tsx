@@ -16,9 +16,14 @@ interface ChallengeCardProps {
     description: string;
   };
   isActive: boolean;
+  areaId: number;
 }
 
-const ChallengeCard: React.FC<ChallengeCardProps> = ({ card, isActive }) => {
+const ChallengeCard: React.FC<ChallengeCardProps> = ({
+  card,
+  isActive,
+  areaId,
+}) => {
   const scale = isActive ? 1.05 : 0.75;
   const opacity = isActive ? 1 : 0.3;
 
@@ -66,7 +71,15 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ card, isActive }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
               >
-                <Link href={`/student/challenges/games/${card.slug}`}>
+                <Link
+                  href={`/student/challenges/${areaId}/games/${card.slug}`}
+                  onClick={() =>
+                    console.log(
+                      "Navigating to:",
+                      `/student/challenges/${areaId}/games/${card.slug}`
+                    )
+                  }
+                >
                   <button className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3 px-6 rounded-xl text-base flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]">
                     <Play className="w-4 h-4" fill="currentColor" />
                     Start Challenge

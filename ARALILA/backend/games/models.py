@@ -5,7 +5,14 @@ from django.conf import settings
 class Area(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    order_index = models.PositiveIntegerField(default=0)  # controls progression
+    order_index = models.PositiveIntegerField(default=0)  
+    theme_color = models.CharField(max_length=7, default="#4A90E2")  # For UI theming
+    icon = models.CharField(max_length=50, blank=True)  
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order_index']  
+        verbose_name_plural = "Areas"
 
     def __str__(self):
         return f"{self.name}"
@@ -13,8 +20,22 @@ class Area(models.Model):
 
 # 2. Games Table
 class Game(models.Model):
+    GAME_TYPE_CHOICES = [
+        ('spelling-challenge', 'Spelling Challenge'),
+        ('punctuation-task', 'Punctuation Task'),
+        ('parts-of-speech', 'Parts of Speech'),
+        ('word-association', 'Word Association'),
+        ('emoji-challenge', 'Emoji Challenge'),
+        ('grammar-check', 'Grammar Check'),
+    ]
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    game_type = models.CharField(max_length=50, choices=GAME_TYPE_CHOICES, blank=True)  # 👈 Add this
+    icon = models.CharField(max_length=10, blank=True)  # 👈 Add this
+    order_index = models.PositiveIntegerField(default=0)  # 👈 Add this
+
+    class Meta:
+        ordering = ['order_index']
 
     def __str__(self):
         return f"{self.name}"

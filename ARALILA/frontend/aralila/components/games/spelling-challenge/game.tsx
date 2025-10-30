@@ -47,7 +47,7 @@ interface FallingLetter {
 interface SpellingChallengeGameProps {
   words: Array<{
     word: string;
-    hint: string;
+    sentence: string;
   }>;
   onGameComplete: (results: {
     score: number;
@@ -460,7 +460,7 @@ export const SpellingChallengeGame = ({
               >
                 <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md max-w-sm text-center md:text-left">
                   <p className="text-purple-800 font-semibold text-lg">
-                    {currentWordData.hint}
+                    {currentWordData.sentence}
                   </p>
                 </div>
               </motion.div>

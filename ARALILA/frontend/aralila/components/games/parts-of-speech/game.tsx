@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import { Star, X, Zap, Volume2, HandHelping } from "lucide-react";
@@ -12,6 +18,7 @@ import {
 import { PARTS_OF_SPEECH_DIFFICULTY_SETTINGS } from "@/data/games/parts-of-speech";
 import Image from "next/image";
 import { ConfirmationModal } from "../confirmation-modal";
+import { generatePartsOfSpeechOptions } from "@/lib/utils";
 
 const MAX_ASSISTS = 3;
 
@@ -109,6 +116,13 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentQ: PartsOfSpeechQuestion = questions[currentQuestionIndex];
+
+  const currentOptions = useMemo(() => {
+    return (
+      currentQ.options || generatePartsOfSpeechOptions(currentQ.correctAnswer)
+    );
+  }, [currentQ.correctAnswer, currentQ.options]);
+
   const currentSettings = PARTS_OF_SPEECH_DIFFICULTY_SETTINGS[difficulty];
   const progress = (timeLeft / currentSettings.initialTime) * 100;
 
@@ -235,14 +249,12 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         nextQuestion();
       }, 2000);
     } else {
-      // Wrong answer - check if assists available
       if (assists > 0) {
         setPendingWrongAnswer(droppedOn);
         setShowAssistPrompt(true);
         setShowFeedback(false);
         setLilaState("worried");
       } else {
-        // No assists - proceed to next
         setLilaState("sad");
         setStreak(0);
         const penalty = currentSettings.wrongPenalty;
@@ -488,7 +500,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
               {/* Right Side: Drop Zones (Parts of Speech Options) */}
               <div className="flex flex-col gap-4">
-                {currentQ.options.map((option) => (
+                {currentOptions.map((option) => (
                   <DropZone
                     key={option}
                     option={option}

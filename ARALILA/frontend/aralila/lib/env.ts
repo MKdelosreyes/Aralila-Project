@@ -1,5 +1,6 @@
 export const env = {
   backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000',
+  frontendUrl: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
   wsUrl: process.env.NEXT_PUBLIC_BACKEND_WS_URL || 'ws://localhost:8000',
   isDev: process.env.NODE_ENV === 'development',
 } as const;

@@ -1,7 +1,7 @@
 export interface SpellingResult {
   wordData: {
     word: string;
-    hint: string;
+    sentence: string;
   };
   userAnswer: string;
   isCorrect: boolean;
@@ -9,8 +9,7 @@ export interface SpellingResult {
 
 export type SpellingWord = {
   word: string;
-  definition: string;
-  hint: string;
+  sentence: string;
 };
 
 export type SpellingChallengeGameProps = {
@@ -48,7 +47,7 @@ export interface PartsOfSpeechQuestion {
   id: string;
   sentence: string;
   word: string; // The word to identify the part of speech for
-  options: string[]; // e.g., ['Noun', 'Verb', 'Adjective']
+  options?: string[]; // e.g., ['Noun', 'Verb', 'Adjective']
   correctAnswer: string;
   hint: string;
   explanation: string; // Optional, for post-game review

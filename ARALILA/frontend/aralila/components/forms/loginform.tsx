@@ -48,16 +48,18 @@ export default function LoginForm() {
     try {
       await login(values.email, values.password);
 
-      // Get fresh user data to determine role
       const { authAPI } = await import("@/lib/api/auth");
       const profile = await authAPI.getProfile();
 
       console.log("User logged in successfully:", profile);
 
-      router.push("/student/dashboard");
+      // Wait for next tick to ensure localStorage is updated
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Use replace instead of push to prevent back button issues
+      router.replace("/student/dashboard");
     } catch (error: any) {
       console.error("Error logging in:", error);
-      // Optional: Show error toast
       // toast.error(error.message || "Login failed");
       alert(error.message || "Login failed"); // Simple fallback
     } finally {

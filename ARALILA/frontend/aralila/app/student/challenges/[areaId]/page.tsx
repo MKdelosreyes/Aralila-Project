@@ -8,6 +8,7 @@ import Header from "@/components/student/header";
 import FullMenuScreen from "@/components/student/fullscreen-menu";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import ChallengesBackground from "@/components/bg/challenges-bg";
+import Image from "next/image";
 
 interface Area {
   id: number;
@@ -36,6 +37,14 @@ export default function AreaChallengesPage() {
   const [areaData, setAreaData] = useState<Area | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const areaSymbols = [
+    "/images/art/Playground-Area-Symbol.png",
+    "/images/art/Classroom-Area-Symbol.png",
+    "/images/art/Home-Area-Symbol.png",
+    "/images/art/Classroom-Area-Symbol.png",
+    "/images/art/Home-Area-Symbol.png",
+  ];
 
   useEffect(() => {
     fetchAreaData();
@@ -120,6 +129,22 @@ export default function AreaChallengesPage() {
 
       {/* Game Cards Carousel */}
       <CardCarousel areaId={parseInt(areaId)} games={games} />
+
+      <div className="flex flex-row gap-5 absolute bottom-0 left-0 right-0 z-[100] p-4 md:p-6 w-full items-center justify-center">
+        {areaSymbols.map((symbol, index) => {
+          return (
+            <div key={index}>
+              <Image
+                src={symbol}
+                alt={`Area ${index + 1} Symbol`}
+                width={180}
+                height={180}
+                className="mt-[-100px]"
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

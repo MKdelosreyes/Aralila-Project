@@ -114,7 +114,7 @@ const CardCarousel = ({ areaId, games = [] }: CardCarouselProps) => {
 
   return (
     <div
-      className="relative z-10 flex items-center min-h-screen w-full"
+      className="relative z-10 flex items-center min-h-screen w-full bottom-12"
       {...swipeHandlers}
     >
       {/* Left and Right Fade Shadows */}

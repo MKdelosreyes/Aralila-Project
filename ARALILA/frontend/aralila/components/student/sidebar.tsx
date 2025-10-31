@@ -3,9 +3,9 @@ import { Home, BookOpen, Swords, ListTodo, Settings } from "lucide-react";
 
 const sidebarItems = [
   { icon: Home, text: "Home", href: "/student/dashboard" },
-  { icon: BookOpen, text: "Classroom", href: "/student/classroom" },
+  // { icon: BookOpen, text: "Classroom", href: "/student/classroom" },
   { icon: Swords, text: "Challenges", href: "/student/challenges" },
-  { icon: ListTodo, text: "Assignments", href: "#" },
+  // { icon: ListTodo, text: "Assignments", href: "#" },
   { icon: Settings, text: "Settings", href: "#" },
 ];
 

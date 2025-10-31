@@ -26,19 +26,47 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
 }) => {
   const scale = isActive ? 1.05 : 0.75;
   const opacity = isActive ? 1 : 0.3;
+  const starSet = [
+    "/images/art/Active-Star.png",
+    "/images/art/Inactive-Star.png",
+    "/images/art/Inactive-Star.png",
+  ];
 
   return (
-    <div className="w-[352px] h-[32rem] flex-shrink-0" aria-hidden={!isActive}>
+    <div className="w-[360px] h-[25rem] flex-shrink-0" aria-hidden={!isActive}>
       <motion.div
         animate={{ scale, opacity }}
         whileHover={isActive ? { scale: 1.1 } : {}}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className={`w-full h-full rounded-[2rem] bg-white overflow-hidden flex flex-col transition-shadow duration-500 ${
+        className={`w-full h-full rounded-[2rem] bg-white overflow-visible flex flex-col transition-shadow duration-500 ${
           isActive
             ? "shadow-[0px_0px_30px_-5px_rgba(168,85,247,0.4)]"
             : "shadow-xl"
         }`}
       >
+        <div className="flex flex-row absolute z-10 mt-[-50px] p-4 md:p-6 w-full items-center justify-center">
+          <Image
+            src="/images/art/Active-Star.png"
+            alt={`star-0`}
+            width={80}
+            height={80}
+            className="mt-[-10px]"
+          />
+          <Image
+            src="/images/art/Inactive-Star.png"
+            alt={`star-1`}
+            width={100}
+            height={100}
+            className="mt-[-10px]"
+          />
+          <Image
+            src="/images/art/Inactive-Star.png"
+            alt={`star-2`}
+            width={80}
+            height={80}
+            className="mt-[-10px]"
+          />
+        </div>
         <div className="relative w-full h-56 flex-shrink-0 p-3 pb-0">
           <div className="w-full h-full rounded-[1.2rem] overflow-hidden relative shadow-lg">
             <Image
@@ -54,9 +82,9 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
         </div>
         <div className="flex flex-col flex-grow p-5 pt-3">
           <div className="flex-grow">
-            <div className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full mb-2">
+            {/* <div className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full mb-2">
               {card.category}
-            </div>
+            </div> */}
             <h3 className="font-bold text-xl text-slate-800 mb-2 leading-tight">
               {card.title}
             </h3>
@@ -65,7 +93,7 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
             </p>
           </div>
           {isActive && (
-            <div className="mt-5 pt-3 border-t border-gray-100">
+            <div className="pt-1 border-t border-gray-100">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}

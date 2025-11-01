@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Lock, CheckCircle } from "lucide-react";
+import { Lock, CheckCircle, TrendingUp, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
 import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import { useAreaUnlocks } from "@/hooks/useAreaUnlocks";
 
 interface Area {
   id: number;
@@ -26,8 +27,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const {
+    unlockedAreas,
+    isAreaLocked,
+    getAreaProgress,
+    loading: progressLoading,
+  } = useAreaUnlocks();
+
   useEffect(() => {
-    // Check if user is logged in
     const token = localStorage.getItem("access_token");
     if (!token) {
       console.log("No token found, redirecting to login");
@@ -48,8 +55,6 @@ export default function DashboardPage() {
         return;
       }
 
-      console.log("Fetching areas with token:", token.substring(0, 20) + "..."); // Debug log
-
       const response = await fetch(`${env.backendUrl}/api/games/areas/`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -57,11 +62,9 @@ export default function DashboardPage() {
         },
       });
 
-      console.log("Response status:", response.status); // Debug log
-
       if (response.status === 401) {
         console.error("Token is invalid or expired");
-        localStorage.removeItem("access_token"); // Clear invalid token
+        localStorage.removeItem("access_token");
         router.push("/login");
         return;
       }
@@ -71,12 +74,11 @@ export default function DashboardPage() {
       }
 
       const data = await response.json();
-      console.log("Areas fetched:", data); // Debug log
       setAreas(data.areas);
     } catch (error) {
       console.error("Error fetching areas:", error);
 
-      // Fallback to mock data for development
+      // Fallback data
       setAreas([
         {
           id: 1,
@@ -112,7 +114,7 @@ export default function DashboardPage() {
           completed_games: 0,
           total_games: 6,
           average_score: 0,
-          message: "Complete Dinner Table to unlock",
+          message: "Complete Town Market to unlock",
         },
         {
           id: 5,
@@ -129,16 +131,35 @@ export default function DashboardPage() {
     }
   };
 
-  const handleAreaClick = (area: Area) => {
-    if (!area.is_locked) {
-      router.push(`/student/challenges/${area.id}`);
+  const getReadinessColor = (readiness: string) => {
+    switch (readiness) {
+      case "well-prepared":
+        return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "ready":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      default:
+        return "bg-red-500/20 text-red-400 border-red-500/30";
     }
   };
 
-  if (loading) {
+  const getReadinessLabel = (readiness: string) => {
+    switch (readiness) {
+      case "well-prepared":
+        return "🎯 Well Prepared!";
+      case "ready":
+        return "✅ Ready to Try";
+      default:
+        return "📚 Practice More";
+    }
+  };
+
+  if (loading || progressLoading) {
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black text-white flex items-center justify-center">
-        <p>Loading areas...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p>Loading your journey...</p>
+        </div>
       </div>
     );
   }
@@ -152,9 +173,29 @@ export default function DashboardPage() {
 
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4 pt-28 pb-10 md:p-8 md:pl-24 md:pt-32 md:pb-12">
         <div className="w-full max-w-6xl">
-          <h1 className="text-4xl font-bold mb-12 text-center">
+          <h1 className="text-4xl font-bold mb-4 text-center">
             Your Learning Journey
           </h1>
+          <p className="text-gray-400 text-center mb-4">
+            Complete assessments to unlock new areas. Practice in Challenges
+            first!
+          </p>
+
+          {/* Quick Stats */}
+          <div className="flex justify-center gap-4 mb-8">
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2">
+              <p className="text-xs text-gray-400">Areas Unlocked</p>
+              <p className="text-2xl font-bold text-purple-400">
+                {unlockedAreas.length}/5
+              </p>
+            </div>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2">
+              <p className="text-xs text-gray-400">Total Progress</p>
+              <p className="text-2xl font-bold text-blue-400">
+                {Math.round((unlockedAreas.length / 5) * 100)}%
+              </p>
+            </div>
+          </div>
 
           {/* Level Map Container */}
           <div className="relative w-full py-12">
@@ -192,6 +233,8 @@ export default function DashboardPage() {
               style={{ zIndex: 1 }}
             >
               {areas.map((area, index) => {
+                const locked = isAreaLocked(area.id);
+                const progress = getAreaProgress(area.id);
                 const isComplete = area.completed_games === area.total_games;
 
                 return (
@@ -204,30 +247,24 @@ export default function DashboardPage() {
                       type: "spring",
                       stiffness: 200,
                     }}
-                    className="flex flex-col items-center"
+                    className="flex flex-col items-center w-32"
                   >
-                    {/* Node Button */}
-                    <motion.button
-                      onClick={() => handleAreaClick(area)}
-                      disabled={area.is_locked}
-                      whileHover={area.is_locked ? {} : { scale: 1.1 }}
-                      whileTap={area.is_locked ? {} : { scale: 0.95 }}
-                      className={`relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-4 shadow-xl transition-all
-                        ${
-                          area.is_locked
-                            ? "bg-gray-600 border-gray-700 cursor-not-allowed opacity-50"
-                            : isComplete
-                            ? "bg-gradient-to-br from-yellow-400 to-amber-500 border-yellow-600 shadow-yellow-500/50"
-                            : "bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-600 shadow-blue-500/50 hover:shadow-blue-500/80"
-                        }`}
+                    {/* Node Display */}
+                    <motion.div
+                      whileHover={!locked ? { scale: 1.1 } : {}}
+                      className={`relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-4 shadow-xl transition-all ${
+                        locked
+                          ? "bg-gray-600 border-gray-700 opacity-50 cursor-not-allowed"
+                          : isComplete
+                          ? "bg-gradient-to-br from-yellow-400 to-amber-500 border-yellow-600 shadow-yellow-500/50 cursor-pointer"
+                          : "bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-600 shadow-blue-500/50 cursor-pointer"
+                      }`}
                     >
                       {/* Lock Icon */}
-                      {area.is_locked && (
-                        <Lock className="text-gray-300" size={32} />
-                      )}
+                      {locked && <Lock className="text-gray-300" size={32} />}
 
                       {/* Completion Badge */}
-                      {!area.is_locked && isComplete && (
+                      {!locked && isComplete && (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
@@ -238,39 +275,71 @@ export default function DashboardPage() {
                       )}
 
                       {/* Area Number */}
-                      {!area.is_locked && (
+                      {!locked && (
                         <span className="text-2xl font-bold text-white">
                           {area.id}
                         </span>
                       )}
-                    </motion.button>
+                    </motion.div>
 
-                    {/* Area Name */}
+                    {/* Area Info */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.2 + 0.3 }}
-                      className="mt-4 text-center"
+                      className="mt-4 text-center w-full"
                     >
                       <p className="text-sm md:text-base font-bold">
                         {area.name}
                       </p>
-                      {!area.is_locked && (
+
+                      {locked ? (
+                        <p className="text-xs text-gray-500 mt-1">🔒 Locked</p>
+                      ) : (
                         <>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {area.completed_games}/{area.total_games} games
-                          </p>
-                          {area.completed_games > 0 && (
-                            <p className="text-xs text-blue-400 font-semibold">
-                              {area.average_score}% avg
+                          {/* Readiness Indicator */}
+                          {progress && !progress.assessmentPassed && (
+                            <div className="mt-2 space-y-1">
+                              <div
+                                className={`text-[10px] px-2 py-1 rounded-full border inline-block ${getReadinessColor(
+                                  progress.recommendedReadiness
+                                )}`}
+                              >
+                                {getReadinessLabel(
+                                  progress.recommendedReadiness
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-400">
+                                {progress.challengesPracticed}/6 practiced
+                              </p>
+
+                              {/* Practice Button */}
+                              <button
+                                onClick={() =>
+                                  router.push(
+                                    `/student/challenges?area=${area.id}`
+                                  )
+                                }
+                                className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center justify-center gap-1 mx-auto mt-1"
+                              >
+                                <BookOpen size={10} />
+                                Practice
+                              </button>
+                            </div>
+                          )}
+
+                          {progress?.assessmentPassed && (
+                            <p className="text-xs text-green-400 mt-1">
+                              ✓ Completed
+                            </p>
+                          )}
+
+                          {!progress && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Not Started
                             </p>
                           )}
                         </>
-                      )}
-                      {area.is_locked && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {area.message}
-                        </p>
                       )}
                     </motion.div>
                   </motion.div>

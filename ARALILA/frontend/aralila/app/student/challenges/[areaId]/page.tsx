@@ -19,23 +19,12 @@ interface Area {
   average_score: number;
 }
 
-interface Game {
-  id: number;
-  name: string;
-  description: string;
-  game_type: string;
-  icon: string;
-  best_score: number;
-  completed: boolean;
-}
-
 export default function AreaChallengesPage() {
   const params = useParams();
   const areaId = params.areaId as string;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [areaData, setAreaData] = useState<Area | null>(null);
-  const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
   const areaSymbols = [
@@ -76,7 +65,7 @@ export default function AreaChallengesPage() {
       const data = await response.json();
       console.log("Area data fetched:", data); // Debug log
       setAreaData(data.area);
-      setGames(data.games);
+      // ❌ Removed: setGames(data.games); - CardCarousel fetches this itself
     } catch (error) {
       console.error("Failed to fetch area data:", error);
     } finally {
@@ -117,19 +106,22 @@ export default function AreaChallengesPage() {
       {/* Dynamic Background */}
       {getBackgroundComponent()}
 
-      {/* Area Info Header */}
-      {/* <div className="relative z-10 pt-24 px-8 text-center text-white">
-        <h1 className="text-4xl font-bold mb-2">{areaData?.name}</h1>
-        <p className="text-gray-300 mb-1">{areaData?.description}</p>
-        <p className="text-sm text-gray-400">
-          {areaData?.completed_games}/{areaData?.total_games} games completed •{" "}
-          {areaData?.average_score}% average
-        </p>
-      </div> */}
+      {/* Area Info Header (Optional - currently commented out) */}
+      {areaData && (
+        <div className="relative z-10 pt-24 px-8 text-center text-white">
+          <h1 className="text-4xl font-bold mb-2">{areaData.name}</h1>
+          <p className="text-gray-300 mb-1">{areaData.description}</p>
+          <p className="text-sm text-gray-400">
+            {areaData.completed_games}/{areaData.total_games} games completed •{" "}
+            {areaData.average_score}% average
+          </p>
+        </div>
+      )}
 
-      {/* Game Cards Carousel */}
-      <CardCarousel areaId={parseInt(areaId)} games={games} />
+      {/* Game Cards Carousel - Only needs areaId */}
+      <CardCarousel areaId={parseInt(areaId)} />
 
+      {/* Area Symbols Footer */}
       <div className="flex flex-row gap-5 absolute bottom-0 left-0 right-0 z-[100] p-4 md:p-6 w-full items-center justify-center">
         {areaSymbols.map((symbol, index) => {
           return (

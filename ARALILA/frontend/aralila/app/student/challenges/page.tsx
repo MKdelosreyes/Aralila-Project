@@ -17,6 +17,7 @@ interface Area {
   id: number;
   name: string;
   description: string;
+  order_index: number;
   completed_games: number;
   total_games: number;
   average_score: number;
@@ -34,31 +35,31 @@ interface Game {
 
 const areaSymbols = [
   {
-    id: 1,
+    order_index: 0,
     name: "Playground",
     image: "/images/art/Playground-Area-Symbol.png",
     bgPath: "/images/bg/Playground.png",
   },
   {
-    id: 2,
+    order_index: 1,
     name: "Classroom",
     image: "/images/art/Classroom-Area-Symbol.png",
     bgPath: "/images/bg/Classroom.png",
   },
   {
-    id: 3,
+    order_index: 2,
     name: "Home",
     image: "/images/art/Home-Area-Symbol.png",
     bgPath: "/images/bg/Home.png",
   },
   {
-    id: 4,
+    order_index: 3,
     name: "Town",
     image: "/images/art/Home-Area-Symbol.png",
     bgPath: "/images/bg/Town.png",
   },
   {
-    id: 5,
+    order_index: 4,
     name: "Mountainside",
     image: "/images/art/Home-Area-Symbol.png",
     bgPath: "/images/bg/Mountainside.png",
@@ -71,8 +72,8 @@ export default function ChallengesPage() {
   const areaParam = searchParams.get("area");
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedAreaId, setSelectedAreaId] = useState<number>(
-    areaParam ? parseInt(areaParam) : 1
+  const [selectedAreaOrder, setSelectedAreaOrder] = useState<number>(
+    areaParam ? parseInt(areaParam) : 0
   );
   const [areaData, setAreaData] = useState<Area | null>(null);
   const [games, setGames] = useState<Game[]>([]);
@@ -91,19 +92,20 @@ export default function ChallengesPage() {
       return;
     }
 
-    // Find first unlocked area if selected area is locked
-    if (isAreaLocked(selectedAreaId)) {
-      const firstUnlocked = areaSymbols.find((a) => !isAreaLocked(a.id));
+    if (isAreaLocked(selectedAreaOrder)) {
+      const firstUnlocked = areaSymbols.find(
+        (a) => !isAreaLocked(a.order_index)
+      );
       if (firstUnlocked) {
-        setSelectedAreaId(firstUnlocked.id);
+        setSelectedAreaOrder(firstUnlocked.order_index);
       }
     } else {
-      fetchAreaData(selectedAreaId);
+      fetchAreaData(selectedAreaOrder);
     }
-  }, [selectedAreaId]);
+  }, [selectedAreaOrder]);
 
-  const fetchAreaData = async (areaId: number) => {
-    if (isAreaLocked(areaId)) {
+  const fetchAreaData = async (orderIndex: number) => {
+    if (isAreaLocked(orderIndex)) {
       return;
     }
 
@@ -117,7 +119,7 @@ export default function ChallengesPage() {
       }
 
       const response = await fetch(
-        `${env.backendUrl}/api/games/area/${areaId}/`,
+        `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -141,22 +143,24 @@ export default function ChallengesPage() {
     }
   };
 
-  const handleAreaClick = (areaId: number) => {
-    if (isAreaLocked(areaId)) {
-      return; // Don't allow selection of locked areas
+  const handleAreaClick = (orderIndex: number) => {
+    if (isAreaLocked(orderIndex)) {
+      return;
     }
-    setSelectedAreaId(areaId);
+    setSelectedAreaOrder(orderIndex);
   };
 
   const getBackgroundComponent = () => {
-    const selectedArea = areaSymbols.find((a) => a.id === selectedAreaId);
+    const selectedArea = areaSymbols.find(
+      (a) => a.order_index === selectedAreaOrder
+    );
     if (selectedArea?.bgPath) {
       return <ChallengesBackground img_path={selectedArea.bgPath} />;
     }
     return <AnimatedBackground />;
   };
 
-  const progress = getAreaProgress(selectedAreaId);
+  const progress = getAreaProgress(selectedAreaOrder);
 
   if (progressLoading) {
     return (
@@ -169,6 +173,8 @@ export default function ChallengesPage() {
     );
   }
 
+  console.log("Games length for area ", selectedAreaOrder, ":", games.length);
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black">
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
@@ -177,7 +183,7 @@ export default function ChallengesPage() {
       {/* Dynamic Background */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={selectedAreaId}
+          key={selectedAreaOrder}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -187,85 +193,25 @@ export default function ChallengesPage() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Area Info Header */}
-      {/* <div className="relative z-10 pt-24 px-8 text-center text-white">
-        <motion.h1
-          key={`title-${selectedAreaId}`}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold mb-2"
-        >
-          {areaData?.name || "Loading..."}
-        </motion.h1>
-        {areaData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <p className="text-gray-300 mb-2">{areaData.description}</p>
-            <div className="flex items-center justify-center gap-6 text-sm">
-              <p className="text-gray-400">
-                {areaData.completed_games}/{areaData.total_games} games
-                completed
-              </p>
-              <p className="text-gray-400">
-                {areaData.average_score}% average score
-              </p>
-            </div>
-
-            {progress && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 }}
-                className="mt-4 inline-block"
-              >
-                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-2">
-                  <div className="flex items-center gap-3">
-                    <TrendingUp className="text-purple-400" size={20} />
-                    <div className="text-left">
-                      <p className="text-xs text-gray-400">Practice Progress</p>
-                      <p className="text-sm font-bold">
-                        {progress.challengesPracticed}/6 games •{" "}
-                        <span
-                          className={
-                            progress.averagePracticeScore >= 70
-                              ? "text-green-400"
-                              : "text-yellow-400"
-                          }
-                        >
-                          {Math.round(progress.averagePracticeScore)}% avg
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-      </div> */}
-
       {/* Game Cards Carousel */}
       {loading ? (
         <div className="relative z-10 flex items-center justify-center min-h-[50vh]">
           <p className="text-white text-xl">Loading games...</p>
         </div>
       ) : (
-        <CardCarousel areaId={selectedAreaId} games={games} />
+        <CardCarousel areaId={selectedAreaOrder} games={games} />
       )}
 
       {/* Area Selection Symbols at Bottom */}
       <div className="flex flex-row gap-3 md:gap-5 absolute bottom-0 left-0 right-0 z-[100] p-4 md:p-6 w-full items-center justify-center">
         {areaSymbols.map((area) => {
-          const locked = isAreaLocked(area.id);
-          const isSelected = selectedAreaId === area.id;
+          const locked = isAreaLocked(area.order_index);
+          const isSelected = selectedAreaOrder === area.order_index;
 
           return (
-            <motion.div key={area.id} className="relative">
+            <motion.div key={area.order_index} className="relative">
               <motion.button
-                onClick={() => handleAreaClick(area.id)}
+                onClick={() => handleAreaClick(area.order_index)}
                 disabled={locked}
                 whileHover={!locked ? { scale: 1.1 } : {}}
                 whileTap={!locked ? { scale: 0.95 } : {}}

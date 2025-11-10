@@ -1,267 +1,201 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import Confetti from "react-confetti";
-import { Target, Trophy, CheckCircle2, XCircle } from "lucide-react";
-import { SpellingWord } from "@/types/games";
+import React from "react";
+import { motion } from "framer-motion";
 import { SpellingResult } from "@/types/games";
+import { Trophy, Star, Zap, RotateCcw } from "lucide-react";
+import Image from "next/image";
 
-// export interface SpellingResult {
-//   wordData: SpellingWord;
-//   userAnswer: string;
-//   isCorrect: boolean;
-// }
-
-interface SpellingChallengeSummaryProps {
+interface SummaryProps {
   score: number;
   results: SpellingResult[];
+  difficulty: number;
+  starsEarned: number;
+  unlockedMessage?: string;
+  canSkip?: boolean;
+  nextDifficulty?: number;
+  replayMode?: boolean;
   onRestart: () => void;
+  onNextDifficulty?: () => void;
+  onSkipToHard?: () => void;
 }
-
-const ReviewModal = ({
-  isOpen,
-  onClose,
-  children,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}) => {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 backdrop-blur-md bg-opacity-60 z-50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className="bg-white rounded-3xl p-6 w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 40 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-4 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-slate-800">Word Review</h2>
-              <button
-                onClick={onClose}
-                className="text-slate-400 hover:text-slate-800 transition-colors"
-              >
-                <XCircle size={28} />
-              </button>
-            </div>
-            {children}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
-
-interface StatCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  colorClass: string;
-  borderClass: string;
-}
-
-const StatCard = ({
-  icon,
-  label,
-  value,
-  colorClass,
-  borderClass,
-}: StatCardProps) => (
-  <motion.div
-    className={`bg-slate-50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border-2 ${borderClass}`}
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${colorClass}`}
-    >
-      {icon}
-    </div>
-    <div className="text-2xl font-bold text-slate-800">{value}</div>
-    <div className="text-sm text-slate-500 mt-1">{label}</div>
-  </motion.div>
-);
 
 export const SpellingChallengeSummary = ({
   score,
   results,
-}: SpellingChallengeSummaryProps) => {
-  const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  difficulty,
+  starsEarned,
+  unlockedMessage,
+  canSkip,
+  nextDifficulty,
+  replayMode,
+  onRestart,
+  onNextDifficulty,
+  onSkipToHard,
+}: SummaryProps) => {
+  const passed = score >= (difficulty === 1 ? 60 : difficulty === 2 ? 70 : 80);
+  const perfect = score >= 90;
 
-  const totalWords = results.length;
-  const correctWords = results.filter((r) => r.isCorrect).length;
-  const accuracy =
-    totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
-
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  useEffect(() => {
-    const handleResize = () =>
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  let summaryContent = {
-    title: "Good Effort!",
-    imageSrc: "/images/character/lila-normal.png",
-    showConfetti: false,
+  const getTitle = () => {
+    if (perfect) return "Perfect! 🎉";
+    if (passed) return "Great Job! 👏";
+    return "Keep Practicing! 💪";
   };
-  if (accuracy === 100) {
-    summaryContent = {
-      title: "Perfect Lesson!",
-      imageSrc: "/images/character/lila-happy.png",
-      showConfetti: true,
-    };
-  } else if (accuracy >= 80) {
-    summaryContent = {
-      title: "Excellent Work!",
-      imageSrc: "/images/character/lila-happy.png",
-      showConfetti: true,
-    };
-  } else if (accuracy < 20) {
-    summaryContent = {
-      title: "Keep Practicing!",
-      imageSrc: "/images/character/lila-crying.png",
-      showConfetti: false,
-    };
-  } else if (accuracy < 40) {
-    summaryContent = {
-      title: "Better Luck Next Time!",
-      imageSrc: "/images/character/lila-sad.png",
-      showConfetti: false,
-    };
-  }
+
+  const getDifficultyLabel = (diff: number) => {
+    return { 1: "Easy", 2: "Medium", 3: "Hard" }[diff] || "Unknown";
+  };
 
   return (
-    <>
-      <motion.div
-        className="relative z-10 bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 max-w-2xl w-full text-center shadow-2xl"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        {summaryContent.showConfetti && windowSize.width > 0 && (
-          <Confetti
-            width={windowSize.width}
-            height={windowSize.height}
-            recycle={false}
-            numberOfPieces={400}
-            gravity={0.15}
-          />
-        )}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+    >
+      {/* Header */}
+      <div className="text-center mb-6">
+        <motion.h2
+          initial={{ y: -20 }}
+          animate={{ y: 0 }}
+          className="text-4xl font-bold text-gray-800 mb-2"
+        >
+          {getTitle()}
+        </motion.h2>
 
-        <Image
-          src={summaryContent.imageSrc}
-          alt="Lila character expressing emotion based on score"
-          width={150}
-          height={150}
-          className="mx-auto mb-4"
-        />
-        <h1 className="text-4xl font-bold text-purple-700 mb-2">
-          {summaryContent.title}
-        </h1>
-        <p className="text-slate-500 mb-8">
-          Here&apos;s a summary of your performance.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10">
-          <StatCard
-            icon={<Trophy className="w-6 h-6 text-yellow-600" />}
-            label="Final Score"
-            value={score}
-            colorClass="bg-yellow-100"
-            borderClass="border-yellow-400"
-          />
-          <StatCard
-            icon={<Target className="w-6 h-6 text-green-600" />}
-            label="Accuracy"
-            value={`${accuracy}%`}
-            colorClass="bg-green-100"
-            borderClass="border-green-400"
-          />
+        <div className="flex items-center justify-center gap-2 text-gray-600 mb-4">
+          <span className="text-sm font-medium">
+            {getDifficultyLabel(difficulty)} Mode
+          </span>
+          <span className="text-2xl">•</span>
+          <span className="text-3xl font-bold text-purple-600">{score}%</span>
         </div>
 
-        <div className="flex flex-col sm:flex-row-reverse items-center justify-center gap-4">
-          <button
-            onClick={() => router.push("/student/challenges")}
-            className="w-full sm:w-auto inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/30"
-          >
-            CONTINUE
-          </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto inline-block bg-transparent hover:bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-xl border-2 border-slate-300 transition-all duration-300"
-          >
-            REVIEW LESSON
-          </button>
+        {/* Stars Display */}
+        <div className="flex justify-center gap-2 mb-4">
+          {[1, 2, 3].map((starNum) => (
+            <motion.div
+              key={starNum}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2 * starNum, type: "spring" }}
+            >
+              <Image
+                src={
+                  starNum <= starsEarned
+                    ? "/images/art/Active-Star.png"
+                    : "/images/art/Inactive-Star.png"
+                }
+                alt={`star-${starNum}`}
+                width={60}
+                height={60}
+                className={
+                  starNum <= starsEarned ? "animate-pulse" : "opacity-50"
+                }
+              />
+            </motion.div>
+          ))}
         </div>
-      </motion.div>
+      </div>
 
-      <ReviewModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="overflow-y-auto pr-2 -mr-2">
-          <div className="space-y-3">
-            {results.map((result, index) => (
-              <motion.div
-                key={index}
-                className={`p-4 rounded-xl border flex items-start gap-4 ${
-                  result.isCorrect
-                    ? "bg-green-50 border-green-200"
-                    : "bg-red-50 border-red-200"
-                }`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <div
-                  className={`mt-1 flex-shrink-0 ${
-                    result.isCorrect ? "text-green-500" : "text-red-500"
-                  }`}
-                >
-                  {result.isCorrect ? (
-                    <CheckCircle2 size={24} />
-                  ) : (
-                    <XCircle size={24} />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xl font-bold text-slate-800">
-                      {result.wordData.word}
-                    </p>
-                    {!result.isCorrect && (
-                      <p className="text-md text-red-700 bg-red-100 px-2 py-1 rounded-md mt-1 sm:mt-0">
-                        You wrote:{" "}
-                        <span className="font-mono font-bold">
-                          {result.userAnswer || '""'}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                  <p className="text-slate-600 mt-1">
-                    {result.wordData.sentence}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+      {/* Unlock Message */}
+      {unlockedMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-400 rounded-xl p-4 mb-6"
+        >
+          <p className="text-purple-800 font-semibold text-center flex items-center justify-center gap-2">
+            {canSkip && <Zap className="text-yellow-500" size={20} />}
+            {unlockedMessage}
+          </p>
+        </motion.div>
+      )}
+
+      {/* Replay Mode Badge */}
+      {replayMode && (
+        <div className="bg-green-100 border-2 border-green-400 rounded-xl p-3 mb-6 text-center">
+          <p className="text-green-800 font-semibold flex items-center justify-center gap-2">
+            <Trophy size={20} />
+            Mastery Unlocked! Play any difficulty
+          </p>
+        </div>
+      )}
+
+      {/* Results Summary */}
+      <div className="bg-gray-50 rounded-xl p-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-gray-500 text-sm">Correct</p>
+            <p className="text-2xl font-bold text-green-600">
+              {results.filter((r) => r.isCorrect).length}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Wrong</p>
+            <p className="text-2xl font-bold text-red-600">
+              {results.filter((r) => !r.isCorrect).length}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Total</p>
+            <p className="text-2xl font-bold text-gray-700">{results.length}</p>
           </div>
         </div>
-      </ReviewModal>
-    </>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="space-y-3">
+        {/* Skip to Hard (if 90%+ on Easy) */}
+        {canSkip && difficulty === 1 && onSkipToHard && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            onClick={onSkipToHard}
+            className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all"
+          >
+            <Zap size={20} fill="white" />
+            Skip to Hard Difficulty!
+          </motion.button>
+        )}
+
+        {/* Continue to Next Difficulty */}
+        {passed &&
+          nextDifficulty &&
+          nextDifficulty <= 3 &&
+          onNextDifficulty &&
+          !canSkip && (
+            <button
+              onClick={onNextDifficulty}
+              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all"
+            >
+              <Star size={20} fill="white" />
+              Continue to {getDifficultyLabel(nextDifficulty)}
+            </button>
+          )}
+
+        {/* Retry Current Difficulty */}
+        <button
+          onClick={onRestart}
+          className="w-full bg-white border-2 border-gray-300 text-gray-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+        >
+          <RotateCcw size={20} />
+          {replayMode
+            ? "Play Again"
+            : passed
+            ? "Retry for Better Score"
+            : "Try Again"}
+        </button>
+
+        {/* Back to Challenges */}
+        <button
+          onClick={() => window.history.back()}
+          className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 transition-colors"
+        >
+          Back to Challenges
+        </button>
+      </div>
+    </motion.div>
   );
 };

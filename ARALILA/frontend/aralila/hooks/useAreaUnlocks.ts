@@ -2,16 +2,16 @@ import { useState, useEffect } from "react";
 import { env } from "@/lib/env";
 
 export interface AreaProgress {
-  areaId: number;
-  challengesPracticed: number; // 0-6 games practiced
-  averagePracticeScore: number; // 0-100%
+  areaOrderIndex: number;  
+  challengesPracticed: number;
+  averagePracticeScore: number;
   assessmentUnlocked: boolean;
   assessmentPassed: boolean;
   recommendedReadiness: 'not-ready' | 'ready' | 'well-prepared';
 }
 
 export function useAreaUnlocks() {
-  const [unlockedAreas, setUnlockedAreas] = useState<number[]>([1]); // Playground default
+  const [unlockedAreas, setUnlockedAreas] = useState<number[]>([0]); 
   const [areaProgress, setAreaProgress] = useState<Map<number, AreaProgress>>(new Map());
   const [loading, setLoading] = useState(true);
 
@@ -22,74 +22,83 @@ export function useAreaUnlocks() {
   const fetchUnlocksAndProgress = async () => {
     try {
       const token = localStorage.getItem("access_token");
-      if (!token) return;
-
-      // Fetch unlocked areas
-      const unlocksResponse = await fetch(
-        `${env.backendUrl}/api/progress/unlocked-areas/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (unlocksResponse.ok) {
-        const unlocksData = await unlocksResponse.json();
-        setUnlockedAreas(unlocksData.unlocked_area_ids || [1]);
+      if (!token) {
+        setUnlockedAreas([0]); 
+        setLoading(false);
+        return;
       }
 
-      // Fetch progress for each area
-      const progressResponse = await fetch(
-        `${env.backendUrl}/api/progress/all-areas/`,
+      const areasResponse = await fetch(
+        `${env.backendUrl}/api/games/areas/`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (progressResponse.ok) {
-        const progressData = await progressResponse.json();
+      if (areasResponse.ok) {
+        const data = await areasResponse.json();
+        
+        const unlocked = data.areas
+          .filter((area: any) => !area.is_locked)
+          .map((area: any) => area.order_index);  
+        
+        if (!unlocked.includes(0)) {
+          unlocked.unshift(0);
+        }
+        
+        console.log("Unlocked areas (order_index):", unlocked);
+        setUnlockedAreas(unlocked);
+        
         const progressMap = new Map<number, AreaProgress>();
         
-        progressData.areas.forEach((area: any) => {
-          progressMap.set(area.areaId, {
-            areaId: area.areaId,
-            challengesPracticed: area.challengesPracticed || 0,
-            averagePracticeScore: area.averagePracticeScore || 0,
-            assessmentUnlocked: area.assessmentUnlocked || false,
-            assessmentPassed: area.assessmentPassed || false,
+        data.areas.forEach((area: any) => {
+          progressMap.set(area.order_index, {  
+            areaOrderIndex: area.order_index,
+            challengesPracticed: area.completed_games || 0,
+            averagePracticeScore: area.average_score || 0,
+            assessmentUnlocked: area.completed_games >= 3,
+            assessmentPassed: area.completed_games === area.total_games,
             recommendedReadiness: calculateReadiness(
-              area.challengesPracticed || 0,
-              area.averagePracticeScore || 0
+              area.completed_games || 0,
+              area.average_score || 0,
+              area.total_games || 6
             ),
           });
         });
         
+        console.log("Area progress map:", progressMap);
         setAreaProgress(progressMap);
+      } else {
+        console.warn("Failed to fetch areas, using fallback");
+        setUnlockedAreas([0]);
       }
     } catch (error) {
       console.error("Failed to fetch area unlocks and progress:", error);
-      // Fallback: only playground unlocked
-      setUnlockedAreas([1]);
+      setUnlockedAreas([0]); 
     } finally {
       setLoading(false);
     }
   };
 
   const calculateReadiness = (
-    practiceCount: number,
-    avgScore: number
+    completedGames: number,
+    avgScore: number,
+    totalGames: number
   ): 'not-ready' | 'ready' | 'well-prepared' => {
-    const practiceRate = practiceCount / 6;
+    const completionRate = completedGames / totalGames;
     const scoreThreshold = avgScore >= 70;
 
-    if (practiceRate >= 0.8 && scoreThreshold) return 'well-prepared';
-    if (practiceRate >= 0.5 && scoreThreshold) return 'ready';
+    if (completionRate >= 0.8 && scoreThreshold) return 'well-prepared';
+    if (completionRate >= 0.5 && scoreThreshold) return 'ready';
     return 'not-ready';
   };
 
-  const isAreaLocked = (areaId: number) => !unlockedAreas.includes(areaId);
+  // ✅ Now checks order_index instead of database ID
+  const isAreaLocked = (orderIndex: number) => !unlockedAreas.includes(orderIndex);
   
-  const getAreaProgress = (areaId: number): AreaProgress | null => {
-    return areaProgress.get(areaId) || null;
+  // ✅ Now uses order_index
+  const getAreaProgress = (orderIndex: number): AreaProgress | null => {
+    return areaProgress.get(orderIndex) || null;
   };
 
   const refreshProgress = () => {

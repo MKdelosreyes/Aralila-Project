@@ -7,11 +7,11 @@ import { ConfirmationModal } from "../confirmation-modal";
 import { SpellingResult } from "@/types/games";
 
 // Constants
-const TIME_LIMIT = 120;
+const TIME_LIMIT = 180;
 const BONUS_TIME = 10;
 const BASE_POINTS = 20;
 const FALL_SPEED = 1.2;
-const LETTER_SPAWN_INTERVAL = 2500;
+const LETTER_SPAWN_INTERVAL = 2000;
 const CATCHER_WIDTH = 115;
 const GAME_AREA_HEIGHT = 400;
 const MIN_X_SPACING = 100;
@@ -49,6 +49,7 @@ interface SpellingChallengeGameProps {
     word: string;
     sentence: string;
   }>;
+  difficulty?: number;
   onGameComplete: (results: {
     score: number;
     results: SpellingResult[];
@@ -58,6 +59,7 @@ interface SpellingChallengeGameProps {
 
 export const SpellingChallengeGame = ({
   words,
+  difficulty = 1,
   onGameComplete,
   onExit,
 }: SpellingChallengeGameProps) => {
@@ -84,7 +86,53 @@ export const SpellingChallengeGame = ({
   const nextId = useRef<number>(0);
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
+  if (!words || words.length === 0) {
+    return (
+      <div className="z-10 max-w-[950px] w-full mx-auto p-4">
+        <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-red-600 mb-4">
+              No Questions Available
+            </p>
+            <p className="text-gray-600 mb-6">
+              There are no questions for this difficulty level yet.
+            </p>
+            <button
+              onClick={onExit}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const currentWordData = words[currentWordIndex];
+
+  if (!currentWordData) {
+    return (
+      <div className="z-10 max-w-[950px] w-full mx-auto p-4">
+        <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-orange-600 mb-4">
+              Error Loading Question
+            </p>
+            <p className="text-gray-600 mb-6">
+              Current question index: {currentWordIndex}
+            </p>
+            <button
+              onClick={onExit}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getRandomLetter = () =>
     String.fromCharCode(65 + Math.floor(Math.random() * 26));

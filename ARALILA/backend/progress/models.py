@@ -1,34 +1,73 @@
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
+from games.models import Game, Area
 
 
-# Game Progress Tracking
 class GameProgress(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name="progress"
-    )
-    game = models.ForeignKey(
-        "games.Game", 
-        on_delete=models.CASCADE, 
-        related_name="progress"
-    )
-    area = models.ForeignKey(
-        "games.Area", 
-        on_delete=models.CASCADE, 
-        related_name="progress"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    
+    # Star progression tracking
+    stars_earned = models.IntegerField(default=0)  # 0, 1, 2, or 3
+    
+    # Individual difficulty scores
+    difficulty_1_score = models.IntegerField(default=0)  # Easy level
+    difficulty_1_completed = models.BooleanField(default=False)
+    
+    difficulty_2_score = models.IntegerField(default=0)  # Medium level
+    difficulty_2_completed = models.BooleanField(default=False)
+    difficulty_2_unlocked = models.BooleanField(default=False)  # NEW: Track if unlocked
+    
+    difficulty_3_score = models.IntegerField(default=0)  # Hard level
+    difficulty_3_completed = models.BooleanField(default=False)
+    difficulty_3_unlocked = models.BooleanField(default=False)  # NEW: Track if unlocked
+    
+    # Legacy fields
     score = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
-    last_played = models.DateTimeField(default=timezone.now)
+    
+    attempts = models.IntegerField(default=0)
+    last_played = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("user", "game", "area")
+        unique_together = ['user', 'area', 'game']
+        ordering = ['-last_played']
 
     def __str__(self):
-        return f"{self.user.email} - {self.game.name} ({self.area.name})"
+        return f"{self.user.first_name} - {self.game.name} - {self.stars_earned}★"
+    
+    def update_stars(self):
+        """Calculate stars based on difficulty completions"""
+        stars = 0
+        if self.difficulty_1_completed:
+            stars = 1
+        if self.difficulty_2_completed:
+            stars = 2
+        if self.difficulty_3_completed:
+            stars = 3
+        self.stars_earned = stars
+        self.save()
+    
+    def can_access_difficulty(self, difficulty):
+        """Check if user can access a specific difficulty"""
+        if difficulty == 1:
+            return True  # Easy always accessible
+        
+        if self.stars_earned == 3:
+            return True  # Replay mode: all unlocked
+        
+        if difficulty == 2:
+            # Medium accessible if: difficulty 1 completed OR unlocked via skip
+            return self.difficulty_1_completed or self.difficulty_2_unlocked
+        
+        if difficulty == 3:
+            # Hard accessible if: difficulty 2 completed OR unlocked via skip
+            return self.difficulty_2_completed or self.difficulty_3_unlocked
+        
+        return False
 
 
 # Optional: Gamification badges/achievements

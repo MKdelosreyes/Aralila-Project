@@ -15,6 +15,7 @@ interface Area {
   id: number;
   name: string;
   is_locked: boolean;
+  order_index: number;
   completed_games: number;
   total_games: number;
   average_score: number;
@@ -84,6 +85,7 @@ export default function DashboardPage() {
           id: 1,
           name: "Playground",
           is_locked: false,
+          order_index: 0,
           completed_games: 0,
           total_games: 6,
           average_score: 0,
@@ -93,6 +95,7 @@ export default function DashboardPage() {
           id: 2,
           name: "Classroom",
           is_locked: true,
+          order_index: 1,
           completed_games: 0,
           total_games: 6,
           average_score: 0,
@@ -102,6 +105,7 @@ export default function DashboardPage() {
           id: 3,
           name: "Dinner Table",
           is_locked: true,
+          order_index: 2,
           completed_games: 0,
           total_games: 6,
           average_score: 0,
@@ -111,6 +115,7 @@ export default function DashboardPage() {
           id: 4,
           name: "Town Market",
           is_locked: true,
+          order_index: 3,
           completed_games: 0,
           total_games: 6,
           average_score: 0,
@@ -120,6 +125,7 @@ export default function DashboardPage() {
           id: 5,
           name: "Mountain",
           is_locked: true,
+          order_index: 4,
           completed_games: 0,
           total_games: 6,
           average_score: 0,
@@ -233,8 +239,8 @@ export default function DashboardPage() {
               style={{ zIndex: 1 }}
             >
               {areas.map((area, index) => {
-                const locked = isAreaLocked(area.id);
-                const progress = getAreaProgress(area.id);
+                const locked = isAreaLocked(area.order_index);
+                const progress = getAreaProgress(area.order_index);
                 const isComplete = area.completed_games === area.total_games;
 
                 return (
@@ -317,7 +323,7 @@ export default function DashboardPage() {
                               <button
                                 onClick={() =>
                                   router.push(
-                                    `/student/challenges?area=${area.id}`
+                                    `/student/challenges?area=${area.order_index}`
                                   )
                                 }
                                 className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center justify-center gap-1 mx-auto mt-1"

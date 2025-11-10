@@ -161,44 +161,44 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-if DATABASE_URL:
-    # Use dj_database_url to parse connection string
-    DATABASES = {
-        'default': {
-            **dj_database_url.parse(DATABASE_URL),
-            'CONN_MAX_AGE': 600,
-            'CONN_HEALTH_CHECKS': True,
-            'OPTIONS': {
-                'sslmode': 'require',
-                'connect_timeout': 10,
-            }
-        }
-    }
-else:
-    # Fallback to SQLite for development
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',  
-#         'USER': 'postgres.dnrwenixinuxocwdlmwk',  
-#         'PASSWORD': 'F4-aralila-db*SR',
-#         'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
-#         'PORT': '6543',
-#         'OPTIONS': {
-#             'sslmode': 'require',
-#             'connect_timeout': 10,
-#         },
-#         'CONN_MAX_AGE': 0,
+# DATABASE_URL = os.getenv('DATABASE_URL')
+# if DATABASE_URL:
+#     # Use dj_database_url to parse connection string
+#     DATABASES = {
+#         'default': {
+#             **dj_database_url.parse(DATABASE_URL),
+#             'CONN_MAX_AGE': 600,
+#             'CONN_HEALTH_CHECKS': True,
+#             'OPTIONS': {
+#                 'sslmode': 'require',
+#                 'connect_timeout': 10,
+#             }
+#         }
 #     }
-# }
+# else:
+#     # Fallback to SQLite for development
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',  
+        'USER': 'postgres.dnrwenixinuxocwdlmwk',  
+        'PASSWORD': 'F4-aralila-db*SR',
+        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
+        'PORT': '6543',
+        'OPTIONS': {
+            'sslmode': 'require',
+            'connect_timeout': 10,
+        },
+        'CONN_MAX_AGE': 0,
+    }
+}
 
 
 # Password validation

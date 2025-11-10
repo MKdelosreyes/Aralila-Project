@@ -39,3 +39,48 @@ export const generatePartsOfSpeechOptions = (correctAnswer: string): string[] =>
 
   return finalOptions;
 };
+
+
+export interface GrammarSentenceQuestion {
+  id: number;
+  sentence: string; // correct sentence
+}
+
+export interface RuntimeGrammarQuestion {
+  id: number;
+  correctTokens: string[];
+  jumbledTokens: string[]; // generated
+}
+
+const TOKEN_REGEX = /[\w’']+|[.,!?;:()\-]/gu;
+
+export function tokenizeSentence(sentence: string): string[] {
+  return (sentence.match(TOKEN_REGEX) || []).map(t => t);
+}
+
+export function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function buildRuntimeQuestions(base: GrammarSentenceQuestion[]): RuntimeGrammarQuestion[] {
+  return base.map(q => {
+    const tokens = tokenizeSentence(q.sentence);
+    let jumbled = shuffleArray(tokens);
+    // Ensure jumbled differs from correct (if possible)
+    const same = jumbled.every((t, i) => t === tokens[i]);
+    if (same && tokens.length > 1) {
+      // simple swap first two
+      [jumbled[0], jumbled[1]] = [jumbled[1], jumbled[0]];
+    }
+    return {
+      id: q.id,
+      correctTokens: tokens,
+      jumbledTokens: jumbled,
+    };
+  });
+}

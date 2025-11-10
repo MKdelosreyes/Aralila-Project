@@ -3,18 +3,29 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { PlayCircle, ArrowLeft } from "lucide-react";
+import { PlayCircle, ArrowLeft, Info } from "lucide-react";
 
 interface SpellingChallengeIntroProps {
+  difficulty: number;
+  skipMessage?: string | null;
   onStartChallenge: () => void;
-  onReviewLessons: () => void;
+  onReviewLessons?: () => void;
   onBack?: () => void;
 }
 
 export const SpellingChallengeIntro = ({
+  difficulty,
+  skipMessage,
   onStartChallenge,
   onBack,
 }: SpellingChallengeIntroProps) => {
+  const difficultyLabel = { 1: "Easy", 2: "Medium", 3: "Hard" }[difficulty];
+  const difficultyColor = {
+    1: "bg-green-500",
+    2: "bg-yellow-500",
+    3: "bg-red-500",
+  }[difficulty];
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Back Button - Top Left Corner */}
@@ -69,6 +80,30 @@ export const SpellingChallengeIntro = ({
           <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
             SPELLING
           </div>
+
+          {/* Difficulty Badge */}
+          {/* <div className="flex items-center justify-center gap-2 mt-2">
+            <div
+              className={`${difficultyColor} text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg`}
+            >
+              {difficultyLabel}
+            </div>
+          </div> */}
+
+          {/* Skip Message */}
+          {skipMessage && (
+            <motion.div
+              className="mt-6 max-w-md mx-auto"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+                <Info className="w-6 h-6 flex-shrink-0" />
+                <p className="text-sm font-semibold text-left">{skipMessage}</p>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
 
         <motion.div

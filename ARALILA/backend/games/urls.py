@@ -5,6 +5,12 @@ urlpatterns = [
     path("sentence-construction/emoji-evaluate/", views.evaluate_emoji_sentence, name="evaluate_emoji_sentence"),
     path('areas/', views.get_unlocked_areas, name='unlocked_areas'),
     path('area/<int:area_id>/', views.get_area_detail, name='area_detail'),
+    path('area/order/<int:order_index>/', views.get_area_by_order, name='area_by_order'),
+
+    path('questions/<int:area_id>/<str:game_type>/<int:difficulty>/', 
+         views.get_game_questions_by_difficulty, 
+         name='get_game_questions_by_difficulty'),
+    path('submit-score/', views.submit_game_score, name='submit_game_score'),
 
     path('spelling/<int:area_id>/', views.get_spelling_questions, name='spelling_questions'),
     path('emoji/<int:area_id>/', views.get_emoji_questions, name='emoji_questions'),

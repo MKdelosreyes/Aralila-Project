@@ -13,12 +13,12 @@ import { Target, Trophy, XCircle } from "lucide-react";
 //   errorType: string;
 //   explanation: string;
 //   correct: string;
-// }
 interface Question {
   id: number;
-  jumbled: string[];
-  correct: string[];
+  correctTokens: string[];
+  jumbledTokens: string[];
 }
+
 export interface GrammarResult {
   question: Question;
   userAnswer: string[]; // array of selected words
@@ -245,7 +245,7 @@ export const GrammarCheckSummary = ({
                   Scrambled Sentence:
                 </p>
                 <p className="text-slate-800 p-2 bg-slate-100 rounded-md mb-3">
-                  {result.question.jumbled.join(" ")}
+                  {result.question.jumbledTokens.join(" ")}
                 </p>
 
                 <p className="text-slate-600 text-sm mb-1">Your Answer:</p>
@@ -263,7 +263,7 @@ export const GrammarCheckSummary = ({
                       Correct Answer:
                     </p>
                     <p className="text-slate-800 p-2 bg-green-100 rounded-md">
-                      {result.question.correct.join(" ")}
+                      {result.question.correctTokens.join(" ")}
                     </p>
                   </>
                 )}

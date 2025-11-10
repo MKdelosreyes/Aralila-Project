@@ -68,6 +68,11 @@ export interface PartsOfSpeechResult {
   hintUsed: boolean;
 }
 
+export interface GrammarSentenceQuestion {
+  id: number;
+  sentence: string; // correct sentence
+}
+
 // word association
 export interface WordAssociationQuestion {
   id: string;

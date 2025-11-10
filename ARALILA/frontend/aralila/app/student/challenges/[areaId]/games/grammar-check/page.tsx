@@ -10,6 +10,7 @@ import {
   GrammarResult,
 } from "@/components/games/grammar-check/summary";
 import { grammarAccuracyQuestions } from "@/data/GrammarAccuracyData";
+import { buildRuntimeQuestions, RuntimeGrammarQuestion } from "@/lib/utils";
 
 type GameState = "intro" | "playing" | "summary";
 
@@ -18,29 +19,34 @@ const GrammarCheckPage = () => {
   const searchParams = useSearchParams();
   const areaId = searchParams.get("areaId");
   const [gameState, setGameState] = useState<GameState>("intro");
-  const [questions, setQuestions] = useState([]);
+  // const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState<RuntimeGrammarQuestion[]>([]);
   const [finalScore, setFinalScore] = useState(0);
   const [finalResults, setFinalResults] = useState<GrammarResult[]>([]);
 
   useEffect(() => {
-    // Fetch grammar questions for this specific area
-    if (areaId) {
-      fetchAreaQuestions(areaId);
-    }
-  }, [areaId]);
+    setQuestions(buildRuntimeQuestions(grammarAccuracyQuestions));
+  }, []);
 
-  const fetchAreaQuestions = async (areaId: string) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/games/grammar/${areaId}/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      setQuestions(data.questions);
-    } catch (error) {
-      console.error("Failed to fetch questions:", error);
-    }
-  };
+  // useEffect(() => {
+  //   // Fetch grammar questions for this specific area
+  //   if (areaId) {
+  //     fetchAreaQuestions(areaId);
+  //   }
+  // }, [areaId]);
+
+  // const fetchAreaQuestions = async (areaId: string) => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const response = await fetch(`/api/games/grammar/${areaId}/`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     const data = await response.json();
+  //     setQuestions(data.questions);
+  //   } catch (error) {
+  //     console.error("Failed to fetch questions:", error);
+  //   }
+  // };
 
   const handleStart = () => {
     setGameState("playing");

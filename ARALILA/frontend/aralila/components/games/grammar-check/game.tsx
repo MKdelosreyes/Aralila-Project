@@ -14,19 +14,16 @@ import {
 import { SortableContext, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ConfirmationModal } from "../confirmation-modal";
+import { buildRuntimeQuestions, RuntimeGrammarQuestion } from "@/lib/utils";
 
-interface Question {
-  id: number;
-  jumbled: string[];
-  correct: string[];
-}
 interface GrammarResult {
-  question: Question;
+  question: RuntimeGrammarQuestion;
   userAnswer: string[];
   isCorrect: boolean;
 }
+
 interface GrammarCheckGameProps {
-  questions: Question[];
+  questions: RuntimeGrammarQuestion[];
   onGameComplete: (summary: {
     score: number;
     results: GrammarResult[];
@@ -110,7 +107,7 @@ export const GrammarCheckGame = ({
 
   // Initialize word objects with unique IDs
   const [words, setWords] = useState<WordItem[]>(
-    currentQ.jumbled.map((w, i) => ({
+    currentQ.jumbledTokens.map((w, i) => ({
       id: `${i}-${w}`,
       text: w,
       isLocked: false,
@@ -124,7 +121,7 @@ export const GrammarCheckGame = ({
       const nextIndex = currentQIndex + 1;
       setCurrentQIndex(nextIndex);
       setWords(
-        questions[nextIndex].jumbled.map((w, i) => ({
+        questions[nextIndex].jumbledTokens.map((w, i) => ({
           id: `${i}-${w}`,
           text: w,
           isLocked: false,
@@ -181,8 +178,8 @@ export const GrammarCheckGame = ({
     let targetWord: WordItem | null = null;
     let targetCorrectIndex = -1;
 
-    for (let i = 0; i < currentQ.correct.length; i++) {
-      const correctWord = currentQ.correct[i];
+    for (let i = 0; i < currentQ.correctTokens.length; i++) {
+      const correctWord = currentQ.correctTokens[i];
       const currentWord = words[i];
 
       // If this position is incorrect and not locked
@@ -243,7 +240,7 @@ export const GrammarCheckGame = ({
 
     const userSentence = words.map((w) => w.text);
     const isCorrect =
-      JSON.stringify(userSentence) === JSON.stringify(currentQ.correct);
+      JSON.stringify(userSentence) === JSON.stringify(currentQ.correctTokens);
 
     const newResult: GrammarResult = {
       question: currentQ,
@@ -293,7 +290,7 @@ export const GrammarCheckGame = ({
 
   // Check if there are any words that can be assisted
   const canUseAssist = words.some(
-    (w, idx) => w.text !== currentQ.correct[idx] && !w.isLocked
+    (w, idx) => w.text !== currentQ.correctTokens[idx] && !w.isLocked
   );
 
   return (
@@ -473,7 +470,7 @@ export const GrammarCheckGame = ({
                     <p className="text-lg text-slate-600">
                       Ang tamang sagot:{" "}
                       <span className="font-bold text-purple-700">
-                        {currentQ.correct.join(" ")}
+                        {currentQ.correctTokens.join(" ")}
                       </span>
                     </p>
                   </div>
@@ -484,7 +481,7 @@ export const GrammarCheckGame = ({
                     <p className="text-lg text-slate-600">
                       Na-skip. Tamang sagot:{" "}
                       <span className="font-bold text-purple-700">
-                        {currentQ.correct.join(" ")}
+                        {currentQ.correctTokens.join(" ")}
                       </span>
                     </p>
                   </div>

@@ -11,13 +11,12 @@ interface SummaryProps {
   results: SpellingResult[];
   difficulty: number;
   starsEarned: number;
-  unlockedMessage?: string;
-  canSkip?: boolean;
   nextDifficulty?: number;
+  difficultyUnlocked?: { [k: number]: boolean };
   replayMode?: boolean;
+  rawPoints?: number;
   onRestart: () => void;
-  onNextDifficulty?: () => void;
-  onSkipToHard?: () => void;
+  onChangeDifficulty: (d: number) => void;
 }
 
 export const SpellingChallengeSummary = ({
@@ -25,16 +24,26 @@ export const SpellingChallengeSummary = ({
   results,
   difficulty,
   starsEarned,
-  unlockedMessage,
-  canSkip,
   nextDifficulty,
+  difficultyUnlocked,
   replayMode,
+  rawPoints,
   onRestart,
-  onNextDifficulty,
-  onSkipToHard,
+  onChangeDifficulty,
 }: SummaryProps) => {
-  const passed = score >= (difficulty === 1 ? 60 : difficulty === 2 ? 70 : 80);
-  const perfect = score >= 90;
+  const correct = results.filter((r) => r.isCorrect).length;
+  const wrong = results.length - correct;
+  const percent = score;
+  const threshold = 80;
+  const unlocked = {
+    1: true,
+    2: difficultyUnlocked?.[2] ?? false,
+    3: difficultyUnlocked?.[3] ?? false,
+  };
+  const perfect = percent === 100 && wrong === 0;
+  const passed = percent >= threshold;
+
+  const [showReview, setShowReview] = React.useState(false);
 
   const getTitle = () => {
     if (perfect) return "Perfect! 🎉";
@@ -67,7 +76,12 @@ export const SpellingChallengeSummary = ({
             {getDifficultyLabel(difficulty)} Mode
           </span>
           <span className="text-2xl">•</span>
-          <span className="text-3xl font-bold text-purple-600">{score}%</span>
+          <span className="text-3xl font-bold text-purple-600">{percent}%</span>
+          {rawPoints !== undefined && (
+            <p className="text-center text-sm text-gray-500 mb-2">
+              Raw Points: {rawPoints}
+            </p>
+          )}
         </div>
 
         {/* Stars Display */}
@@ -97,21 +111,6 @@ export const SpellingChallengeSummary = ({
         </div>
       </div>
 
-      {/* Unlock Message */}
-      {unlockedMessage && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-400 rounded-xl p-4 mb-6"
-        >
-          <p className="text-purple-800 font-semibold text-center flex items-center justify-center gap-2">
-            {canSkip && <Zap className="text-yellow-500" size={20} />}
-            {unlockedMessage}
-          </p>
-        </motion.div>
-      )}
-
       {/* Replay Mode Badge */}
       {replayMode && (
         <div className="bg-green-100 border-2 border-green-400 rounded-xl p-3 mb-6 text-center">
@@ -127,15 +126,12 @@ export const SpellingChallengeSummary = ({
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-gray-500 text-sm">Correct</p>
-            <p className="text-2xl font-bold text-green-600">
-              {results.filter((r) => r.isCorrect).length}
-            </p>
+            {/* ✅ show once */}
+            <p className="text-2xl font-bold text-green-600">{correct}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">Wrong</p>
-            <p className="text-2xl font-bold text-red-600">
-              {results.filter((r) => !r.isCorrect).length}
-            </p>
+            <p className="text-2xl font-bold text-red-600">{wrong}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">Total</p>
@@ -146,35 +142,6 @@ export const SpellingChallengeSummary = ({
 
       {/* Action Buttons */}
       <div className="space-y-3">
-        {/* Skip to Hard (if 90%+ on Easy) */}
-        {canSkip && difficulty === 1 && onSkipToHard && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            onClick={onSkipToHard}
-            className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all"
-          >
-            <Zap size={20} fill="white" />
-            Skip to Hard Difficulty!
-          </motion.button>
-        )}
-
-        {/* Continue to Next Difficulty */}
-        {passed &&
-          nextDifficulty &&
-          nextDifficulty <= 3 &&
-          onNextDifficulty &&
-          !canSkip && (
-            <button
-              onClick={onNextDifficulty}
-              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all"
-            >
-              <Star size={20} fill="white" />
-              Continue to {getDifficultyLabel(nextDifficulty)}
-            </button>
-          )}
-
         {/* Retry Current Difficulty */}
         <button
           onClick={onRestart}
@@ -187,6 +154,12 @@ export const SpellingChallengeSummary = ({
             ? "Retry for Better Score"
             : "Try Again"}
         </button>
+        <button
+          onClick={() => setShowReview((p) => !p)}
+          className="w-full bg-white border-2 border-blue-300 text-blue-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-all"
+        >
+          {showReview ? "Hide Review" : "Review Answers"}
+        </button>
 
         {/* Back to Challenges */}
         <button
@@ -196,6 +169,37 @@ export const SpellingChallengeSummary = ({
           Back to Challenges
         </button>
       </div>
+
+      {showReview && (
+        <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
+          <h3 className="font-semibold text-gray-700 mb-2 text-sm">
+            Answer Review
+          </h3>
+          <ul className="space-y-2 text-sm">
+            {results.map((r, i) => (
+              <li
+                key={i}
+                className={`p-2 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between ${
+                  r.isCorrect
+                    ? "bg-green-100 border border-green-200"
+                    : "bg-red-100 border border-red-200"
+                }`}
+              >
+                <span className="font-medium">
+                  {i + 1}. {r.wordData.word}
+                </span>
+                <span className="text-gray-600">
+                  Your answer:{" "}
+                  <span className="font-semibold">
+                    {r.userAnswer || "(blank)"}
+                  </span>{" "}
+                  {r.isCorrect ? "✓" : `→ Correct: ${r.wordData.word}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </motion.div>
   );
 };

@@ -78,6 +78,7 @@ const DialogueBubble = ({ children }: { children: React.ReactNode }) => (
 
 export const PunctuationChallengeGame = ({
   sentences,
+  difficulty = 1,
   onGameComplete,
   onExit,
 }: PunctuationChallengeGameProps) => {
@@ -105,6 +106,15 @@ export const PunctuationChallengeGame = ({
   );
 
   const currentSentenceData = sentences[currentQIndex];
+  const resultsRef = useRef<PunctuationResult[]>([]);
+  useEffect(() => {
+    resultsRef.current = results;
+  }, [results]);
+
+  const computePercent = (res: PunctuationResult[]) => {
+    const correct = res.filter((r) => r.isCorrect).length;
+    return Math.round((correct / sentences.length) * 100);
+  };
 
   const platforms = useMemo(
     () =>
@@ -167,12 +177,26 @@ export const PunctuationChallengeGame = ({
   // Timer
   useEffect(() => {
     if (timeLeft <= 0) {
-      onGameComplete({ score, results: [...results] });
+      const finalResults = [...resultsRef.current];
+      for (let i = currentQIndex; i < sentences.length; i++) {
+        const s = sentences[i];
+        finalResults.push({
+          sentenceData: s,
+          userAnswer: [],
+          isCorrect: false,
+          completedGaps: 0,
+        });
+      }
+      onGameComplete({
+        percentScore: computePercent(finalResults),
+        rawPoints: score,
+        results: finalResults,
+      });
       return;
     }
     const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(id);
-  }, [timeLeft, onGameComplete, results, score]);
+  }, [timeLeft, onGameComplete, sentences, currentQIndex, score]);
 
   const finalizeSentence = (
     answers: { position: number; mark: string; isCorrect: boolean }[],
@@ -209,7 +233,12 @@ export const PunctuationChallengeGame = ({
     if (currentQIndex + 1 < sentences.length) {
       setCurrentQIndex((i) => i + 1);
     } else {
-      onGameComplete({ score, results: [...results] });
+      const final = resultsRef.current;
+      onGameComplete({
+        percentScore: computePercent(final),
+        rawPoints: score,
+        results: [...final],
+      });
     }
   };
 

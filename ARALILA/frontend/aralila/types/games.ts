@@ -26,15 +26,30 @@ export interface PunctuationData {
 }
 
 export interface PunctuationResult {
-  sentenceData: PunctuationData;
+  sentenceData: {
+    sentence: string;
+    correctPunctuation: { position: number; mark: string }[];
+    hint?: string;
+    explanation?: string;
+  };
   userAnswer: { position: number; mark: string }[];
   isCorrect: boolean;
-  completedGaps: number; // NEW: Track how many gaps were filled correctly
+  completedGaps: number;
 }
 
 export interface PunctuationChallengeGameProps {
-  sentences: PunctuationData[];
-  onGameComplete: (data: { score: number; results: PunctuationResult[] }) => void;
+  sentences: {
+    sentence: string;
+    correctPunctuation: { position: number; mark: string }[];
+    hint?: string;
+    explanation?: string;
+  }[];
+  difficulty?: number;
+  onGameComplete: (args: {
+    percentScore: number;  
+    rawPoints: number;     
+    results: PunctuationResult[];
+  }) => void;
   onExit: () => void;
 }
 

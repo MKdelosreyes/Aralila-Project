@@ -7,7 +7,8 @@ import { PlayCircle, ArrowLeft, Info } from "lucide-react";
 
 interface SpellingChallengeIntroProps {
   difficulty: number;
-  skipMessage?: string | null;
+  unlocked?: { [k: number]: boolean };
+  onSelectDifficulty?: (d: number) => void;
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
@@ -15,7 +16,8 @@ interface SpellingChallengeIntroProps {
 
 export const SpellingChallengeIntro = ({
   difficulty,
-  skipMessage,
+  unlocked,
+  onSelectDifficulty,
   onStartChallenge,
   onBack,
 }: SpellingChallengeIntroProps) => {
@@ -80,30 +82,38 @@ export const SpellingChallengeIntro = ({
           <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
             SPELLING
           </div>
+        </motion.div>
 
-          {/* Difficulty Badge */}
-          {/* <div className="flex items-center justify-center gap-2 mt-2">
-            <div
-              className={`${difficultyColor} text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg`}
-            >
-              {difficultyLabel}
-            </div>
-          </div> */}
-
-          {/* Skip Message */}
-          {skipMessage && (
-            <motion.div
-              className="mt-6 max-w-md mx-auto"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
-                <Info className="w-6 h-6 flex-shrink-0" />
-                <p className="text-sm font-semibold text-left">{skipMessage}</p>
-              </div>
-            </motion.div>
-          )}
+        {/* ✅ Difficulty selector */}
+        <motion.div
+          className="mt-4 flex gap-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.35 }}
+        >
+          {[1, 2, 3].map((d) => {
+            const isUnlocked = unlocked ? !!unlocked[d] : d === 1;
+            const isActive = difficulty === d;
+            return (
+              <button
+                key={d}
+                disabled={!isUnlocked}
+                onClick={() =>
+                  onSelectDifficulty && isUnlocked && onSelectDifficulty(d)
+                }
+                className={`px-5 py-2 rounded-full font-bold text-sm transition-all ${
+                  isActive
+                    ? "bg-purple-600 text-white"
+                    : isUnlocked
+                    ? "bg-white/90 text-purple-700 border border-purple-300 hover:bg-white"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                }`}
+                aria-pressed={isActive}
+              >
+                {d === 1 ? "Easy" : d === 2 ? "Medium" : "Hard"}
+              </button>
+            );
+          })}
         </motion.div>
 
         <motion.div

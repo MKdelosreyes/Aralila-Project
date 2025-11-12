@@ -14,9 +14,9 @@ interface ChallengeCardProps {
     image: string;
     category: string;
     description: string;
-    stars_earned?: number; // NEW: 0-3 stars earned
-    next_difficulty?: number; // NEW: next difficulty to play (1, 2, or 3)
-    replay_mode?: boolean; // NEW: if player has mastered (3 stars)
+    stars_earned?: number;
+    next_difficulty?: number;
+    replay_mode?: boolean;
   };
   isActive: boolean;
   areaId: number;
@@ -30,20 +30,18 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
   const scale = isActive ? 1.05 : 0.75;
   const opacity = isActive ? 1 : 0.3;
 
-  // Default to 0 stars if not provided (first-time players)
   const starsEarned = card.stars_earned ?? 0;
   const nextDifficulty = card.next_difficulty ?? 1;
   const replayMode = card.replay_mode ?? false;
 
-  // Determine button text based on progress
   const getButtonText = () => {
     if (replayMode) {
-      return "Play Again"; // Mastered all difficulties
+      return "Play Again";
     }
     if (starsEarned === 0) {
-      return "Start Challenge"; // First time
+      return "Start Challenge";
     }
-    return `Continue (${starsEarned + 1}★)`; // Show next star to earn
+    return `Continue`;
   };
 
   return (
@@ -117,7 +115,7 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
             </p>
 
             {/* Progress Indicator */}
-            {starsEarned > 0 && (
+            {/* {starsEarned > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <div className="text-xs font-semibold text-purple-600">
                   ⭐ {starsEarned}/3 completed
@@ -128,7 +126,7 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
                   </div>
                 )}
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Play Button */}

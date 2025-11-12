@@ -8,8 +8,11 @@ import { SpellingChallengeIntro } from "@/components/games/spelling-challenge/in
 import { SpellingChallengeGame } from "@/components/games/spelling-challenge/game";
 import { SpellingChallengeSummary } from "@/components/games/spelling-challenge/summary";
 import { SpellingResult } from "@/types/games";
+import { spellingChallengeData } from "@/data/games/spelling-challenge";
 
 type GameState = "intro" | "playing" | "summary";
+
+type Difficulty = 1 | 2 | 3;
 
 const SpellingChallengePage = () => {
   const router = useRouter();
@@ -19,18 +22,75 @@ const SpellingChallengePage = () => {
 
   const [gameState, setGameState] = useState<GameState>("intro");
   const [currentDifficulty, setCurrentDifficulty] = useState(initialDifficulty);
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState(spellingChallengeData);
   const [finalScore, setFinalScore] = useState(0);
   const [finalResults, setFinalResults] = useState<SpellingResult[]>([]);
   const [gameData, setGameData] = useState<any>(null);
-
-  // ✅ NEW: Add loading and error states
+  const [unlocked, setUnlocked] = useState<{ [k: number]: boolean }>({
+    1: true,
+    2: false,
+    3: false,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+
+  const toDifficulty = (n: number): Difficulty => {
+    if (n === 2) return 2;
+    if (n === 3) return 3;
+    return 1;
+  };
 
   useEffect(() => {
-    fetchQuestions(areaId, currentDifficulty);
-  }, [areaId, currentDifficulty]);
+    const init = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          router.push("/auth/login");
+          return;
+        }
+        const orderIndex = parseInt(areaId, 10);
+        const areaResp = await fetch(
+          `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!areaResp.ok) throw new Error("Failed to load area");
+        const areaJson = await areaResp.json();
+        setResolvedAreaId(areaJson.area.id);
+
+        const spelling = (areaJson.games || []).find(
+          (g: any) => g.game_type === "spelling-challenge"
+        );
+        if (spelling) {
+          const du = spelling.difficulty_unlocked || {};
+          const mapped: Record<Difficulty, boolean> = {
+            1: true,
+            2: !!(du[2] ?? du["2"]),
+            3: !!(du[3] ?? du["3"]),
+          };
+          setUnlocked(mapped);
+
+          // Validate URL difficulty; fallback to highest available or 1
+          const requestedRaw = initialDifficulty;
+          const requested = toDifficulty(requestedRaw);
+
+          const highest: Difficulty = mapped[3] ? 3 : mapped[2] ? 2 : 1;
+          setCurrentDifficulty(mapped[requested] ? requested : highest);
+          setGameData(spelling);
+        } else {
+          setUnlocked({ 1: true, 2: false, 3: false });
+          setCurrentDifficulty(1);
+        }
+      } catch (e: any) {
+        setError(e.message || "Failed to load game");
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [areaId]);
 
   const fetchQuestions = async (rawAreaParam: string, difficulty: number) => {
     setLoading(true);
@@ -55,7 +115,8 @@ const SpellingChallengePage = () => {
         );
         if (areaResp.ok) {
           const areaData = await areaResp.json();
-          actualAreaId = areaData.area.id; // ✅ real DB id
+          actualAreaId = areaData.area.id;
+          setResolvedAreaId(actualAreaId);
         } else {
           // fallback: assume param already is an id
           console.warn("Area-by-order lookup failed, using raw param as id.");
@@ -104,8 +165,15 @@ const SpellingChallengePage = () => {
         return;
       }
 
-      setQuestions(data.questions);
-      setGameData(data);
+      const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, 10);
+
+      setQuestions(selected);
+      setGameData({
+        ...data,
+        total_pool: data.questions.length,
+        used_count: selected.length,
+      });
       if (data.skip_message) {
         console.log("Skip message:", data.skip_message);
       }
@@ -120,22 +188,22 @@ const SpellingChallengePage = () => {
   };
 
   const handleStart = () => {
-    if (questions.length > 0) {
-      setGameState("playing");
-    }
+    setGameState("playing");
+    fetchQuestions(areaId, currentDifficulty);
   };
 
   const handleGameComplete = async ({
-    score,
+    percentScore,
+    rawPoints,
     results,
   }: {
-    score: number;
+    percentScore: number;
+    rawPoints: number;
     results: SpellingResult[];
   }) => {
-    setFinalScore(score);
+    setFinalScore(percentScore);
     setFinalResults(results);
 
-    // Submit score to backend
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
@@ -147,16 +215,19 @@ const SpellingChallengePage = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            area_id: areaId,
+            area_id: resolvedAreaId ?? parseInt(areaId, 10),
             game_type: "spelling-challenge",
             difficulty: currentDifficulty,
-            score: score,
+            score: percentScore,
           }),
         }
       );
-
-      const data = await response.json();
-      setGameData((prev: any) => ({ ...prev, ...data }));
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        console.error("submit-score failed", response.status, err);
+      }
+      const data = await response.json().catch(() => ({}));
+      setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
     } catch (error) {
       console.error("Failed to submit score:", error);
     }
@@ -191,7 +262,6 @@ const SpellingChallengePage = () => {
     router.push(`/student/challenges?area=${areaId}`);
   };
 
-  // ✅ NEW: Loading screen
   if (loading) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
@@ -206,7 +276,6 @@ const SpellingChallengePage = () => {
     );
   }
 
-  // ✅ NEW: Error screen
   if (error) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
@@ -246,13 +315,15 @@ const SpellingChallengePage = () => {
             results={finalResults}
             difficulty={currentDifficulty}
             starsEarned={gameData?.stars_earned || 0}
-            unlockedMessage={gameData?.unlocked_message}
-            canSkip={gameData?.can_skip}
             nextDifficulty={gameData?.next_difficulty}
+            difficultyUnlocked={gameData?.difficulty_unlocked}
             replayMode={gameData?.replay_mode}
+            rawPoints={gameData?.raw_points}
             onRestart={handleRestart}
-            onNextDifficulty={handleNextDifficulty}
-            onSkipToHard={handleSkipToHard}
+            onChangeDifficulty={(d) => {
+              setCurrentDifficulty(d);
+              setGameState("intro");
+            }}
           />
         );
       case "intro":
@@ -260,7 +331,8 @@ const SpellingChallengePage = () => {
         return (
           <SpellingChallengeIntro
             difficulty={currentDifficulty}
-            skipMessage={gameData?.skip_message}
+            unlocked={unlocked}
+            onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
           />

@@ -24,6 +24,9 @@ interface Game {
   icon: string;
   best_score: number;
   completed: boolean;
+  stars_earned?: number;
+  next_difficulty?: number;
+  replay_mode?: boolean;
 }
 
 interface CardCarouselProps {
@@ -81,6 +84,9 @@ const CardCarousel = ({ areaId, games = [] }: CardCarouselProps) => {
     description: game.description,
     bestScore: game.best_score,
     completed: game.completed,
+    stars_earned: (game as any).stars_earned,
+    next_difficulty: (game as any).next_difficulty,
+    replay_mode: (game as any).replay_mode,
   }));
 
   console.log("Mapped cards:", cards);

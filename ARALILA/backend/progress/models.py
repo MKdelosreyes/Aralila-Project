@@ -40,33 +40,27 @@ class GameProgress(models.Model):
         return f"{self.user.first_name} - {self.game.name} - {self.stars_earned}★"
     
     def update_stars(self):
-        """Calculate stars based on difficulty completions"""
+        """Calculate stars based on difficulty completions (sequential logic)."""
         stars = 0
         if self.difficulty_1_completed:
             stars = 1
+            self.difficulty_2_unlocked = True
         if self.difficulty_2_completed:
             stars = 2
+            self.difficulty_3_unlocked = True
         if self.difficulty_3_completed:
             stars = 3
         self.stars_earned = stars
         self.save()
     
     def can_access_difficulty(self, difficulty):
-        """Check if user can access a specific difficulty"""
+        """Sequential unlock: 1 always; 2 only after 1 completed; 3 only after 2 completed (or full mastery)."""
         if difficulty == 1:
-            return True  # Easy always accessible
-        
-        if self.stars_earned == 3:
-            return True  # Replay mode: all unlocked
-        
+            return True
         if difficulty == 2:
-            # Medium accessible if: difficulty 1 completed OR unlocked via skip
-            return self.difficulty_1_completed or self.difficulty_2_unlocked
-        
+            return self.difficulty_1_completed
         if difficulty == 3:
-            # Hard accessible if: difficulty 2 completed OR unlocked via skip
-            return self.difficulty_2_completed or self.difficulty_3_unlocked
-        
+            return self.difficulty_2_completed
         return False
 
 

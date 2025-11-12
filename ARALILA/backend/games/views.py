@@ -158,8 +158,8 @@ def get_unlocked_areas(request):
     return Response({'areas': areas_data})
 
 
-PASS_THRESHOLDS = {1: 60, 2: 70, 3: 80}
-SKIP_THRESHOLD = 90  # Score needed to unlock skip
+UNLOCK_THRESHOLD = 80
+PASS_THRESHOLDS = {1: UNLOCK_THRESHOLD, 2: UNLOCK_THRESHOLD, 3: UNLOCK_THRESHOLD}
 
 
 @api_view(['GET'])
@@ -183,7 +183,7 @@ def get_game_questions_by_difficulty(request, area_id, game_type, difficulty):
         # Check access permission
         if not progress.can_access_difficulty(difficulty):
             return Response({
-                'error': f'Kailangan mong kumpletuhin ang Difficulty {difficulty - 1} muna!',
+                'error': f'Kailangan mong tapusin muna ang {difficulty - 1 if difficulty>1 else 1} (previous) difficulty.',
                 'locked': True,
                 'required_difficulty': difficulty - 1
             }, status=403)
@@ -284,25 +284,15 @@ def get_game_questions_by_difficulty(request, area_id, game_type, difficulty):
                     continue
         
         # Determine skip/replay status
-        skip_message = None
         replay_mode = progress.stars_earned == 3
-        
-        if replay_mode:
-            skip_message = "Replay Mode: Kumpleto na ang lahat ng difficulty!"
-        elif difficulty == 2 and progress.difficulty_2_unlocked and not progress.difficulty_1_completed:
-            skip_message = "Nag-skip ka sa Medium dahil sa perfect score sa Easy!"
-        elif difficulty == 3 and progress.difficulty_3_unlocked and not progress.difficulty_2_completed:
-            skip_message = "Nag-skip ka sa Hard dahil sa perfect score sa Medium!"
-        
         return Response({
             'questions': questions,
             'difficulty': difficulty,
             'difficulty_label': {1: 'Easy', 2: 'Medium', 3: 'Hard'}[difficulty],
-            'pass_threshold': PASS_THRESHOLDS[difficulty],
+            'pass_threshold': UNLOCK_THRESHOLD,
             'area': {'id': area.id, 'name': area.name},
             'game': {'id': game.id, 'name': game.name, 'type': game_type},
             'total_questions': len(questions),
-            'skip_message': skip_message,
             'replay_mode': replay_mode,
             'stars_earned': progress.stars_earned,
         })
@@ -316,6 +306,7 @@ def get_game_questions_by_difficulty(request, area_id, game_type, difficulty):
         print(f"Error in get_game_questions_by_difficulty: {str(e)}")
         print(traceback.format_exc())
         return Response({'error': str(e)}, status=500)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -345,63 +336,50 @@ def submit_game_score(request):
         
         progress.attempts += 1
         
-        # Check if passed
-        passed = score >= PASS_THRESHOLDS[difficulty]
-        can_skip = score >= SKIP_THRESHOLD and difficulty < 3
-        
-        # Update difficulty-specific scores
-        unlocked_message = None
+        passed = score >= UNLOCK_THRESHOLD
         next_unlocked_difficulty = None
+        unlocked_message = None
         
         if difficulty == 1:
             if score > progress.difficulty_1_score:
                 progress.difficulty_1_score = score
-            if passed:
+            if passed and not progress.difficulty_1_completed:
                 progress.difficulty_1_completed = True
-                progress.difficulty_2_unlocked = True  # Normal unlock
-                next_unlocked_difficulty = 2
-                
-                if can_skip:
-                    # Skip mechanic: unlock hard mode too!
-                    progress.difficulty_3_unlocked = True
-                    unlocked_message = "🎯 Excellent! Medium AND Hard difficulties unlocked!"
-                    next_unlocked_difficulty = 3  # Can skip to hard
-                else:
-                    unlocked_message = "✅ Medium difficulty unlocked!"
-        
+                unlocked_message = "✅ Medium difficulty unlocked!"
         elif difficulty == 2:
             if score > progress.difficulty_2_score:
                 progress.difficulty_2_score = score
-            if passed:
+            if passed and not progress.difficulty_2_completed:
                 progress.difficulty_2_completed = True
-                progress.difficulty_3_unlocked = True  # Normal unlock
-                next_unlocked_difficulty = 3
-                
-                if can_skip:
-                    unlocked_message = "🎯 Amazing! Hard difficulty unlocked with a perfect score!"
-                else:
-                    unlocked_message = "✅ Hard difficulty unlocked!"
-        
+                unlocked_message = "✅ Hard difficulty unlocked!"
         elif difficulty == 3:
             if score > progress.difficulty_3_score:
                 progress.difficulty_3_score = score
-            if passed:
+            if passed and not progress.difficulty_3_completed:
                 progress.difficulty_3_completed = True
-                unlocked_message = "🏆 Congratulations! You've mastered this game!"
+                unlocked_message = "🏆 Mastered! All difficulties completed."
         
-        # Update overall best score
+
+        # Update stars & auto-unlocks
+        progress.update_stars()
+
+        # Determine next suggested difficulty (first incomplete)
+        if not progress.difficulty_1_completed:
+            next_unlocked_difficulty = 1
+        elif not progress.difficulty_2_completed:
+            next_unlocked_difficulty = 2
+        elif not progress.difficulty_3_completed:
+            next_unlocked_difficulty = 3
+        else:
+            next_unlocked_difficulty = 1  # cycle back
+
+        # Overall best score (keep legacy)
         progress.score = max(
             progress.difficulty_1_score,
             progress.difficulty_2_score,
             progress.difficulty_3_score
         )
-        
-        # Update stars
-        progress.update_stars()
-        
-        # Check if all difficulties completed
         progress.completed = progress.difficulty_3_completed
-        
         progress.save()
         
         return Response({
@@ -411,7 +389,6 @@ def submit_game_score(request):
             'stars_earned': progress.stars_earned,
             'next_difficulty': next_unlocked_difficulty,
             'unlocked_message': unlocked_message,
-            'can_skip': can_skip,
             'replay_mode': progress.stars_earned == 3,
             'difficulty_scores': {
                 1: progress.difficulty_1_score,
@@ -419,9 +396,9 @@ def submit_game_score(request):
                 3: progress.difficulty_3_score,
             },
             'difficulty_unlocked': {
-                1: True,  # Always unlocked
-                2: progress.difficulty_2_unlocked,
-                3: progress.difficulty_3_unlocked,
+                1: True,
+                2: progress.difficulty_1_completed,
+                3: progress.difficulty_2_completed,
             }
         })
         
@@ -465,9 +442,7 @@ def get_area_detail(request, area_id):
         
         if progress:
             if not progress.difficulty_1_completed:
-                next_difficulty = 1
-            elif progress.difficulty_3_unlocked and not progress.difficulty_3_completed:
-                next_difficulty = 3
+                    next_difficulty = 1
             elif not progress.difficulty_2_completed:
                 next_difficulty = 2
             elif not progress.difficulty_3_completed:
@@ -489,8 +464,8 @@ def get_area_detail(request, area_id):
                 },
                 'difficulty_unlocked': {
                     1: True,
-                    2: progress.difficulty_2_unlocked,
-                    3: progress.difficulty_3_unlocked,
+                    2: progress.difficulty_1_completed,
+                    3: progress.difficulty_2_completed,
                 },
                 'best_score': progress.score,
                 'completed': progress.completed,

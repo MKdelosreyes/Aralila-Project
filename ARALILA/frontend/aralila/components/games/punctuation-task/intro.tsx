@@ -8,17 +8,24 @@ import { motion } from "framer-motion";
 import { PlayCircle, ArrowLeft } from "lucide-react";
 
 interface PunctuationChallengeIntroProps {
+  difficulty: number;
+  unlocked?: { [k: number]: boolean };
+  onSelectDifficulty?: (d: number) => void;
   onStartChallenge: () => void;
+  onReviewLessons?: () => void;
   onBack?: () => void;
 }
 
 export const PunctuationChallengeIntro = ({
+  difficulty,
+  unlocked,
+  onSelectDifficulty,
   onStartChallenge,
   onBack,
 }: PunctuationChallengeIntroProps) => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Back Button - Top Left Corner */}
+      {/* Back Button */}
       {onBack && (
         <motion.div
           className="absolute top-8 left-8 z-20"
@@ -69,6 +76,38 @@ export const PunctuationChallengeIntro = ({
           <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
             GRAMMAR
           </div>
+        </motion.div>
+
+        {/* ✅ Difficulty selector */}
+        <motion.div
+          className="mt-4 flex gap-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.35 }}
+        >
+          {[1, 2, 3].map((d) => {
+            const isUnlocked = unlocked ? !!unlocked[d] : d === 1;
+            const isActive = difficulty === d;
+            return (
+              <button
+                key={d}
+                disabled={!isUnlocked}
+                onClick={() =>
+                  onSelectDifficulty && isUnlocked && onSelectDifficulty(d)
+                }
+                className={`px-5 py-2 rounded-full font-bold text-sm transition-all ${
+                  isActive
+                    ? "bg-purple-600 text-white"
+                    : isUnlocked
+                    ? "bg-white/90 text-purple-700 border border-purple-300 hover:bg-white"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                }`}
+                aria-pressed={isActive}
+              >
+                {d === 1 ? "Easy" : d === 2 ? "Medium" : "Hard"}
+              </button>
+            );
+          })}
         </motion.div>
 
         <motion.div

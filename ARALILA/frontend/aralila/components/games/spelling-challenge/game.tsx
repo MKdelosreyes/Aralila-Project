@@ -35,15 +35,6 @@ interface FallingLetter {
   speed: number;
 }
 
-// interface SpellingResult {
-//   wordData: {
-//     word: string;
-//     hint: string;
-//   };
-//   userAnswer: string;
-//   isCorrect: boolean;
-// }
-
 interface SpellingChallengeGameProps {
   words: Array<{ word: string; sentence: string }>;
   difficulty?: number;

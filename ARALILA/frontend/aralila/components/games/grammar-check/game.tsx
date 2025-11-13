@@ -25,7 +25,8 @@ interface GrammarResult {
 interface GrammarCheckGameProps {
   questions: RuntimeGrammarQuestion[];
   onGameComplete: (summary: {
-    score: number;
+    percentScore: number;
+    rawPoints: number;
     results: GrammarResult[];
   }) => void;
   onExit: () => void;
@@ -89,6 +90,7 @@ export const GrammarCheckGame = ({
   const [results, setResults] = useState<GrammarResult[]>([]);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);
+  const [rawPoints, setRawPoints] = useState(0);
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error" | "skipped";
@@ -103,30 +105,32 @@ export const GrammarCheckGame = ({
   const [showAssistAnimation, setShowAssistAnimation] = useState(false);
   const [animatedWordId, setAnimatedWordId] = useState<string | null>(null);
 
-  const currentQ = questions[currentQIndex];
-
-  // Initialize word objects with unique IDs
-  const [words, setWords] = useState<WordItem[]>(
-    currentQ.jumbledTokens.map((w, i) => ({
-      id: `${i}-${w}`,
-      text: w,
-      isLocked: false,
-    }))
-  );
-
+  const [words, setWords] = useState<WordItem[]>([]);
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const advanceToNext = useCallback(() => {
-    if (currentQIndex < questions.length - 1) {
-      const nextIndex = currentQIndex + 1;
-      setCurrentQIndex(nextIndex);
+  const currentQ = questions[currentQIndex];
+
+  useEffect(() => {
+    if (currentQ?.jumbledTokens) {
       setWords(
-        questions[nextIndex].jumbledTokens.map((w, i) => ({
+        currentQ.jumbledTokens.map((w, i) => ({
           id: `${i}-${w}`,
           text: w,
           isLocked: false,
         }))
       );
+    }
+  }, [currentQ]);
+
+  const calculatePercent = (res: GrammarResult[]) => {
+    const correct = res.filter((r) => r.isCorrect).length;
+    return Math.round((correct / words.length) * 100);
+  };
+
+  const advanceToNext = useCallback(() => {
+    if (currentQIndex < questions.length - 1) {
+      const nextIndex = currentQIndex + 1;
+      setCurrentQIndex(nextIndex);
       setFeedback(null);
       setLilaState("normal");
       setAnimationKey((prev) => prev + 1);
@@ -137,7 +141,15 @@ export const GrammarCheckGame = ({
 
   useEffect(() => {
     if (isFinished) {
-      onGameComplete({ score, results });
+      const correctCount = results.filter((r) => r.isCorrect).length;
+      const percentScore = Math.round((correctCount / results.length) * 100);
+      const rawPoints = score;
+
+      onGameComplete({
+        percentScore,
+        rawPoints,
+        results,
+      });
     }
   }, [isFinished, score, results, onGameComplete]);
 
@@ -148,7 +160,7 @@ export const GrammarCheckGame = ({
     if (timeLeft > 0 && !feedback) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && results.length > 0) {
       const finalResults = [...results];
       for (let i = currentQIndex; i < questions.length; i++) {
         finalResults.push({
@@ -157,7 +169,15 @@ export const GrammarCheckGame = ({
           isCorrect: false,
         });
       }
-      onGameComplete({ score, results: finalResults });
+      onGameComplete({
+        percentScore: Math.round(
+          (finalResults.filter((r) => r.isCorrect).length /
+            finalResults.length) *
+            100
+        ),
+        rawPoints,
+        results: finalResults,
+      });
     }
   }, [
     timeLeft,
@@ -168,13 +188,35 @@ export const GrammarCheckGame = ({
     currentQIndex,
     questions,
     lilaState,
+    rawPoints,
   ]);
+
+  if (!currentQ || !words || words.length === 0) {
+    return (
+      <div className="relative z-10 max-w-[950px] w-full mx-auto p-4">
+        <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[70vh]">
+          <div className="text-center space-y-4">
+            <div className="text-6xl">😕</div>
+            <h2 className="text-2xl font-bold text-red-600">
+              No Questions Available
+            </h2>
+            <p className="text-gray-700">Please go back and try again.</p>
+            <button
+              onClick={onExit}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
+            >
+              Exit Game
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Handle assist usage
   const handleUseAssist = () => {
     if (assists <= 0 || feedback) return;
 
-    // Find the first word that's not in the correct position and not locked
     let targetWord: WordItem | null = null;
     let targetCorrectIndex = -1;
 
@@ -182,9 +224,7 @@ export const GrammarCheckGame = ({
       const correctWord = currentQ.correctTokens[i];
       const currentWord = words[i];
 
-      // If this position is incorrect and not locked
       if (currentWord.text !== correctWord && !currentWord.isLocked) {
-        // Find the word that should be here
         const wordToMove = words.find(
           (w) => w.text === correctWord && !w.isLocked
         );
@@ -198,11 +238,9 @@ export const GrammarCheckGame = ({
 
     if (!targetWord || targetCorrectIndex === -1) return;
 
-    // Move the word to correct position
     const currentIndex = words.findIndex((w) => w.id === targetWord!.id);
     const newWords = arrayMove(words, currentIndex, targetCorrectIndex);
 
-    // Lock the moved word
     const updatedWords = newWords.map((w, idx) =>
       idx === targetCorrectIndex ? { ...w, isLocked: true } : w
     );
@@ -210,7 +248,6 @@ export const GrammarCheckGame = ({
     setWords(updatedWords);
     setAssists((prev) => prev - 1);
 
-    // Show animation
     setAnimatedWordId(targetWord.id);
     setShowAssistAnimation(true);
     setTimeout(() => {
@@ -251,6 +288,7 @@ export const GrammarCheckGame = ({
     if (isCorrect) {
       const points = streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS;
       setScore((prev) => prev + points);
+      setRawPoints((prev) => prev + points);
       setStreak((prev) => prev + 1);
       setFeedback({ type: "success" });
       setLilaState("happy");
@@ -265,7 +303,7 @@ export const GrammarCheckGame = ({
       const updated = [...prev, newResult];
 
       if (currentQIndex === questions.length - 1) {
-        onGameComplete({ score, results: updated });
+        setIsFinished(true);
       } else {
         setTimeout(advanceToNext, 2500);
       }

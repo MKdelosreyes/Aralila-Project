@@ -216,6 +216,18 @@ def get_game_questions_by_difficulty(request, area_id, game_type, difficulty):
                 except Exception as e:
                     print(f"Error loading spelling item {item.id}: {e}")
                     continue
+
+        elif game_type == 'grammar-check':
+            for item in items:
+                try:
+                    grammar = item.grammar_data
+                    questions.append({
+                        'id': item.id,
+                        'sentence': grammar.sentence,
+                    })
+                except Exception as e:
+                    print(f"Error loading spelling item {item.id}: {e}")
+                    continue
         
         elif game_type == 'emoji-challenge':
             for item in items:
@@ -666,6 +678,46 @@ def get_spelling_questions(request, area_id):
         print(f"❌ Error fetching spelling questions: {str(e)}")
         import traceback
         traceback.print_exc()  # This will show the full error in console
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_grammar_questions(request, area_id):
+    """Get grammar questions for a specific area"""
+    try:
+        # Verify area exists
+        area = Area.objects.get(id=area_id, is_active=True)
+        
+        items = GameItem.objects.filter(
+            area=area,
+            game__game_type='grammar-check'
+        ).select_related('grammar_data')
+        
+        questions = []
+        for item in items:
+            if hasattr(item, 'grammar_data'):
+                questions.append({
+                    'id': item.id,
+                    'sentence': item.grammar_data.sentence,
+                    'difficulty': item.get_difficulty_display(),
+                })
+
+        print(f"✅ Found {len(questions)} grammar questions for area {area_id}")
+
+        return Response({
+            'questions': questions,
+            'area': {
+                'id': area.id,
+                'name': area.name
+            }
+        })
+    except Area.DoesNotExist:
+        return Response({'error': 'Area not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error fetching grammar questions: {str(e)}")
+        import traceback
+        traceback.print_exc()  
         return Response({'error': str(e)}, status=500)
 
 

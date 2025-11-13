@@ -13,6 +13,7 @@ urlpatterns = [
     path('submit-score/', views.submit_game_score, name='submit_game_score'),
 
     path('spelling/<int:area_id>/', views.get_spelling_questions, name='spelling_questions'),
+    path('grammar-check/<int:area_id>/', views.get_grammar_questions, name='grammar_check_questions'),
     path('emoji/<int:area_id>/', views.get_emoji_questions, name='emoji_questions'),
     path('parts-of-speech/<int:area_id>/', views.get_parts_of_speech_questions, name='parts_of_speech_questions'),
     path('punctuation/<int:area_id>/', views.get_punctuation_questions, name='punctuation_questions'),

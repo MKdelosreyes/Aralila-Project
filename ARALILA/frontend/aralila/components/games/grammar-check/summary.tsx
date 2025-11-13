@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
-import { Target, Trophy, XCircle } from "lucide-react";
+import { Target, Trophy, XCircle, RotateCcw } from "lucide-react";
 
 // --- Interfaces ---
 // interface GrammarError {
@@ -21,12 +21,18 @@ interface Question {
 
 export interface GrammarResult {
   question: Question;
-  userAnswer: string[]; // array of selected words
+  userAnswer: string[];
   isCorrect: boolean;
 }
 interface GrammarChallengeSummaryProps {
   score: number;
   results: GrammarResult[];
+  difficulty: number;
+  starsEarned: number;
+  nextDifficulty?: number;
+  difficultyUnlocked?: { [k: number]: boolean };
+  replayMode?: boolean;
+  rawPoints?: number;
   onRestart: () => void;
 }
 // --- Helper Components ---
@@ -74,212 +80,196 @@ const ReviewModal = ({
   </AnimatePresence>
 );
 
-const StatCard = ({
-  icon,
-  label,
-  value,
-  colorClass,
-  borderClass,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  colorClass: string;
-  borderClass: string;
-}) => (
-  <motion.div
-    className={`bg-slate-50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border-2 ${borderClass}`}
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${colorClass}`}
-    >
-      {icon}
-    </div>
-    <div className="text-2xl font-bold text-slate-800">{value}</div>
-    <div className="text-sm text-slate-500 mt-1">{label}</div>
-  </motion.div>
-);
-
 // --- Main Summary Component ---
 export const GrammarCheckSummary = ({
   score,
   results,
+  difficulty,
+  starsEarned,
+  nextDifficulty,
+  difficultyUnlocked,
+  replayMode,
+  rawPoints,
+  onRestart,
 }: GrammarChallengeSummaryProps) => {
-  const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const totalQuestions = results.length;
-  const correctAnswers = results.filter((r) => r.isCorrect).length;
-  const accuracy =
-    totalQuestions > 0
-      ? Math.round((correctAnswers / totalQuestions) * 100)
-      : 0;
-
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  useEffect(() => {
-    const handleResize = () =>
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  let summaryContent = {
-    title: "Good Effort!",
-    imageSrc: "/images/character/lila-normal.png",
-    showConfetti: false,
+  const correct = results.filter((r) => r.isCorrect).length;
+  const wrong = results.length - correct;
+  const percent = score;
+  const threshold = 80;
+  const unlocked = {
+    1: true,
+    2: difficultyUnlocked?.[2] ?? false,
+    3: difficultyUnlocked?.[3] ?? false,
   };
-  if (accuracy === 100) {
-    summaryContent = {
-      title: "Perfect!",
-      imageSrc: "/images/character/lila-happy.png",
-      showConfetti: true,
-    };
-  } else if (accuracy >= 80) {
-    summaryContent = {
-      title: "Excellent Work!",
-      imageSrc: "/images/character/lila-happy.png",
-      showConfetti: true,
-    };
-  } else if (accuracy < 20) {
-    summaryContent = {
-      title: "Keep Practicing!",
-      imageSrc: "/images/character/lila-crying.png",
-      showConfetti: false,
-    };
-  } else if (accuracy < 40) {
-    summaryContent = {
-      title: "Needs Improvement",
-      imageSrc: "/images/character/lila-sad.png",
-      showConfetti: false,
-    };
-  }
+  const perfect = percent === 100 && wrong === 0;
+  const passed = percent >= threshold;
 
-  // const incorrectResults = results.filter((r) => !r.isCorrect);
+  const [showReview, setShowReview] = React.useState(false);
+
+  const getTitle = () => {
+    if (perfect) return "Perfect! 🎉";
+    if (passed) return "Great Job! 👏";
+    return "Keep Practicing! 💪";
+  };
+
+  const getDifficultyLabel = (diff: number) => {
+    return { 1: "Easy", 2: "Medium", 3: "Hard" }[diff] || "Unknown";
+  };
 
   return (
     <>
       <motion.div
-        className="relative z-10 bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 max-w-2xl w-full text-center shadow-2xl"
+        className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
-        {summaryContent.showConfetti && windowSize.width > 0 && (
-          <Confetti
-            width={windowSize.width}
-            height={windowSize.height}
-            recycle={false}
-            numberOfPieces={400}
-            gravity={0.15}
-          />
-        )}
-        <Image
-          src={summaryContent.imageSrc}
-          alt="Lila character"
-          width={150}
-          height={150}
-          className="mx-auto mb-4"
-        />
-        <h1 className="text-4xl font-bold text-purple-700 mb-2">
-          {summaryContent.title}
-        </h1>
-        <p className="text-slate-500 mb-8">
-          Here&apos;s a summary of your performance.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10">
-          <StatCard
-            icon={<Trophy className="w-6 h-6 text-yellow-600" />}
-            label="Final Score"
-            value={score}
-            colorClass="bg-yellow-100"
-            borderClass="border-yellow-400"
-          />
-          <StatCard
-            icon={<Target className="w-6 h-6 text-green-600" />}
-            label="Accuracy"
-            value={`${accuracy}%`}
-            colorClass="bg-green-100"
-            borderClass="border-green-400"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row-reverse items-center justify-center gap-4">
-          <button
-            onClick={() => router.push("/student/challenges")}
-            className="w-full sm:w-auto inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/30"
+        {/* Header */}
+        <div className="text-center mb-6">
+          <motion.h2
+            initial={{ y: -20 }}
+            animate={{ y: 0 }}
+            className="text-4xl font-bold text-gray-800 mb-2"
           >
-            CONTINUE
-          </button>
-          {results.length > 0 && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="w-full sm:w-auto inline-block bg-transparent hover:bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-xl border-2 border-slate-300 transition-all duration-300"
-            >
-              REVIEW ANSWERS
-            </button>
-          )}
-        </div>
-      </motion.div>
+            {getTitle()}
+          </motion.h2>
 
-      <ReviewModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="overflow-y-auto pr-2 -mr-2">
-          <div className="space-y-4">
-            {results.map((result, index) => (
+          <div className="flex items-center justify-center gap-2 text-gray-600 mb-4">
+            <span className="text-sm font-medium">
+              {getDifficultyLabel(difficulty)} Mode
+            </span>
+            <span className="text-2xl">•</span>
+            <span className="text-3xl font-bold text-purple-600">
+              {percent}%
+            </span>
+            {rawPoints !== undefined && (
+              <p className="text-center text-sm text-gray-500 mb-2">
+                Raw Points: {rawPoints}
+              </p>
+            )}
+          </div>
+
+          {/* Stars Display */}
+          <div className="flex justify-center gap-2 mb-4">
+            {[1, 2, 3].map((starNum) => (
               <motion.div
-                key={index}
-                className={`p-4 rounded-xl border ${
-                  result.isCorrect
-                    ? "bg-green-50 border-green-200"
-                    : "bg-red-50 border-red-200"
-                }`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+                key={starNum}
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2 * starNum, type: "spring" }}
               >
-                <p className="text-slate-600 text-sm mb-1">
-                  Scrambled Sentence:
-                </p>
-                <p className="text-slate-800 p-2 bg-slate-100 rounded-md mb-3">
-                  {result.question.jumbledTokens.join(" ")}
-                </p>
-
-                <p className="text-slate-600 text-sm mb-1">Your Answer:</p>
-                <p
-                  className={`text-slate-800 p-2 rounded-md mb-3 ${
-                    result.isCorrect ? "bg-green-100" : "bg-red-100"
-                  }`}
-                >
-                  {result.userAnswer.join(" ")}
-                </p>
-
-                {!result.isCorrect && (
-                  <>
-                    <p className="text-slate-600 text-sm mb-1">
-                      Correct Answer:
-                    </p>
-                    <p className="text-slate-800 p-2 bg-green-100 rounded-md">
-                      {result.question.correctTokens.join(" ")}
-                    </p>
-                  </>
-                )}
-
-                <p
-                  className={`mt-2 font-bold ${
-                    result.isCorrect ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {result.isCorrect ? "✅ Correct" : "❌ Incorrect"}
-                </p>
+                <Image
+                  src={
+                    starNum <= starsEarned
+                      ? "/images/art/Active-Star.png"
+                      : "/images/art/Inactive-Star.png"
+                  }
+                  alt={`star-${starNum}`}
+                  width={60}
+                  height={60}
+                  className={
+                    starNum <= starsEarned ? "animate-pulse" : "opacity-50"
+                  }
+                />
               </motion.div>
             ))}
           </div>
         </div>
-      </ReviewModal>
+
+        {/* Replay Mode Badge */}
+        {replayMode && (
+          <div className="bg-green-100 border-2 border-green-400 rounded-xl p-3 mb-6 text-center">
+            <p className="text-green-800 font-semibold flex items-center justify-center gap-2">
+              <Trophy size={20} />
+              Mastery Unlocked! Play any difficulty
+            </p>
+          </div>
+        )}
+
+        {/* Results Summary */}
+        <div className="bg-gray-50 rounded-xl p-4 mb-6">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-gray-500 text-sm">Correct</p>
+              {/* ✅ show once */}
+              <p className="text-2xl font-bold text-green-600">{correct}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Wrong</p>
+              <p className="text-2xl font-bold text-red-600">{wrong}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Total</p>
+              <p className="text-2xl font-bold text-gray-700">
+                {results.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          {/* Retry Current Difficulty */}
+          <button
+            onClick={onRestart}
+            className="w-full bg-white border-2 border-gray-300 text-gray-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+          >
+            <RotateCcw size={20} />
+            {replayMode
+              ? "Play Again"
+              : passed
+              ? "Retry for Better Score"
+              : "Try Again"}
+          </button>
+          <button
+            onClick={() => setShowReview((p) => !p)}
+            className="w-full bg-white border-2 border-blue-300 text-blue-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-all"
+          >
+            {showReview ? "Hide Review" : "Review Answers"}
+          </button>
+
+          {/* Back to Challenges */}
+          <button
+            onClick={() => window.history.back()}
+            className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 transition-colors"
+          >
+            Back to Challenges
+          </button>
+        </div>
+
+        {showReview && (
+          <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
+            <h3 className="font-semibold text-gray-700 mb-2 text-sm">
+              Answer Review
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {results.map((r, i) => (
+                <li
+                  key={i}
+                  className={`p-2 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between ${
+                    r.isCorrect
+                      ? "bg-green-100 border border-green-200"
+                      : "bg-red-100 border border-red-200"
+                  }`}
+                >
+                  <span className="font-medium">
+                    {i + 1}. {r.question.jumbledTokens.join(" ")}
+                  </span>
+                  <span className="text-gray-600">
+                    Your answer:{" "}
+                    <span className="font-semibold">
+                      {r.userAnswer.join(" ") || "(blank)"}
+                    </span>{" "}
+                    {r.isCorrect
+                      ? "✓"
+                      : `→ Correct: ${r.question.correctTokens.join(" ")}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </motion.div>
     </>
   );
 };

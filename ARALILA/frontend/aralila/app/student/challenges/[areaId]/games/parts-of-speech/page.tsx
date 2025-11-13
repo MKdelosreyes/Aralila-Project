@@ -55,7 +55,7 @@ const PartsOfSpeechPage = () => {
       try {
         const token = localStorage.getItem("access_token");
         if (!token) {
-          router.push("/auth/login");
+          router.push("/login");
           return;
         }
         const orderIndex = parseInt(areaId, 10);

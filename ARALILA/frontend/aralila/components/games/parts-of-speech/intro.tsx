@@ -27,14 +27,14 @@ export const PartsOfSpeechIntro = ({
       {/* Back Button - Top Left Corner */}
       {onBack && (
         <motion.div
-          className="absolute top-8 left-8 z-20"
+          className="absolute top-10 left-8 z-20"
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <div className="relative group flex items-center justify-center">
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+              <div className="w-16 h-16 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50"></div>
             </div>
             <motion.button
               onClick={onBack}
@@ -42,7 +42,7 @@ export const PartsOfSpeechIntro = ({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ArrowLeft className="w-20 h-20 text-white cursor-pointer" />
+              <ArrowLeft className="w-16 h-16 text-white cursor-pointer" />
               <div
                 className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap"
                 style={{ pointerEvents: "none" }}
@@ -55,9 +55,9 @@ export const PartsOfSpeechIntro = ({
       )}
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full">
+      <div className="relative z-10 flex flex-col items-center justify-start h-full overflow-hidden">
         <motion.div
-          className="text-center mb-8"
+          className="text-center mb-3"
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
@@ -80,7 +80,7 @@ export const PartsOfSpeechIntro = ({
 
         {/* ✅ Difficulty selector */}
         <motion.div
-          className="mt-4 flex gap-3"
+          className="mb-5 flex gap-3"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.35 }}
@@ -123,23 +123,41 @@ export const PartsOfSpeechIntro = ({
           }}
         >
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-36 h-36 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+            <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
           </div>
 
-          <motion.button
-            onClick={onStartChallenge}
-            className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+          <motion.div
+            className="relative group flex items-center justify-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 20,
+              delay: 0.5,
+            }}
           >
-            <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
-            <div
-              className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-              style={{ pointerEvents: "none" }}
-            >
-              Start
+            {/* Pulsing circle animation */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
             </div>
-          </motion.button>
+
+            <motion.button
+              onClick={onStartChallenge}
+              className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
+              {/* Start tooltip */}
+              <div
+                className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                style={{ pointerEvents: "none" }}
+              >
+                Start
+              </div>
+            </motion.button>
+          </motion.div>
         </motion.div>
       </div>
     </div>

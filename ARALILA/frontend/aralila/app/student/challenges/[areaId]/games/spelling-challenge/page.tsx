@@ -266,10 +266,10 @@ const SpellingChallengePage = () => {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
         <AnimatedBackground />
-        <div className="relative z-20 bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+        <div className="relative z-20 rounded-3xl p-8 max-w-md w-full">
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-600"></div>
-            <p className="text-gray-700 font-semibold">Loading questions...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
+            <p className="text-white font-semibold">Loading questions...</p>
           </div>
         </div>
       </div>
@@ -343,7 +343,7 @@ const SpellingChallengePage = () => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground />
-      <div className="w-full flex items-center justify-center">
+      <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>
     </div>

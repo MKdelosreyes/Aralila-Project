@@ -366,7 +366,7 @@ const PartsOfSpeechPage = () => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground />
-      <div className="w-full flex items-center justify-center">
+      <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>
     </div>

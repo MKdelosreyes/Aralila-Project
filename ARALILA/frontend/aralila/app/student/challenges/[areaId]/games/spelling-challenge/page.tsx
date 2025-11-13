@@ -100,7 +100,7 @@ const SpellingChallengePage = () => {
       const token = localStorage.getItem("access_token");
       if (!token) {
         setError("Not authenticated. Please log in.");
-        router.push("/auth/login");
+        router.push("/login");
         return;
       }
 

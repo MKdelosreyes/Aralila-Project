@@ -7,12 +7,18 @@ import { PlayCircle, ArrowLeft } from "lucide-react";
 import { PartsOfSpeechDifficulty } from "@/types/games";
 
 interface PartsOfSpeechIntroProps {
-  onStartChallenge: (difficulty: PartsOfSpeechDifficulty) => void;
-  onReviewLessons: () => void;
+  difficulty: PartsOfSpeechDifficulty;
+  unlocked?: { [k: number]: boolean };
+  onSelectDifficulty?: (d: PartsOfSpeechDifficulty) => void;
+  onStartChallenge: () => void;
+  onReviewLessons?: () => void;
   onBack?: () => void;
 }
 
 export const PartsOfSpeechIntro = ({
+  difficulty,
+  unlocked,
+  onSelectDifficulty,
   onStartChallenge,
   onBack,
 }: PartsOfSpeechIntroProps) => {
@@ -72,6 +78,39 @@ export const PartsOfSpeechIntro = ({
           </div>
         </motion.div>
 
+        {/* ✅ Difficulty selector */}
+        <motion.div
+          className="mt-4 flex gap-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.35 }}
+        >
+          {([1, 2, 3] as PartsOfSpeechDifficulty[]).map((d) => {
+            // ✅ Type assertion
+            const isUnlocked = unlocked ? !!unlocked[d] : d === 1;
+            const isActive = difficulty === d;
+            return (
+              <button
+                key={d}
+                disabled={!isUnlocked}
+                onClick={() =>
+                  onSelectDifficulty && isUnlocked && onSelectDifficulty(d)
+                }
+                className={`px-5 py-2 rounded-full font-bold text-sm transition-all ${
+                  isActive
+                    ? "bg-purple-600 text-white"
+                    : isUnlocked
+                    ? "bg-white/90 text-purple-700 border border-purple-300 hover:bg-white"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                }`}
+                aria-pressed={isActive}
+              >
+                {d === 1 ? "Easy" : d === 2 ? "Medium" : "Hard"}
+              </button>
+            );
+          })}
+        </motion.div>
+
         <motion.div
           className="relative group flex items-center justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
@@ -88,7 +127,7 @@ export const PartsOfSpeechIntro = ({
           </div>
 
           <motion.button
-            onClick={() => onStartChallenge("medium")}
+            onClick={onStartChallenge}
             className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}

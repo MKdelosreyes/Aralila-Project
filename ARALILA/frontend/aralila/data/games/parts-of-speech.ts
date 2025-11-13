@@ -46,23 +46,27 @@ export const partsOfSpeechData: PartsOfSpeechQuestion[] = [
 ];
 
 
-export const PARTS_OF_SPEECH_DIFFICULTY_SETTINGS = {
-  easy: {
-    initialTime: 90, // seconds
-    correctBonus: 15, // seconds added for correct answer
-    wrongPenalty: 5, // seconds removed for wrong answer
-    hintCost: 5, // stars
-  },
-  medium: {
-    initialTime: 60,
-    correctBonus: 10,
-    wrongPenalty: 10,
-    hintCost: 10,
-  },
-  hard: {
-    initialTime: 45,
+export const PARTS_OF_SPEECH_DIFFICULTY_SETTINGS: Record<
+  1 | 2 | 3, 
+  {
+    initialTime: number;
+    correctBonus: number;
+    wrongPenalty: number;
+  }
+> = {
+  1: { 
+    initialTime: 120,
     correctBonus: 5,
-    wrongPenalty: 15,
-    hintCost: 15,
+    wrongPenalty: 3,
+  },
+  2: { 
+    initialTime: 100,
+    correctBonus: 8,
+    wrongPenalty: 5,
+  },
+  3: {
+    initialTime: 80,
+    correctBonus: 10,
+    wrongPenalty: 7,
   },
 };

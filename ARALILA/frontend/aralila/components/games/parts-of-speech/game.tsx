@@ -14,6 +14,7 @@ import {
   PartsOfSpeechQuestion,
   PartsOfSpeechGameProps,
   PartsOfSpeechResult,
+  PartsOfSpeechDifficulty,
 } from "@/types/games";
 import { PARTS_OF_SPEECH_DIFFICULTY_SETTINGS } from "@/data/games/parts-of-speech";
 import Image from "next/image";
@@ -126,6 +127,12 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const currentSettings = PARTS_OF_SPEECH_DIFFICULTY_SETTINGS[difficulty];
   const progress = (timeLeft / currentSettings.initialTime) * 100;
 
+  const computePercent = (res: PartsOfSpeechResult[]) => {
+    const total = questions.length || 1;
+    const correct = res.filter((r) => r.isCorrect).length;
+    return Math.round((correct / total) * 100);
+  };
+
   const finishGame = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -143,7 +150,11 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         });
       }
     }
-    onGameComplete({ score, results: finalResults });
+    onGameComplete({
+      percentScore: computePercent(finalResults),
+      rawPoints: score,
+      results: finalResults,
+    });
   }, [score, results, onGameComplete, currentQuestionIndex, questions]);
 
   useEffect(() => {
@@ -313,9 +324,37 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   };
 
   const renderSentenceWithHighlight = () => {
+    if (!currentQ || !currentQ.word || !currentQ.sentence) {
+      return (
+        <div className="relative z-10 max-w-6xl w-full mx-auto p-4">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[70vh]">
+            <div className="text-center space-y-4">
+              <div className="text-6xl">😕</div>
+              <h2 className="text-2xl font-bold text-red-600">
+                Invalid Question Data
+              </h2>
+              <p className="text-gray-700">
+                The question data is incomplete or missing.
+              </p>
+              <button
+                onClick={onExit}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
+              >
+                Exit Game
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!currentQ?.sentence || !currentQ?.word) {
+      return <span className="text-slate-600">No sentence available</span>;
+    }
+
     return currentQ.sentence.split(" ").map((word, i) => {
       const cleanWord = word.replace(/[.,!?]/g, "");
-      if (cleanWord.toLowerCase() === currentQ.word.toLowerCase()) {
+      if (cleanWord.toLowerCase() === currentQ.word?.toLowerCase()) {
         return (
           <span
             key={i}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
 import { PunctuationChallengeIntro } from "@/components/games/punctuation-task/intro";
@@ -8,6 +8,7 @@ import { PunctuationChallengeGame } from "@/components/games/punctuation-task/ga
 import { PunctuationChallengeSummary } from "@/components/games/punctuation-task/summary";
 import { punctuationChallengeData } from "@/data/games/punctuation-task";
 import { PunctuationResult } from "@/types/games";
+import { PunctuationData } from "@/types/games";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { parse } from "path";
 import { da } from "date-fns/locale";
@@ -24,7 +25,7 @@ const PunctuationChallengePage = () => {
 
   const [gameState, setGameState] = useState<GameState>("intro");
   const [currentDifficulty, setCurrentDifficulty] = useState(initialDifficulty);
-  const [questions, setQuestions] = useState(punctuationChallengeData);
+  const [questions, setQuestions] = useState<PunctuationData[]>([]);
   const [finalScore, setFinalScore] = useState(0);
   const [finalResults, setFinalResults] = useState<PunctuationResult[]>([]);
   const [gameData, setGameData] = useState<any>(null);
@@ -42,10 +43,6 @@ const PunctuationChallengePage = () => {
     if (n === 3) return 3;
     return 1;
   };
-
-  // useEffect(() => {
-  //   fetchAreaQuestions(areaId, currentDifficulty);
-  // }, [areaId, currentDifficulty]);
 
   useEffect(() => {
     const init = async () => {
@@ -101,6 +98,7 @@ const PunctuationChallengePage = () => {
   const fetchQuestions = async (rawAreaParam: string, difficulty: number) => {
     setLoading(true);
     setError(null);
+    let selected;
 
     try {
       const token = localStorage.getItem("access_token");
@@ -171,7 +169,7 @@ const PunctuationChallengePage = () => {
       }
 
       const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 10);
+      selected = shuffled.slice(0, 10);
 
       setQuestions(selected);
       setGameData({
@@ -182,6 +180,8 @@ const PunctuationChallengePage = () => {
       if (data.skip_message) {
         console.log("Skip message:", data.skip_message);
       }
+
+      console.log(questions[0]);
     } catch (error) {
       console.error("Failed to fetch questions:", error);
       setError(
@@ -190,11 +190,34 @@ const PunctuationChallengePage = () => {
     } finally {
       setLoading(false);
     }
+
+    return selected;
   };
 
-  const handleStart = () => {
-    setGameState("playing");
-    fetchQuestions(areaId, currentDifficulty);
+  const handleStart = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await fetchQuestions(areaId, currentDifficulty);
+      console.log("Fetched questions:", data);
+
+      if (data && data.length > 0) {
+        console.log("First question structure:", {
+          sentence: data[0].sentence,
+          answers: data[0].answers,
+          rawData: data[0],
+        });
+
+        console.log("First answer object:", data[0].answers?.[0]);
+      }
+      if (!data || data.length === 0) {
+        setError("No questions available.");
+        return;
+      }
+      setGameState("playing");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGameComplete = async ({

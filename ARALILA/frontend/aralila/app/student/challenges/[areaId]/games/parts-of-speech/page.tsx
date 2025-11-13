@@ -178,7 +178,24 @@ const PartsOfSpeechPage = () => {
         return;
       }
 
-      const validQuestions = data.questions.filter(
+      console.log("First questions:", data.questions[0]);
+
+      const transformedQuestions = data.questions.flatMap((q: any) => {
+        if (!q.words || q.words.length === 0) return [];
+
+        return q.words.map((wordObj: any) => ({
+          id: `${q.id}-${wordObj.id}`,
+          sentence: q.sentence,
+          word: wordObj.word,
+          correctAnswer: wordObj.correct_answer,
+          hint: q.hint,
+          explanation: q.explanation,
+        }));
+      });
+
+      console.log("Transformed questions:", transformedQuestions);
+
+      const validQuestions = transformedQuestions.filter(
         (q: any) => q.sentence && q.word && q.correctAnswer
       );
 
@@ -187,17 +204,19 @@ const PartsOfSpeechPage = () => {
         return;
       }
 
-      const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
+      const shuffled = [...validQuestions].sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, 10);
 
       console.log("Selected questions:", selected);
+      console.log("First selected question:", selected[0]);
 
       setQuestions(selected);
       setGameData({
         ...data,
-        total_pool: data.questions.length,
+        total_pool: validQuestions.length,
         used_count: selected.length,
       });
+
       if (data.skip_message) {
         console.log("Skip message:", data.skip_message);
       }
@@ -211,24 +230,19 @@ const PartsOfSpeechPage = () => {
     }
   };
 
-  const handleStart = () => {
-    if (!questions || questions.length === 0) {
-      setError("No questions available. Please try again.");
-      return;
+  const handleStart = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      await fetchQuestions(areaId, currentDifficulty);
+      setGameState("playing");
+    } catch (error) {
+      console.error("Error starting game:", error);
+      setError("Failed to start game. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    const invalidQuestion = questions.find(
-      (q) => !q.sentence || !q.word || !q.correctAnswer
-    );
-
-    if (invalidQuestion) {
-      setError("Some questions are missing required data. Please reload.");
-      console.error("Invalid question:", invalidQuestion);
-      return;
-    }
-
-    setGameState("playing");
-    fetchQuestions(areaId, currentDifficulty);
   };
 
   const handleGameComplete = async ({

@@ -18,7 +18,7 @@ export const punctuationChallengeData: PunctuationData[] = [
   {
     id: 1,
     sentence: "Hala May nakalimutan pala ako",
-    // Hala ! May nakalimutan pala ako .
+    // Hala  ! May nakalimutan pala ako .
     correctPunctuation: [
       { position: 0, mark: "!" },  // after "Hala"
       { position: -1, mark: "." }, // end of sentence

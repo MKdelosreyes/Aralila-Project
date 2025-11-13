@@ -14,6 +14,7 @@ import {
   PartsOfSpeechQuestion,
   PartsOfSpeechGameProps,
   PartsOfSpeechResult,
+  PartsOfSpeechDifficulty,
 } from "@/types/games";
 import { PARTS_OF_SPEECH_DIFFICULTY_SETTINGS } from "@/data/games/parts-of-speech";
 import Image from "next/image";
@@ -126,6 +127,12 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const currentSettings = PARTS_OF_SPEECH_DIFFICULTY_SETTINGS[difficulty];
   const progress = (timeLeft / currentSettings.initialTime) * 100;
 
+  const computePercent = (res: PartsOfSpeechResult[]) => {
+    const total = questions.length || 1;
+    const correct = res.filter((r) => r.isCorrect).length;
+    return Math.round((correct / total) * 100);
+  };
+
   const finishGame = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -143,7 +150,11 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         });
       }
     }
-    onGameComplete({ score, results: finalResults });
+    onGameComplete({
+      percentScore: computePercent(finalResults),
+      rawPoints: score,
+      results: finalResults,
+    });
   }, [score, results, onGameComplete, currentQuestionIndex, questions]);
 
   useEffect(() => {
@@ -313,9 +324,37 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   };
 
   const renderSentenceWithHighlight = () => {
+    if (!currentQ || !currentQ.word || !currentQ.sentence) {
+      return (
+        <div className="relative z-10 max-w-6xl w-full mx-auto p-4">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[70vh]">
+            <div className="text-center space-y-4">
+              <div className="text-6xl">😕</div>
+              <h2 className="text-2xl font-bold text-red-600">
+                Invalid Question Data
+              </h2>
+              <p className="text-gray-700">
+                The question data is incomplete or missing.
+              </p>
+              <button
+                onClick={onExit}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
+              >
+                Exit Game
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!currentQ?.sentence || !currentQ?.word) {
+      return <span className="text-slate-600">No sentence available</span>;
+    }
+
     return currentQ.sentence.split(" ").map((word, i) => {
       const cleanWord = word.replace(/[.,!?]/g, "");
-      if (cleanWord.toLowerCase() === currentQ.word.toLowerCase()) {
+      if (cleanWord.toLowerCase() === currentQ.word?.toLowerCase()) {
         return (
           <span
             key={i}
@@ -352,50 +391,29 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
             className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
           >
             <div className="flex flex-col items-center gap-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-                <HandHelping className="w-10 h-10 text-white" />
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                <HandHelping className="w-8 h-8 text-purple-600" />
               </div>
-
-              <div className="text-center space-y-2">
-                <h3 className="text-3xl font-bold text-slate-800">
-                  Oops! Mali yun! 😅
-                </h3>
-                <p className="text-lg text-slate-600 font-medium">
-                  Gusto mo ng tulong ni Lila?
-                </p>
-                <p className="text-sm text-slate-400 italic">
-                  Wanna use an assist for this?
-                </p>
+              <h3 className="text-2xl font-bold text-slate-800">Mali!</h3>
+              <p className="text-slate-600 text-center">
+                Gusto mo bang gumamit ng assist para subukan ulit?
+              </p>
+              <div className="flex items-center gap-2 text-purple-600">
+                <HandHelping className="w-5 h-5" />
+                <span className="font-bold">{assists} assists natitira</span>
               </div>
-
-              <div className="bg-purple-50 rounded-xl p-4 w-full">
-                <div className="flex items-center justify-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <HandHelping className="w-6 h-6 text-purple-600" />
-                    <span className="text-2xl font-bold text-purple-600">
-                      {assists}
-                    </span>
-                  </div>
-                  <span className="text-slate-600 font-medium">
-                    {assists === 1 ? "assist" : "assists"} natitira
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex gap-3 w-full mt-2">
+              <div className="flex gap-3 w-full mt-4">
                 <button
                   onClick={handleDeclineAssist}
-                  className="flex-1 px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all transform hover:scale-105 active:scale-95"
+                  className="flex-1 px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all"
                 >
-                  <div className="text-base">Huwag na</div>
-                  <div className="text-xs text-slate-500">Proceed</div>
+                  Hindi
                 </button>
                 <button
                   onClick={handleUseAssist}
-                  className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+                  className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
                 >
-                  <div className="text-base">Gamitin! ✨</div>
-                  <div className="text-xs opacity-90">Use assist</div>
+                  Oo, gamitin
                 </button>
               </div>
             </div>
@@ -500,9 +518,9 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
               {/* Right Side: Drop Zones (Parts of Speech Options) */}
               <div className="flex flex-col gap-4">
-                {currentOptions.map((option) => (
+                {currentOptions.map((option, index) => (
                   <DropZone
-                    key={option}
+                    key={`${option}-${index}`}
                     option={option}
                     isCorrect={
                       option === currentQ.correctAnswer &&

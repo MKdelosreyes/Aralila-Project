@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
+from progress.models import GameProgress
 
 MINIMUM_SCORE_THRESHOLD = 70  # 70% average required
 
@@ -74,14 +75,10 @@ def evaluate_emoji_sentence(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_unlocked_areas(request):
     """Get all areas with lock/unlock status and progress for current user"""
-    print(f"User: {request.user}")  # Debug: Check if user is authenticated
-    print(f"Is authenticated: {request.user.is_authenticated}")
-
     all_areas = Area.objects.filter(is_active=True).order_by('order_index')
     areas_data = []
     
@@ -89,6 +86,9 @@ def get_unlocked_areas(request):
         # Get all games for this area
         game_items = GameItem.objects.filter(area=area).select_related('game')
         total_games = game_items.count()
+        
+        if total_games == 0:
+            total_games = 6
         
         # Get user's progress for this area
         progress_records = GameProgress.objects.filter(
@@ -105,12 +105,10 @@ def get_unlocked_areas(request):
         best_scores = [p['best_score'] for p in progress_records]
         average_score = sum(best_scores) / len(best_scores) if best_scores else 0
         
-        # Determine if area is locked
         is_locked = False
         message = ""
         
         if index == 0:
-            # First area is always unlocked
             is_locked = False
             message = "Start your journey here!"
         else:
@@ -126,6 +124,10 @@ def get_unlocked_areas(request):
             
             prev_completed = previous_progress.count()
             prev_total = GameItem.objects.filter(area=previous_area).count()
+            
+            if prev_total == 0:
+                prev_total = 6
+            
             prev_scores = [p['best_score'] for p in previous_progress]
             prev_avg = sum(prev_scores) / len(prev_scores) if prev_scores else 0
             
@@ -141,7 +143,8 @@ def get_unlocked_areas(request):
                 message = "Unlocked!"
         
         areas_data.append({
-            'id': area.id,
+            'id': area.id,  # Database ID (for reference)
+            'order_index': area.order_index, 
             'name': area.name,
             'description': area.description,
             'is_locked': is_locked,
@@ -150,61 +153,360 @@ def get_unlocked_areas(request):
             'average_score': round(average_score, 1),
             'message': message,
             'theme_color': area.theme_color,
-            'icon': area.icon
         })
     
     return Response({'areas': areas_data})
 
 
+UNLOCK_THRESHOLD = 80
+PASS_THRESHOLDS = {1: UNLOCK_THRESHOLD, 2: UNLOCK_THRESHOLD, 3: UNLOCK_THRESHOLD}
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_game_questions_by_difficulty(request, area_id, game_type, difficulty):
+    """
+    Get questions for a specific game type, area, and difficulty level
+    Implements hybrid unlock logic with skip mechanic
+    """
+    try:
+        area = Area.objects.get(id=area_id, is_active=True)
+        game = Game.objects.get(game_type=game_type)
+        
+        # Get or create progress
+        progress, created = GameProgress.objects.get_or_create(
+            user=request.user,
+            area=area,
+            game=game
+        )
+        
+        # Check access permission
+        if not progress.can_access_difficulty(difficulty):
+            return Response({
+                'error': f'Kailangan mong tapusin muna ang {difficulty - 1 if difficulty>1 else 1} (previous) difficulty.',
+                'locked': True,
+                'required_difficulty': difficulty - 1
+            }, status=403)
+        
+        items = GameItem.objects.filter(
+            area=area,
+            game=game,
+            difficulty=difficulty
+        ).order_by('id') 
+        
+        if not items.exists():
+            return Response({
+                'error': 'No questions available for this difficulty',
+                'questions': [],
+                'difficulty': difficulty
+            }, status=200)
+        
+        questions = []
+        
+        # Route to appropriate handler based on game_type
+        if game_type == 'spelling-challenge':
+            for item in items:
+                try:
+                    spelling = item.spelling_data
+                    questions.append({
+                        'id': item.id,
+                        'word': spelling.word,
+                        'sentence': spelling.sentence,
+                    })
+                except Exception as e:
+                    print(f"Error loading spelling item {item.id}: {e}")
+                    continue
+
+        elif game_type == 'grammar-check':
+            for item in items:
+                try:
+                    grammar = item.grammar_data
+                    questions.append({
+                        'id': item.id,
+                        'sentence': grammar.sentence,
+                    })
+                except Exception as e:
+                    print(f"Error loading spelling item {item.id}: {e}")
+                    continue
+        
+        elif game_type == 'emoji-challenge':
+            for item in items:
+                try:
+                    emoji = item.emoji_data
+                    symbols = list(emoji.symbols.values('symbol', 'keyword'))
+                    questions.append({
+                        'id': item.id,
+                        'translation': emoji.translation,
+                        'symbols': symbols,
+                    })
+                except Exception as e:
+                    print(f"Error loading emoji item {item.id}: {e}")
+                    continue
+        
+        elif game_type == 'punctuation-task':
+            for item in items:
+                try:
+                    punctuation = item.punctuation_data
+                    answers = list(punctuation.answers.values('position', 'mark'))
+                    questions.append({
+                        'id': item.id,
+                        'sentence': punctuation.sentence,
+                        'hint': punctuation.hint,
+                        'answers': answers
+                    })
+                except Exception as e:
+                    print(f"Error loading punctuation item {item.id}: {e}")
+                    continue
+        
+        elif game_type == 'parts-of-speech':
+            for item in items:
+                try:
+                    pos = item.pos_data
+                    words = []
+                    for word_obj in pos.words.all():
+                        words.append({
+                            'id': word_obj.id,
+                            'word': word_obj.word,
+                            'correct_answer': word_obj.correct_answer
+                        })
+                    questions.append({
+                        'id': item.id,
+                        'sentence': pos.sentence,
+                        'words': words,
+                        'hint': pos.hint,
+                        'explanation': pos.explanation
+                    })
+                except Exception as e:
+                    print(f"Error loading POS item {item.id}: {e}")
+                    continue
+        
+        elif game_type == 'word-association':
+            for item in items:
+                try:
+                    fourpics = item.fourpics_data
+                    images = [img.image_path for img in fourpics.images.all()]
+                    questions.append({
+                        'id': item.id,
+                        'answer': fourpics.answer,
+                        'images': images,
+                        'hint': fourpics.hint
+                    })
+                except Exception as e:
+                    print(f"Error loading word association item {item.id}: {e}")
+                    continue
+        
+        # Determine skip/replay status
+        replay_mode = progress.stars_earned == 3
+        return Response({
+            'questions': questions,
+            'difficulty': difficulty,
+            'difficulty_label': {1: 'Easy', 2: 'Medium', 3: 'Hard'}[difficulty],
+            'pass_threshold': UNLOCK_THRESHOLD,
+            'area': {'id': area.id, 'name': area.name},
+            'game': {'id': game.id, 'name': game.name, 'type': game_type},
+            'total_questions': len(questions),
+            'replay_mode': replay_mode,
+            'stars_earned': progress.stars_earned,
+        })
+        
+    except Area.DoesNotExist:
+        return Response({'error': 'Area not found'}, status=404)
+    except Game.DoesNotExist:
+        return Response({'error': 'Game not found'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Error in get_game_questions_by_difficulty: {str(e)}")
+        print(traceback.format_exc())
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_game_score(request):
+    """
+    Submit score and update star progress with hybrid unlock logic
+    """
+    try:
+        area_id = request.data.get('area_id')
+        game_type = request.data.get('game_type')
+        difficulty = request.data.get('difficulty')
+        score = request.data.get('score')
+        
+        # Validation
+        if not all([area_id, game_type, difficulty is not None, score is not None]):
+            return Response({'error': 'Missing required fields'}, status=400)
+        
+        area = Area.objects.get(id=area_id)
+        game = Game.objects.get(game_type=game_type)
+        
+        # Get or create progress
+        progress, created = GameProgress.objects.get_or_create(
+            user=request.user,
+            area=area,
+            game=game
+        )
+        
+        progress.attempts += 1
+        
+        passed = score >= UNLOCK_THRESHOLD
+        next_unlocked_difficulty = None
+        unlocked_message = None
+        
+        if difficulty == 1:
+            if score > progress.difficulty_1_score:
+                progress.difficulty_1_score = score
+            if passed and not progress.difficulty_1_completed:
+                progress.difficulty_1_completed = True
+                unlocked_message = "✅ Medium difficulty unlocked!"
+        elif difficulty == 2:
+            if score > progress.difficulty_2_score:
+                progress.difficulty_2_score = score
+            if passed and not progress.difficulty_2_completed:
+                progress.difficulty_2_completed = True
+                unlocked_message = "✅ Hard difficulty unlocked!"
+        elif difficulty == 3:
+            if score > progress.difficulty_3_score:
+                progress.difficulty_3_score = score
+            if passed and not progress.difficulty_3_completed:
+                progress.difficulty_3_completed = True
+                unlocked_message = "🏆 Mastered! All difficulties completed."
+        
+
+        # Update stars & auto-unlocks
+        progress.update_stars()
+
+        # Determine next suggested difficulty (first incomplete)
+        if not progress.difficulty_1_completed:
+            next_unlocked_difficulty = 1
+        elif not progress.difficulty_2_completed:
+            next_unlocked_difficulty = 2
+        elif not progress.difficulty_3_completed:
+            next_unlocked_difficulty = 3
+        else:
+            next_unlocked_difficulty = 1  # cycle back
+
+        # Overall best score (keep legacy)
+        progress.score = max(
+            progress.difficulty_1_score,
+            progress.difficulty_2_score,
+            progress.difficulty_3_score
+        )
+        progress.completed = progress.difficulty_3_completed
+        progress.save()
+        
+        return Response({
+            'success': True,
+            'passed': passed,
+            'score': score,
+            'stars_earned': progress.stars_earned,
+            'next_difficulty': next_unlocked_difficulty,
+            'unlocked_message': unlocked_message,
+            'replay_mode': progress.stars_earned == 3,
+            'difficulty_scores': {
+                1: progress.difficulty_1_score,
+                2: progress.difficulty_2_score,
+                3: progress.difficulty_3_score,
+            },
+            'difficulty_unlocked': {
+                1: True,
+                2: progress.difficulty_1_completed,
+                3: progress.difficulty_2_completed,
+            }
+        })
+        
+    except Area.DoesNotExist:
+        return Response({'error': 'Area not found'}, status=404)
+    except Game.DoesNotExist:
+        return Response({'error': 'Game not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_area_detail(request, area_id):
-    """Get detailed information about a specific area and its games"""
+    """Get detailed information about a specific area and its games with star progress"""
     
     try:
         area = Area.objects.get(id=area_id, is_active=True)
     except Area.DoesNotExist:
         return Response({'error': 'Area not found'}, status=404)
     
-    # Get all unique games for this area
-    game_items = GameItem.objects.filter(area=area).select_related('game').distinct('game')
+    game_ids = GameItem.objects.filter(area=area).values_list('game_id', flat=True).distinct()
+    games_in_area = Game.objects.filter(id__in=game_ids).order_by('order_index')
     
     games_data = []
-    for item in game_items:
-        game = item.game
+    for game in games_in_area:
         
-        # Get user's best progress for this game in this area
-        best_progress = GameProgress.objects.filter(
+        progress = GameProgress.objects.filter(
             user=request.user,
             area=area,
             game=game
-        ).order_by('-score').first()
+        ).first()
         
-        # Count attempts
         attempts = GameProgress.objects.filter(
             user=request.user,
             area=area,
             game=game
         ).count()
         
-        # ✅ Use the game_type field directly from the Game model
         game_type = game.game_type if game.game_type else 'unknown'
-        icon = game.icon if game.icon else '🎮'
         
-        games_data.append({
-            'id': game.id,
-            'name': game.name,
-            'description': game.description,
-            'game_type': game_type,  # ✅ This will now return 'spelling-challenge', 'emoji-challenge', etc.
-            'icon': icon,
-            'best_score': best_progress.score if best_progress else 0,
-            'completed': best_progress.completed if best_progress else False,
-            'attempts': attempts
-        })
+        if progress:
+            if not progress.difficulty_1_completed:
+                    next_difficulty = 1
+            elif not progress.difficulty_2_completed:
+                next_difficulty = 2
+            elif not progress.difficulty_3_completed:
+                next_difficulty = 3
+            else:
+                next_difficulty = 1
+            
+            games_data.append({
+                'id': game.id,
+                'name': game.name,
+                'description': game.description,
+                'game_type': game_type,
+                'stars_earned': progress.stars_earned,
+                'next_difficulty': next_difficulty,
+                'difficulty_scores': {
+                    1: progress.difficulty_1_score,
+                    2: progress.difficulty_2_score,
+                    3: progress.difficulty_3_score,
+                },
+                'difficulty_unlocked': {
+                    1: True,
+                    2: progress.difficulty_1_completed,
+                    3: progress.difficulty_2_completed,
+                },
+                'best_score': progress.score,
+                'completed': progress.completed,
+                'attempts': attempts,
+                'replay_mode': progress.stars_earned == 3,
+            })
+        else:
+            games_data.append({
+                'id': game.id,
+                'name': game.name,
+                'description': game.description,
+                'game_type': game_type,
+                'stars_earned': 0,
+                'next_difficulty': 1,
+                'difficulty_scores': {1: 0, 2: 0, 3: 0},
+                'difficulty_unlocked': {1: True, 2: False, 3: False},
+                'best_score': 0,
+                'completed': False,
+                'attempts': 0,
+                'replay_mode': False,
+            })
     
-    # Calculate area statistics
     completed_count = sum(1 for g in games_data if g['completed'])
     total_games = len(games_data)
+    
+    # ✅ Handle empty games
+    if total_games == 0:
+        total_games = 6
+    
     scores = [g['best_score'] for g in games_data if g['best_score'] > 0]
     avg_score = sum(scores) / len(scores) if scores else 0
     
@@ -217,12 +519,125 @@ def get_area_detail(request, area_id):
             'total_games': total_games,
             'average_score': round(avg_score, 1),
             'theme_color': area.theme_color,
-            'icon': area.icon
         },
         'games': games_data
     })
 
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_area_by_order(request, order_index):
+    """
+    Get area details by order_index instead of id
+    This makes the system independent of database IDs
+    """
+    try:
+        area = Area.objects.get(order_index=order_index, is_active=True)
+        
+        game_ids = GameItem.objects.filter(area=area).values_list('game_id', flat=True).distinct()
+        
+        # Then get the Game objects
+        games_in_area = Game.objects.filter(id__in=game_ids).order_by('order_index')
+        
+        games_data = []
+        for game in games_in_area:
+            
+            progress = GameProgress.objects.filter(
+                user=request.user,
+                area=area,
+                game=game
+            ).first()
+            
+            attempts = GameProgress.objects.filter(
+                user=request.user,
+                area=area,
+                game=game
+            ).count()
+            
+            game_type = game.game_type if game.game_type else 'unknown'
+            
+            if progress:
+                if not progress.difficulty_1_completed:
+                    next_difficulty = 1
+                elif progress.difficulty_3_unlocked and not progress.difficulty_3_completed:
+                    next_difficulty = 3
+                elif not progress.difficulty_2_completed:
+                    next_difficulty = 2
+                elif not progress.difficulty_3_completed:
+                    next_difficulty = 3
+                else:
+                    next_difficulty = 1
+                
+                games_data.append({
+                    'id': game.id,
+                    'name': game.name,
+                    'description': game.description,
+                    'game_type': game_type,
+                    'stars_earned': progress.stars_earned,
+                    'next_difficulty': next_difficulty,
+                    'difficulty_scores': {
+                        1: progress.difficulty_1_score,
+                        2: progress.difficulty_2_score,
+                        3: progress.difficulty_3_score,
+                    },
+                    'difficulty_unlocked': {
+                        1: True,
+                        2: progress.difficulty_2_unlocked,
+                        3: progress.difficulty_3_unlocked,
+                    },
+                    'best_score': progress.score,
+                    'completed': progress.completed,
+                    'attempts': attempts,
+                    'replay_mode': progress.stars_earned == 3,
+                })
+            else:
+                games_data.append({
+                    'id': game.id,
+                    'name': game.name,
+                    'description': game.description,
+                    'game_type': game_type,
+                    'stars_earned': 0,
+                    'next_difficulty': 1,
+                    'difficulty_scores': {1: 0, 2: 0, 3: 0},
+                    'difficulty_unlocked': {1: True, 2: False, 3: False},
+                    'best_score': 0,
+                    'completed': False,
+                    'attempts': 0,
+                    'replay_mode': False,
+                })
+        
+        completed_count = sum(1 for g in games_data if g['completed'])
+        total_games = len(games_data)
+        
+        if total_games == 0:
+            total_games = 6  # Expected games per area
+        
+        scores = [g['best_score'] for g in games_data if g['best_score'] > 0]
+        avg_score = sum(scores) / len(scores) if scores else 0
+        
+        return Response({
+            'area': {
+                'id': area.id,
+                'order_index': area.order_index,
+                'name': area.name,
+                'description': area.description,
+                'completed_games': completed_count,
+                'total_games': total_games,
+                'average_score': round(avg_score, 1),
+                'theme_color': area.theme_color,
+            },
+            'games': games_data
+        })
+        
+    except Area.DoesNotExist:
+        return Response(
+            {'error': f'Area with order {order_index} not found'}, 
+            status=404
+        )
+    except Exception as e:
+        import traceback
+        print(f"❌ Error in get_area_by_order: {str(e)}")
+        traceback.print_exc()
+        return Response({'error': str(e)}, status=500)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -232,7 +647,6 @@ def get_spelling_questions(request, area_id):
         # Verify area exists
         area = Area.objects.get(id=area_id, is_active=True)
         
-        # ✅ Fixed: Use 'spelling_data' instead of 'spellingitem'
         items = GameItem.objects.filter(
             area=area,
             game__game_type='spelling-challenge'
@@ -264,6 +678,46 @@ def get_spelling_questions(request, area_id):
         print(f"❌ Error fetching spelling questions: {str(e)}")
         import traceback
         traceback.print_exc()  # This will show the full error in console
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_grammar_questions(request, area_id):
+    """Get grammar questions for a specific area"""
+    try:
+        # Verify area exists
+        area = Area.objects.get(id=area_id, is_active=True)
+        
+        items = GameItem.objects.filter(
+            area=area,
+            game__game_type='grammar-check'
+        ).select_related('grammar_data')
+        
+        questions = []
+        for item in items:
+            if hasattr(item, 'grammar_data'):
+                questions.append({
+                    'id': item.id,
+                    'sentence': item.grammar_data.sentence,
+                    'difficulty': item.get_difficulty_display(),
+                })
+
+        print(f"✅ Found {len(questions)} grammar questions for area {area_id}")
+
+        return Response({
+            'questions': questions,
+            'area': {
+                'id': area.id,
+                'name': area.name
+            }
+        })
+    except Area.DoesNotExist:
+        return Response({'error': 'Area not found'}, status=404)
+    except Exception as e:
+        print(f"❌ Error fetching grammar questions: {str(e)}")
+        import traceback
+        traceback.print_exc()  
         return Response({'error': str(e)}, status=500)
 
 
@@ -409,3 +863,5 @@ def get_word_association_questions(request, area_id):
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         return Response({'error': str(e)}, status=500)
+    
+

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
-import { Target, Trophy, CheckCircle2, XCircle } from "lucide-react";
+import { Target, Trophy, CheckCircle2, RotateCcw } from "lucide-react";
 
 // Interfaces
 interface Question {
@@ -21,199 +21,200 @@ export interface GameResult {
 interface SummaryProps {
   score: number;
   results: GameResult[];
+  difficulty: number;
+  starsEarned: number;
+  nextDifficulty?: number;
+  difficultyUnlocked?: { [k: number]: boolean };
+  replayMode?: boolean;
+  rawPoints?: number;
   onRestart: () => void;
 }
 
-const ReviewModal = ({
-  isOpen,
-  onClose,
-  children,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}) => (
-  <AnimatePresence>
-    {isOpen && (
-      <motion.div
-        className="fixed inset-0 backdrop-blur-sm bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-      >
-        <motion.div
-          className="bg-white rounded-3xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl"
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center mb-4 flex-shrink-0">
-            <h2 className="text-2xl font-bold text-slate-800">
-              Review Challenge
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-800"
-            >
-              <XCircle size={28} />
-            </button>
-          </div>
-          {children}
-        </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
-export const EmojiChallengeSummary = ({ score, results }: SummaryProps) => {
-  const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-
-  const totalQuestions = results.length;
-  const correctAnswers = results.filter((r) => r.isCorrect).length;
-  const accuracy =
-    totalQuestions > 0
-      ? Math.round((correctAnswers / totalQuestions) * 100)
-      : 0;
-
-  useEffect(() => {
-    const handleResize = () =>
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  let summaryContent = {
-    title: "Great Job!",
-    imageSrc: "/images/character/lila-normal.png",
-    showConfetti: false,
+export const EmojiChallengeSummary = ({
+  score,
+  results,
+  difficulty,
+  starsEarned,
+  nextDifficulty,
+  difficultyUnlocked,
+  replayMode,
+  rawPoints,
+  onRestart,
+}: SummaryProps) => {
+  const correct = results.filter((r) => r.isCorrect).length;
+  const wrong = results.length - correct;
+  const percent = score;
+  const threshold = 80;
+  const unlocked = {
+    1: true,
+    2: difficultyUnlocked?.[2] ?? false,
+    3: difficultyUnlocked?.[3] ?? false,
   };
-  if (accuracy === 100) {
-    summaryContent = {
-      title: "Perfect!",
-      imageSrc: "/images/character/lila-happy.png",
-      showConfetti: true,
-    };
-  } else if (accuracy >= 80) {
-    summaryContent = {
-      title: "Awesome Effort!",
-      imageSrc: "/images/character/lila-happy.png",
-      showConfetti: true,
-    };
-  } else if (accuracy < 40) {
-    summaryContent = {
-      title: "Keep Practicing!",
-      imageSrc: "/images/character/lila-crying.png",
-      showConfetti: false,
-    };
-  }
+  const perfect = percent === 100 && wrong === 0;
+  const passed = percent >= threshold;
+
+  const [showReview, setShowReview] = React.useState(false);
+
+  const getTitle = () => {
+    if (perfect) return "Perfect! 🎉";
+    if (passed) return "Great Job! 👏";
+    return "Keep Practicing! 💪";
+  };
+
+  const getDifficultyLabel = (diff: number) => {
+    return { 1: "Easy", 2: "Medium", 3: "Hard" }[diff] || "Unknown";
+  };
 
   return (
     <>
       <motion.div
-        className="relative z-10 bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 max-w-2xl w-full text-center shadow-2xl"
+        className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-        {summaryContent.showConfetti && windowSize.width > 0 && (
-          <Confetti
-            width={windowSize.width}
-            height={windowSize.height}
-            recycle={false}
-          />
-        )}
-
-        <Image
-          src={summaryContent.imageSrc}
-          alt="Summary character"
-          width={150}
-          height={150}
-          className="mx-auto mb-4"
-        />
-        <h1 className="text-4xl font-bold text-purple-700 mb-2">
-          {summaryContent.title}
-        </h1>
-        <p className="text-slate-500 mb-8">Here’s a summary of your game.</p>
-
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-10">
-          <div className="bg-slate-50 p-4 rounded-2xl border-2 border-yellow-400 flex flex-col items-center">
-            <Trophy className="text-yellow-500 mb-1" size={28} />
-            <div className="text-3xl font-bold text-slate-800">{score}</div>
-            <div className="text-sm text-slate-500 mt-1">Score</div>
-          </div>
-          <div className="bg-slate-50 p-4 rounded-2xl border-2 border-green-400 flex flex-col items-center">
-            <Target className="text-green-500 mb-1" size={28} />
-            <div className="text-3xl font-bold text-slate-800">{accuracy}%</div>
-            <div className="text-sm text-slate-500 mt-1">Accuracy</div>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row-reverse items-center justify-center gap-4">
-          <button
-            onClick={() => router.push("/student/challenges")}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-transform transform hover:scale-105"
+        {/* Header */}
+        <div className="text-center mb-6">
+          <motion.h2
+            initial={{ y: -20 }}
+            animate={{ y: 0 }}
+            className="text-4xl font-bold text-gray-800 mb-2"
           >
-            CONTINUE
-          </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto bg-transparent hover:bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-xl border-2 border-slate-300 transition-all"
-          >
-            REVIEW LESSONS
-          </button>
-        </div>
-      </motion.div>
+            {getTitle()}
+          </motion.h2>
 
-      <ReviewModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="overflow-y-auto pr-2 -mr-2">
-          <div className="space-y-3">
-            {results.map((result, index) => (
+          <div className="flex items-center justify-center gap-2 text-gray-600 mb-4">
+            <span className="text-sm font-medium">
+              {getDifficultyLabel(difficulty)} Mode
+            </span>
+            <span className="text-2xl">•</span>
+            <span className="text-3xl font-bold text-purple-600">
+              {percent}%
+            </span>
+            {rawPoints !== undefined && (
+              <p className="text-center text-sm text-gray-500 mb-2">
+                Raw Points: {rawPoints}
+              </p>
+            )}
+          </div>
+
+          {/* Stars Display */}
+          <div className="flex justify-center gap-2 mb-4">
+            {[1, 2, 3].map((starNum) => (
               <motion.div
-                key={index}
-                className={`p-4 rounded-xl border flex items-start gap-4 ${
-                  result.isCorrect
-                    ? "bg-green-50 border-green-200"
-                    : "bg-red-50 border-red-200"
-                }`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
+                key={starNum}
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2 * starNum, type: "spring" }}
               >
-                <div
-                  className={`mt-1 flex-shrink-0 ${
-                    result.isCorrect ? "text-green-500" : "text-red-500"
-                  }`}
-                >
-                  {result.isCorrect ? (
-                    <CheckCircle2 size={24} />
-                  ) : (
-                    <XCircle size={24} />
-                  )}
-                </div>
-                {/* <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    {result.questionData.emojis.map((e, i) => (
-                      <span key={i} className="text-2xl">
-                        {e}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="font-bold text-slate-800">
-                    {result.questionData.correctSentence}
-                  </p>
-                  <p className="text-sm text-slate-500 mt-1">
-                    ({result.questionData.hint})
-                  </p>
-                </div> */}
+                <Image
+                  src={
+                    starNum <= starsEarned
+                      ? "/images/art/Active-Star.png"
+                      : "/images/art/Inactive-Star.png"
+                  }
+                  alt={`star-${starNum}`}
+                  width={60}
+                  height={60}
+                  className={
+                    starNum <= starsEarned ? "animate-pulse" : "opacity-50"
+                  }
+                />
               </motion.div>
             ))}
           </div>
         </div>
-      </ReviewModal>
+
+        {/* Replay Mode Badge */}
+        {replayMode && (
+          <div className="bg-green-100 border-2 border-green-400 rounded-xl p-3 mb-6 text-center">
+            <p className="text-green-800 font-semibold flex items-center justify-center gap-2">
+              <Trophy size={20} />
+              Mastery Unlocked! Play any difficulty
+            </p>
+          </div>
+        )}
+
+        {/* Results Summary */}
+        <div className="bg-gray-50 rounded-xl p-4 mb-6">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-gray-500 text-sm">Correct</p>
+              {/* ✅ show once */}
+              <p className="text-2xl font-bold text-green-600">{correct}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Wrong</p>
+              <p className="text-2xl font-bold text-red-600">{wrong}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Total</p>
+              <p className="text-2xl font-bold text-gray-700">
+                {results.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          {/* Retry Current Difficulty */}
+          <button
+            onClick={onRestart}
+            className="w-full bg-white border-2 border-gray-300 text-gray-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+          >
+            <RotateCcw size={20} />
+            {replayMode
+              ? "Play Again"
+              : passed
+              ? "Retry for Better Score"
+              : "Try Again"}
+          </button>
+          <button
+            onClick={() => setShowReview((p) => !p)}
+            className="w-full bg-white border-2 border-blue-300 text-blue-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-all"
+          >
+            {showReview ? "Hide Review" : "Review Answers"}
+          </button>
+
+          {/* Back to Challenges */}
+          <button
+            onClick={() => window.history.back()}
+            className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 transition-colors"
+          >
+            Back to Challenges
+          </button>
+        </div>
+
+        {showReview && (
+          <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
+            <h3 className="font-semibold text-gray-700 mb-2 text-sm">
+              Answer Review
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {results.map((r, i) => (
+                <li
+                  key={i}
+                  className={`p-2 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between ${
+                    r.isCorrect
+                      ? "bg-green-100 border border-green-200"
+                      : "bg-red-100 border border-red-200"
+                  }`}
+                >
+                  <span className="font-medium">
+                    {i + 1}. {r.questionData.emojis.join("")}
+                  </span>
+                  <span className="text-gray-600">
+                    Your answer:{" "}
+                    <span className="font-semibold">
+                      {/* {r.questionData.userAnswer || "(blank)"} */}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </motion.div>
     </>
   );
 };

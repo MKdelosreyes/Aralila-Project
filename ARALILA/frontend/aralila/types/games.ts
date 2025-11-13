@@ -26,37 +26,56 @@ export interface PunctuationData {
 }
 
 export interface PunctuationResult {
-  sentenceData: PunctuationData;
+  sentenceData: {
+    sentence: string;
+    correctPunctuation: { position: number; mark: string }[];
+    hint?: string;
+    explanation?: string;
+  };
   userAnswer: { position: number; mark: string }[];
   isCorrect: boolean;
-  completedGaps: number; // NEW: Track how many gaps were filled correctly
+  completedGaps: number;
 }
 
 export interface PunctuationChallengeGameProps {
-  sentences: PunctuationData[];
-  onGameComplete: (data: { score: number; results: PunctuationResult[] }) => void;
+  sentences: {
+    sentence: string;
+    correctPunctuation: { position: number; mark: string }[];
+    hint?: string;
+    explanation?: string;
+  }[];
+  difficulty?: number;
+  onGameComplete: (args: {
+    percentScore: number;  
+    rawPoints: number;     
+    results: PunctuationResult[];
+  }) => void;
   onExit: () => void;
 }
 
 
 // parts of speech
 
-export type PartsOfSpeechDifficulty = "easy" | "medium" | "hard";
+export type PartsOfSpeechDifficulty = 1 | 2 | 3;
 
 export interface PartsOfSpeechQuestion {
   id: string;
   sentence: string;
-  word: string; // The word to identify the part of speech for
-  options?: string[]; // e.g., ['Noun', 'Verb', 'Adjective']
+  word: string; 
+  options?: string[];
   correctAnswer: string;
   hint: string;
-  explanation: string; // Optional, for post-game review
+  explanation: string; 
 }
 
 export interface PartsOfSpeechGameProps {
   questions: PartsOfSpeechQuestion[];
   difficulty: PartsOfSpeechDifficulty;
-  onGameComplete: (data: { score: number; results: PartsOfSpeechResult[] }) => void;
+  onGameComplete: (args: {
+    percentScore: number;  
+    rawPoints: number;
+    results: PartsOfSpeechResult[];
+  }) => void;
   onExit: () => void;
 }
 
@@ -66,6 +85,11 @@ export interface PartsOfSpeechResult {
   isCorrect: boolean;
   skipped: boolean;
   hintUsed: boolean;
+}
+
+export interface GrammarSentenceQuestion {
+  id: number;
+  sentence: string; // correct sentence
 }
 
 // word association

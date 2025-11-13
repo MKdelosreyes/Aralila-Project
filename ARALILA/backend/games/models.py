@@ -31,8 +31,8 @@ class Game(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     game_type = models.CharField(max_length=50, choices=GAME_TYPE_CHOICES, blank=True)  # 👈 Add this
-    icon = models.CharField(max_length=10, blank=True)  # 👈 Add this
-    order_index = models.PositiveIntegerField(default=0)  # 👈 Add this
+    icon = models.CharField(max_length=10, blank=True)  
+    order_index = models.PositiveIntegerField(default=0)  
 
     class Meta:
         ordering = ['order_index']
@@ -52,6 +52,11 @@ class GameItem(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="items")
     area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="items")
     difficulty = models.IntegerField(choices=DIFFICULTY_CHOICES, default=1)
+    order_index = models.PositiveIntegerField(default=0)  
+
+    class Meta:
+        ordering = ['difficulty', 'order_index'] 
+        unique_together = ['game', 'area', 'difficulty', 'order_index']  
 
     def __str__(self):
         return f"{self.game.name} - {self.area.name} ({self.get_difficulty_display()})"
@@ -152,6 +157,15 @@ class FourPicsOneWordImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.fourpics_item.answer}: {self.image_path}"
+
+
+# Grammar Game
+class GrammarItem(models.Model):
+    item = models.OneToOneField(GameItem, on_delete=models.CASCADE, primary_key=True, related_name="grammar_data")
+    sentence = models.TextField()
+
+    def __str__(self):
+        return f"{self.sentence[:50]}"
 
 
 class EmojiSentenceItem(models.Model):

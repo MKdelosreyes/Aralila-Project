@@ -24,6 +24,9 @@ interface Game {
   icon: string;
   best_score: number;
   completed: boolean;
+  stars_earned?: number;
+  next_difficulty?: number;
+  replay_mode?: boolean;
 }
 
 interface CardCarouselProps {
@@ -35,37 +38,55 @@ const CardCarousel = ({ areaId, games = [] }: CardCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const x = useMotionValue(0);
 
-  // Helper function to get valid image URL
-  const getImageUrl = (icon: string | null | undefined): string => {
-    if (!icon || icon.trim() === "") {
+  console.log("Received games prop:", games.length);
+
+  const getImageUrl = (name: string) => {
+    if (name === "Spelling Game") {
       return "/images/art/game-art-1.png";
+    } else if (name === "Punctuation Game") {
+      return "/images/art/game-art-2.png";
+    } else if (name === "Parts of Speech Game") {
+      return "/images/art/game-art-3.png";
+    } else if (name === "Word Association") {
+      return "/images/art/game-art-4.png";
+    } else if (name === "Grammar Check Game") {
+      return "/images/art/game-art-6.png";
+    } else if (name === "Emoji Sentence Construction") {
+      return "/images/art/game-art-8.png";
     }
+    return "/images/art/game-art-7.png";
+  };
 
-    if (icon.startsWith("http://") || icon.startsWith("https://")) {
-      return icon;
+  const getTitle = (name: string) => {
+    if (name === "Spelling Game") {
+      return "Spell Mo 'Yan";
+    } else if (name === "Punctuation Game") {
+      return "Puntuhang Puntos";
+    } else if (name === "Parts of Speech Game") {
+      return "Salita't Uri";
+    } else if (name === "Word Association") {
+      return "Salitang Konektado";
+    } else if (name === "Grammar Check Game") {
+      return "Gramatika Galore";
+    } else if (name === "Emoji Sentence Construction") {
+      return "Kuwento ng mga Emoji";
     }
-
-    if (icon.startsWith("/")) {
-      return icon;
-    }
-
-    if (icon.includes("media/")) {
-      return `${env.backendUrl}${icon.startsWith("/") ? "" : "/"}${icon}`;
-    }
-
-    return "/images/art/game-art-1.png";
+    return name;
   };
 
   // Map backend games to card format
   const cards = games.map((game) => ({
     id: game.id,
-    title: game.name,
+    title: getTitle(game.name),
     slug: game.game_type,
-    image: getImageUrl(game.icon),
+    image: getImageUrl(game.name),
     category: game.game_type,
     description: game.description,
     bestScore: game.best_score,
     completed: game.completed,
+    stars_earned: (game as any).stars_earned,
+    next_difficulty: (game as any).next_difficulty,
+    replay_mode: (game as any).replay_mode,
   }));
 
   console.log("Mapped cards:", cards);

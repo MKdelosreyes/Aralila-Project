@@ -33,13 +33,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}
       >
-        <AuthProvider>
-          {" "}
-          {/* NEW: Wrap with AuthProvider */}
-          {children}
-        </AuthProvider>
+        <AuthProvider> {children}</AuthProvider>
       </body>
     </html>
   );

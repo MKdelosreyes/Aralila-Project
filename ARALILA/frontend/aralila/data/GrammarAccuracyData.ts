@@ -231,55 +231,63 @@
   // }
 // ];
 
+// export const grammarAccuracyQuestions = [
+//   {
+//     id: 1,
+//     jumbled: ["eats", "She", "apple", "an"],
+//     correct: ["She", "eats", "an", "apple"],
+//   },
+//   {
+//     id: 2,
+//     jumbled: ["dog", "The", "sleeping", "is"],
+//     correct: ["The", "dog", "is", "sleeping"],
+//   },
+//   {
+//     id: 3,
+//     jumbled: ["going", "to", "am", "school", "I"],
+//     correct: ["I", "am", "going", "to", "school"],
+//   },
+//   {
+//     id: 4,
+//     jumbled: ["friends", "My", "playing", "are", "outside"],
+//     correct: ["My", "friends", "are", "playing", "outside"],
+//   },
+//   {
+//     id: 5,
+//     jumbled: ["book", "reading", "is", "She", "a"],
+//     correct: ["She", "is", "reading", "a", "book"],
+//   },
+//   // {
+//   //   id: 6,
+//   //   jumbled: ["at", "morning", "runs", "the", "He"],
+//   //   correct: ["He", "runs", "at", "the", "morning"],
+//   // },
+//   // {
+//   //   id: 7,
+//   //   jumbled: ["cat", "sleeping", "the", "is", "sofa", "on", "the"],
+//   //   correct: ["The", "cat", "is", "sleeping", "on", "the", "sofa"],
+//   // },
+//   // {
+//   //   id: 8,
+//   //   jumbled: ["have", "We", "lunch", "already", "eaten"],
+//   //   correct: ["We", "have", "already", "eaten", "lunch"],
+//   // },
+//   // {
+//   //   id: 9,
+//   //   jumbled: ["teacher", "our", "kind", "is", "very"],
+//   //   correct: ["Our", "teacher", "is", "very", "kind"],
+//   // },
+//   // {
+//   //   id: 10,
+//   //   jumbled: ["playing", "the", "piano", "She", "is"],
+//   //   correct: ["She", "is", "playing", "the", "piano"],
+//   // },
+// ];
+
 export const grammarAccuracyQuestions = [
-  {
-    id: 1,
-    jumbled: ["eats", "She", "apple", "an"],
-    correct: ["She", "eats", "an", "apple"],
-  },
-  {
-    id: 2,
-    jumbled: ["dog", "The", "sleeping", "is"],
-    correct: ["The", "dog", "is", "sleeping"],
-  },
-  {
-    id: 3,
-    jumbled: ["going", "to", "am", "school", "I"],
-    correct: ["I", "am", "going", "to", "school"],
-  },
-  {
-    id: 4,
-    jumbled: ["friends", "My", "playing", "are", "outside"],
-    correct: ["My", "friends", "are", "playing", "outside"],
-  },
-  {
-    id: 5,
-    jumbled: ["book", "reading", "is", "She", "a"],
-    correct: ["She", "is", "reading", "a", "book"],
-  },
-  // {
-  //   id: 6,
-  //   jumbled: ["at", "morning", "runs", "the", "He"],
-  //   correct: ["He", "runs", "at", "the", "morning"],
-  // },
-  // {
-  //   id: 7,
-  //   jumbled: ["cat", "sleeping", "the", "is", "sofa", "on", "the"],
-  //   correct: ["The", "cat", "is", "sleeping", "on", "the", "sofa"],
-  // },
-  // {
-  //   id: 8,
-  //   jumbled: ["have", "We", "lunch", "already", "eaten"],
-  //   correct: ["We", "have", "already", "eaten", "lunch"],
-  // },
-  // {
-  //   id: 9,
-  //   jumbled: ["teacher", "our", "kind", "is", "very"],
-  //   correct: ["Our", "teacher", "is", "very", "kind"],
-  // },
-  // {
-  //   id: 10,
-  //   jumbled: ["playing", "the", "piano", "She", "is"],
-  //   correct: ["She", "is", "playing", "the", "piano"],
-  // },
+  { id: 1, sentence: "She eats an apple." },
+  { id: 2, sentence: "The dog is sleeping." },
+  { id: 3, sentence: "I am going to school." },
+  { id: 4, sentence: "My friends are playing outside." },
+  { id: 5, sentence: "She is reading a book." },
 ];

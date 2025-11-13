@@ -36,9 +36,9 @@ const buildPlatforms = (
   sentence: string,
   correctPunctuation: { position: number; mark: string }[]
 ): PlatformUnit[] => {
-  const words = splitIntoWords(sentence);
-
-  const sorted = [...correctPunctuation].sort((a, b) => {
+  const cps = Array.isArray(correctPunctuation) ? correctPunctuation : []; // ✅
+  const words = splitIntoWords(sentence || "");
+  const sorted = [...cps].sort((a, b) => {
     const aPos = a.position === -1 ? Number.MAX_SAFE_INTEGER : a.position;
     const bPos = b.position === -1 ? Number.MAX_SAFE_INTEGER : b.position;
     return aPos - bPos;
@@ -76,11 +76,81 @@ const DialogueBubble = ({ children }: { children: React.ReactNode }) => (
   </motion.div>
 );
 
+type NormalizedSentence = {
+  sentence: string;
+  correctPunctuation: { position: number; mark: string }[];
+  hint?: string;
+  explanation?: string;
+};
+
+const normalizeSentence = (s: any): NormalizedSentence => {
+  console.log("Normalizing sentence:", s);
+  const sentence = s?.sentence ?? "";
+
+  let arr: any =
+    s?.answers ?? s?.correctPunctuation ?? s?.correct_punctuation ?? [];
+
+  console.log("Initial correctPunctuation:", arr);
+
+  if (!Array.isArray(arr) && typeof arr === "object" && arr !== null) {
+    arr = Object.entries(arr).map(([k, v]) => ({
+      position: Number(k),
+      mark: String(v),
+    }));
+
+    console.log("Converted object to array:", arr);
+  }
+
+  if (Array.isArray(arr)) {
+    arr = arr.map((it: any) => ({
+      position:
+        typeof it?.position === "number"
+          ? it.position
+          : typeof it?.index === "number"
+          ? it.index
+          : typeof it?.pos === "number"
+          ? it.pos
+          : typeof it?.word_index === "number"
+          ? it.word_index
+          : -1,
+      mark: String(
+        it?.mark ?? it?.symbol ?? it?.punctuation ?? it?.answer ?? ""
+      ),
+    }));
+    console.log("Normalized array items:", arr);
+  } else {
+    arr = [];
+  }
+
+  const filtered = arr.filter(
+    (x: any) =>
+      typeof x.position === "number" &&
+      x.position >= -1 && // Allow -1 for end-of-sentence
+      typeof x.mark === "string" &&
+      x.mark !== ""
+  );
+
+  console.log("Filtered correctPunctuation:", filtered);
+
+  return {
+    sentence,
+    correctPunctuation: filtered,
+    hint: s?.hint,
+    explanation: s?.explanation,
+  };
+};
+
 export const PunctuationChallengeGame = ({
   sentences,
+  difficulty = 1,
   onGameComplete,
   onExit,
 }: PunctuationChallengeGameProps) => {
+  const normalized = useMemo(
+    () => (Array.isArray(sentences) ? sentences.map(normalizeSentence) : []),
+    [sentences]
+  );
+  const completedRef = useRef(false);
   const [currentQIndex, setCurrentQIndex] = useState(0);
 
   const [results, setResults] = useState<PunctuationResult[]>([]);
@@ -104,32 +174,57 @@ export const PunctuationChallengeGame = ({
     null
   );
 
-  const currentSentenceData = sentences[currentQIndex];
+  const currentSentenceData = normalized[currentQIndex] ?? {
+    sentence: "",
+    correctPunctuation: [],
+  };
 
-  const platforms = useMemo(
-    () =>
-      buildPlatforms(
-        currentSentenceData.sentence,
-        currentSentenceData.correctPunctuation
-      ),
-    [currentSentenceData]
-  );
+  useEffect(() => {
+    console.log("Current sentence data:", {
+      index: currentQIndex,
+      sentence: currentSentenceData.sentence,
+      correctPunctuation: currentSentenceData.correctPunctuation,
+      normalized,
+    });
+  }, [currentQIndex, currentSentenceData, normalized]);
+
+  const resultsRef = useRef<PunctuationResult[]>([]);
+  useEffect(() => {
+    resultsRef.current = results;
+  }, [results]);
+
+  const computePercent = (res: PunctuationResult[]) => {
+    const total = normalized.length || 1;
+    const correct = res.filter((r) => r.isCorrect).length;
+    return Math.round((correct / total) * 100);
+  };
+
+  const platforms = useMemo(() => {
+    const result = buildPlatforms(
+      currentSentenceData.sentence ?? "",
+      Array.isArray(currentSentenceData.correctPunctuation)
+        ? currentSentenceData.correctPunctuation
+        : []
+    );
+    console.log("Built platforms:", result);
+    return result;
+  }, [currentSentenceData]);
 
   const platformUnits = useMemo(
     () => platforms.filter((p) => p.type === "platform") as PlatformOnly[],
     [platforms]
   );
 
-  const gaps = useMemo(
-    () =>
-      platforms.filter((p) => p.type === "gap") as Extract<
-        PlatformUnit,
-        { type: "gap" }
-      >[],
-    [platforms]
-  );
+  const gaps = useMemo(() => {
+    const result = platforms.filter((p) => p.type === "gap") as Extract<
+      PlatformUnit,
+      { type: "gap" }
+    >[];
+    console.log("Gaps extracted:", result); // ✅ Debug
+    return result;
+  }, [platforms]);
 
-  const currentGap = gaps[currentGapIndex];
+  const currentGap = gaps[currentGapIndex] || null;
   const totalGaps = gaps.length;
 
   // Lila index = cleared gaps + optional extra slide to end
@@ -167,12 +262,33 @@ export const PunctuationChallengeGame = ({
   // Timer
   useEffect(() => {
     if (timeLeft <= 0) {
-      onGameComplete({ score, results: [...results] });
+      if (completedRef.current) return;
+      completedRef.current = true;
+
+      const finalResults = [...resultsRef.current];
+      for (let i = currentQIndex; i < normalized.length; i++) {
+        const s = normalized[i];
+        finalResults.push({
+          sentenceData: s,
+          userAnswer: [],
+          isCorrect: false,
+          completedGaps: 0,
+        });
+      }
+      onGameComplete({
+        percentScore: computePercent(finalResults),
+        rawPoints: score,
+        results: finalResults,
+      });
       return;
     }
     const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(id);
-  }, [timeLeft, onGameComplete, results, score]);
+  }, [timeLeft, onGameComplete, normalized, currentQIndex, score]);
+
+  useEffect(() => {
+    completedRef.current = false;
+  }, [normalized]);
 
   const finalizeSentence = (
     answers: { position: number; mark: string; isCorrect: boolean }[],
@@ -206,19 +322,38 @@ export const PunctuationChallengeGame = ({
     setLilaState("normal");
     setAutoSlideToEnd(false);
 
-    if (currentQIndex + 1 < sentences.length) {
+    if (currentQIndex + 1 < normalized.length) {
       setCurrentQIndex((i) => i + 1);
     } else {
-      onGameComplete({ score, results: [...results] });
+      if (completedRef.current) return;
+      completedRef.current = true;
+      const final = resultsRef.current;
+      onGameComplete({
+        percentScore: computePercent(final),
+        rawPoints: score,
+        results: [...final],
+      });
     }
   };
 
   const slideDur = 800;
 
   const handlePickPunctuation = (mark: string) => {
-    if (!currentGap) return;
+    console.log("Pick punctuation:", {
+      mark,
+      currentGap,
+      currentGapIndex,
+      totalGaps,
+      gaps,
+    });
+
+    if (!currentGap) {
+      console.warn("No current gap available");
+      return;
+    }
 
     const isCorrect = currentGap.correctMark === mark;
+    console.log("Is correct?", isCorrect, "Expected:", currentGap.correctMark);
 
     if (isCorrect) {
       const nextAnswers = [
@@ -373,6 +508,21 @@ export const PunctuationChallengeGame = ({
     let gapCounter = 0;
     let platformCounter = 0;
 
+    const calculatePlatformWidth = (text: string, isEnd?: boolean): number => {
+      if (isEnd) return 112; // w-28 = 112px
+      if (!text) return 112;
+
+      const charWidth = 14;
+      const minWidth = 80;
+      const maxWidth = 400;
+      const padding = 40;
+
+      return Math.min(
+        Math.max(text.length * charWidth + padding, minWidth),
+        maxWidth
+      );
+    };
+
     return (
       <div
         ref={trackRef}
@@ -386,28 +536,6 @@ export const PunctuationChallengeGame = ({
                 const index = platformCounter++;
                 const isLilaHere = index === lilaPlatformIndex;
 
-                // Calculate platform width based on text length
-                const calculatePlatformWidth = (
-                  text: string,
-                  isEnd?: boolean
-                ) => {
-                  if (isEnd) return "w-28";
-                  if (!text) return "w-28";
-
-                  // Base calculation: ~8px per character + padding
-                  const charWidth = 14; // Adjust this value to fine-tune spacing
-                  const minWidth = 80; // Minimum width in pixels
-                  const maxWidth = 400; // Maximum width in pixels
-                  const padding = 40; // Extra padding on both sides
-
-                  const calculatedWidth = Math.min(
-                    Math.max(text.length * charWidth + padding, minWidth),
-                    maxWidth
-                  );
-
-                  return `w-[${calculatedWidth}px]`;
-                };
-
                 const platformWidth = calculatePlatformWidth(
                   unit.text,
                   unit.isEnd
@@ -419,7 +547,6 @@ export const PunctuationChallengeGame = ({
                     ref={setPlatformRef(index)}
                     className="flex flex-col items-center relative"
                   >
-                    {/* Fixed vertical zone keeps the row aligned */}
                     <div className="h-28 flex items-end justify-center">
                       {isLilaHere && (
                         <motion.img
@@ -438,7 +565,7 @@ export const PunctuationChallengeGame = ({
                     </div>
 
                     {/* Platform bar with dynamic width */}
-                    <div
+                    {/* <div
                       className={`h-3 rounded-md bg-slate-700 ${platformWidth}`}
                       style={
                         !unit.isEnd && unit.text
@@ -450,10 +577,15 @@ export const PunctuationChallengeGame = ({
                             }
                           : undefined
                       }
+                    /> */}
+
+                    <div
+                      className="h-3 rounded-md bg-slate-700"
+                      style={{ width: `${platformWidth}px` }}
                     />
 
                     {/* Label BELOW the platform */}
-                    {unit.text && (
+                    {/* {unit.text && (
                       <div
                         className="mt-2 min-h-8 text-xl text-slate-700 font-semibold whitespace-pre-wrap text-center px-2"
                         style={{
@@ -462,6 +594,14 @@ export const PunctuationChallengeGame = ({
                             400
                           )}px`,
                         }}
+                      >
+                        {unit.text}
+                      </div>
+                    )} */}
+                    {unit.text && (
+                      <div
+                        className="mt-2 min-h-8 text-xl text-slate-700 font-semibold whitespace-pre-wrap text-center px-2"
+                        style={{ maxWidth: `${platformWidth}px` }}
                       >
                         {unit.text}
                       </div>
@@ -479,13 +619,8 @@ export const PunctuationChallengeGame = ({
 
               return (
                 <div key={`g-${idx}`} className="flex flex-col items-center">
-                  {/* Spacer aligns with Lila zone */}
                   <div className="h-28" />
-
-                  {/* Short platform segment (bridge) */}
                   <div className="h-3 w-20 bg-slate-700 rounded-md" />
-
-                  {/* Answer tile below */}
                   <div
                     className={`mt-2 h-10 w-12 rounded-lg border-2 flex items-center justify-center bg-slate-100 text-xl
                       ${isActive ? "border-purple-500" : "border-slate-400"}`}

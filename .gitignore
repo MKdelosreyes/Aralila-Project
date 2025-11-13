@@ -1,4 +1,4 @@
-﻿# Python virtual environments
+﻿# Virtual environments
 venv/
 virtenv/
 **/venv/
@@ -8,6 +8,8 @@ virtenv/
 .env
 .env.*
 **/.env*
+ARALILA/backend/.env*
+*.env
 
 # Python bytecode/cache
 __pycache__/
@@ -15,11 +17,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Databases
+# DB
 db.sqlite3
 *.db
 
-# Node/Frontend
+# Frontend
 node_modules/
 dist/
 build/
@@ -29,8 +31,8 @@ staticfiles/
 media/
 *.log
 
-# System/editor
-.DS_Store
-Thumbs.db
+# Editors/OS
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db

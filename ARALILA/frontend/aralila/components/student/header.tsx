@@ -9,14 +9,29 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 type HeaderProps = {
   menuOpen: boolean;
   setMenuOpen: (value: boolean) => void;
+  firstname?: string;
+  lastname?: string;
+  profile_pic?: string;
+  email?: string;
 };
 
-export default function Header({ menuOpen, setMenuOpen }: HeaderProps) {
+export default function Header({
+  menuOpen,
+  setMenuOpen,
+  firstname,
+  lastname,
+  profile_pic,
+  email,
+}: HeaderProps) {
   return (
     <header className="absolute top-0 left-0 right-0 z-[100] p-4 md:p-6 flex justify-between items-center">
       <a href="#" className="w-28 md:w-32">
         <Image
-          src={menuOpen ? "/images/aralila-logo-exp-pr.svg" : "/images/aralila-logo-exp1.svg"}
+          src={
+            menuOpen
+              ? "/images/aralila-logo-exp-pr.svg"
+              : "/images/aralila-logo-exp1.svg"
+          }
           alt="Aralila Logo"
           width={128}
           height={32}
@@ -26,16 +41,26 @@ export default function Header({ menuOpen, setMenuOpen }: HeaderProps) {
       </a>
 
       {!menuOpen && (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex flex-row gap-2 items-center justify-center">
+            <Avatar className="w-12 h-12 relative ring-2 ring-purple-500 shadow-[0_0_12px_3px_rgba(168,85,247,0.5)]">
+              <AvatarImage
+                alt="Student Avatar"
+                className="object-cover"
+                src={profile_pic}
+              />
+              <AvatarFallback className="bg-purple-900 text-white">
+                {(firstname?.charAt(0) || "G") + (lastname?.charAt(0) || "u")}
+              </AvatarFallback>
+            </Avatar>
 
-<Avatar className="relative ring-2 ring-purple-500 shadow-[0_0_12px_3px_rgba(168,85,247,0.5)]">
-  <AvatarImage
-    alt="Student Avatar"
-    className="object-cover"
-  />
-  <AvatarFallback className="bg-purple-900 text-white">AL</AvatarFallback>
-</Avatar>
-
+            <div className="flex flex-col">
+              <span className="font-semibold">
+                {firstname + " " + lastname}
+              </span>
+              <span className="text-sm text-purple-400">{email}</span>
+            </div>
+          </div>
 
           {/* Menu Button */}
           <button

@@ -20,7 +20,12 @@ interface GameResult {
 }
 interface GameProps {
   questions: Question[];
-  onGameComplete: (summary: { score: number; results: GameResult[] }) => void;
+  difficulty?: number;
+  onGameComplete: (summary: {
+    percentScore: number;
+    rawPoints: number;
+    results: GameResult[];
+  }) => void;
   onExit: () => void;
 }
 
@@ -42,6 +47,7 @@ type GameStatus = "playing" | "failed" | "completed" | "skipped";
 // --- Main Game Component ---
 export const EmojiHulaSalitaGame = ({
   questions,
+  difficulty = 1,
   onGameComplete,
   onExit,
 }: GameProps) => {
@@ -74,7 +80,14 @@ export const EmojiHulaSalitaGame = ({
     if (currentQuestionIndex < shuffledQuestions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
-      onGameComplete({ score, results });
+      const correctCount = results.filter((r) => r.isCorrect).length;
+      const percentScore = Math.round((correctCount / results.length) * 100);
+
+      onGameComplete({
+        percentScore,
+        rawPoints: score,
+        results,
+      });
     }
   }, [
     currentQuestionIndex,
@@ -108,7 +121,17 @@ export const EmojiHulaSalitaGame = ({
     if (status !== "playing") return;
 
     if (timeLeft <= 0) {
-      onGameComplete({ score, results });
+      const correctCount = results.filter((r) => r.isCorrect).length;
+      const percentScore =
+        results.length > 0
+          ? Math.round((correctCount / results.length) * 100)
+          : 0;
+
+      onGameComplete({
+        percentScore,
+        rawPoints: score,
+        results,
+      });
       return;
     }
 
@@ -325,7 +348,7 @@ export const EmojiHulaSalitaGame = ({
           <button
             onClick={handleSubmitAnswer}
             disabled={status !== "playing"}
-            className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full font-bold text-lg transition disabled:opacity-50"
+            className="px-7 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-base transition disabled:opacity-50"
           >
             Submit Answer
           </button>

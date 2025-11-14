@@ -16,6 +16,13 @@ import { percent } from "framer-motion";
 type GameState = "intro" | "playing" | "summary";
 type Difficulty = 1 | 2 | 3;
 
+interface Question {
+  id: number;
+  emojis: string[];
+  keywords: string[];
+  translation: string;
+}
+
 const EmojiChallengePage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,7 +31,7 @@ const EmojiChallengePage = () => {
 
   const [gameState, setGameState] = useState<GameState>("intro");
   const [currentDifficulty, setCurrentDifficulty] = useState(initialDifficulty);
-  const [questions, setQuestions] = useState<GameState[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [finalScore, setFinalScore] = useState(0);
   const [finalResults, setFinalResults] = useState<GameResult[]>([]);
   const [gameData, setGameData] = useState<any>(null);
@@ -282,40 +289,50 @@ const EmojiChallengePage = () => {
     );
   }
 
-  // const renderGameState = () => {
-  //   switch (gameState) {
-  //     case "playing":
-  //       return (
-  //         <EmojiHulaSalitaGame
-  //           questions={questions}
-  //           onGameComplete={handleGameComplete}
-  //           onExit={handleRestart}
-  //         />
-  //       );
-  //     case "summary":
-  //       return (
-  //         <EmojiChallengeSummary
-  //           score={finalScore}
-  //           results={finalResults}
-  //           onRestart={handleRestart}
-  //         />
-  //       );
-  //     case "intro":
-  //     default:
-  //       return (
-  //         <EmojiChallengeIntro
-  //           onStartChallenge={handleStart}
-  //           onBack={handleBack}
-  //         />
-  //       );
-  //   }
-  // };
+  const renderGameState = () => {
+    switch (gameState) {
+      case "playing":
+        return (
+          <EmojiHulaSalitaGame
+            questions={questions}
+            difficulty={currentDifficulty}
+            onGameComplete={handleGameComplete}
+            onExit={handleRestart}
+          />
+        );
+      case "summary":
+        return (
+          <EmojiChallengeSummary
+            score={finalScore}
+            results={finalResults}
+            difficulty={currentDifficulty}
+            starsEarned={gameData?.stars_earned || 0}
+            nextDifficulty={gameData?.next_difficulty}
+            difficultyUnlocked={gameData?.difficulty_unlocked}
+            replayMode={gameData?.replay_mode}
+            rawPoints={gameData?.raw_points}
+            onRestart={handleRestart}
+          />
+        );
+      case "intro":
+      default:
+        return (
+          <EmojiChallengeIntro
+            difficulty={currentDifficulty}
+            unlocked={unlocked}
+            onSelectDifficulty={(d) => setCurrentDifficulty(d)}
+            onStartChallenge={handleStart}
+            onBack={handleBack}
+          />
+        );
+    }
+  };
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground />
       <div className="w-full flex items-center justify-center">
-        {/* {renderGameState()} */}
+        {renderGameState()}
       </div>
     </div>
   );

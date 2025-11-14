@@ -233,14 +233,24 @@ def get_game_questions_by_difficulty(request, area_id, game_type, difficulty):
             for item in items:
                 try:
                     emoji = item.emoji_data
-                    symbols = list(emoji.symbols.values('symbol', 'keyword'))
+                    emoji_list = []
+                    for emoji_symbol in emoji.emojis.all():
+                        emoji_list.append(emoji_symbol.symbol)
+                    
+                    keyword_list = []
+                    for emoji_symbol in emoji.emojis.all():
+                        keyword_list.append(emoji_symbol.keyword)
+                    
                     questions.append({
                         'id': item.id,
+                        'emojis': emoji_list, 
+                        'keywords': keyword_list,  
                         'translation': emoji.translation,
-                        'symbols': symbols,
                     })
                 except Exception as e:
                     print(f"Error loading emoji item {item.id}: {e}")
+                    import traceback
+                    traceback.print_exc()
                     continue
         
         elif game_type == 'punctuation-task':

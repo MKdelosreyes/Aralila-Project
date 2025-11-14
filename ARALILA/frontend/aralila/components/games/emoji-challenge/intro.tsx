@@ -54,7 +54,7 @@ export const EmojiChallengeIntro = ({
       )}
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-start h-full text-center overflow-hidden">
+      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center overflow-hidden">
         <motion.div
           className="mb-3"
           initial={{ opacity: 0, y: -50 }}
@@ -69,7 +69,7 @@ export const EmojiChallengeIntro = ({
             className="mx-auto"
             priority
           />
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 mt-4">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
             Kwento ng mga Emoji
           </h1>
 

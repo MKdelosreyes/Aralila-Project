@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
@@ -67,6 +67,23 @@ const areaSymbols = [
 ];
 
 export default function ChallengesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative min-h-screen w-full overflow-hidden bg-black text-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p>Loading challenges...</p>
+          </div>
+        </div>
+      }
+    >
+      <ChallengesPageInner />
+    </Suspense>
+  );
+}
+
+function ChallengesPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const areaParam = searchParams.get("area");

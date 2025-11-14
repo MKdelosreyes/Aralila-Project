@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { GrammarCheckIntro } from "@/components/games/grammar-check/intro";
@@ -15,11 +15,25 @@ import { buildRuntimeQuestions, RuntimeGrammarQuestion } from "@/lib/utils";
 type GameState = "intro" | "playing" | "summary";
 
 const GrammarCheckPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black text-white">
+          <div>Loading...</div>
+        </div>
+      }
+    >
+      <GrammarCheckPageInner />
+    </Suspense>
+  );
+};
+
+function GrammarCheckPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const areaId = searchParams.get("areaId");
+
   const [gameState, setGameState] = useState<GameState>("intro");
-  // const [questions, setQuestions] = useState([]);
   const [questions, setQuestions] = useState<RuntimeGrammarQuestion[]>([]);
   const [finalScore, setFinalScore] = useState(0);
   const [finalResults, setFinalResults] = useState<GrammarResult[]>([]);
@@ -27,26 +41,6 @@ const GrammarCheckPage = () => {
   useEffect(() => {
     setQuestions(buildRuntimeQuestions(grammarAccuracyQuestions));
   }, []);
-
-  // useEffect(() => {
-  //   // Fetch grammar questions for this specific area
-  //   if (areaId) {
-  //     fetchAreaQuestions(areaId);
-  //   }
-  // }, [areaId]);
-
-  // const fetchAreaQuestions = async (areaId: string) => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     const response = await fetch(`/api/games/grammar/${areaId}/`, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const data = await response.json();
-  //     setQuestions(data.questions);
-  //   } catch (error) {
-  //     console.error("Failed to fetch questions:", error);
-  //   }
-  // };
 
   const handleStart = () => {
     setGameState("playing");
@@ -74,35 +68,6 @@ const GrammarCheckPage = () => {
     router.push("/student/challenges");
   };
 
-  // const renderGameState = () => {
-  //   switch (gameState) {
-  //     case "playing":
-  //       return (
-  //         <GrammarCheckGame
-  //           questions={questions}
-  //           onGameComplete={handleGameComplete}
-  //           onExit={handleRestart}
-  //         />
-  //       );
-  //     case "summary":
-  //       return (
-  //         <GrammarCheckSummary
-  //           score={finalScore}
-  //           results={finalResults}
-  //           onRestart={handleRestart}
-  //         />
-  //       );
-  //     case "intro":
-  //     default:
-  //       return (
-  //         <GrammarCheckIntro
-  //           onStartChallenge={handleStart}
-  //           onBack={handleBack}
-  //         />
-  //       );
-  //   }
-  // };
-
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       {/* Background */}
@@ -110,10 +75,28 @@ const GrammarCheckPage = () => {
 
       {/* Game Content */}
       <div className="w-full flex items-center justify-center">
-        {/* {renderGameState()} */}
+        {/* Uncomment when ready to render the game flow */}
+        {/* {gameState === "playing" ? (
+          <GrammarCheckGame
+            questions={questions}
+            onGameComplete={handleGameComplete}
+            onExit={handleRestart}
+          />
+        ) : gameState === "summary" ? (
+          <GrammarCheckSummary
+            score={finalScore}
+            results={finalResults}
+            onRestart={handleRestart}
+          />
+        ) : (
+          <GrammarCheckIntro onStartChallenge={handleStart} onBack={handleBack} />
+        )} */}
       </div>
     </div>
   );
-};
+}
 
 export default GrammarCheckPage;
+
+// Optional: if build still prerenders and fails, force dynamic rendering:
+// export const dynamic = 'force-dynamic';

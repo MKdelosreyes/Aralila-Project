@@ -27,6 +27,16 @@ interface AuthResponse {
   refresh: string;
 }
 
+interface RegisterResponse {
+  message: string;
+  email: string;
+}
+
+interface VerifyEmailData {
+  uid: string;
+  token: string;
+}
+
 interface ProfileResponse {
   id: number;
   email: string;
@@ -54,7 +64,6 @@ class AuthAPI {
 
       console.log('📥 Response status:', response.status);
 
-      // Try to parse response as JSON
       const text = await response.text();
       console.log('📄 Response body:', text);
 
@@ -62,7 +71,6 @@ class AuthAPI {
       try {
         result = JSON.parse(text);
       } catch (e) {
-        // If not JSON, it's likely an HTML error page
         console.error('❌ Failed to parse JSON. Response was:', text.substring(0, 500));
         throw new Error('Server returned an error. Please check the backend logs.');
       }
@@ -72,10 +80,53 @@ class AuthAPI {
       }
       
       // Backend returns { user: {...}, tokens: { access, refresh } }
+      // const authResponse: AuthResponse = {
+      //   user: result.user,
+      //   access: result.tokens.access,
+      //   refresh: result.tokens.refresh,
+      // };
+      
+      // localStorage.setItem('access_token', authResponse.access);
+      // localStorage.setItem('refresh_token', authResponse.refresh);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Registration error:', error);
+      throw error;
+    }
+  }
+
+  async verifyEmail(data: VerifyEmailData): Promise<AuthResponse> {
+    try {
+      console.log('📤 Verifying email');
+      
+      const response = await fetch(`${this.baseURL}/verify-email/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const text = await response.text();
+      console.log('📥 Verification response:', text);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        console.error('❌ Failed to parse JSON:', text.substring(0, 500));
+        throw new Error('Server returned an error.');
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Verification failed');
+      }
+
       const authResponse: AuthResponse = {
         user: result.user,
-        access: result.tokens.access,
-        refresh: result.tokens.refresh,
+        access: result.access,
+        refresh: result.refresh,
       };
       
       // Store tokens
@@ -84,7 +135,30 @@ class AuthAPI {
       
       return authResponse;
     } catch (error) {
-      console.error('❌ Registration error:', error);
+      console.error('❌ Verification error:', error);
+      throw error;
+    }
+  }
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    try {
+      const response = await fetch(`${this.baseURL}/resend-verification/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to resend verification email');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ Resend verification error:', error);
       throw error;
     }
   }
@@ -149,10 +223,8 @@ class AuthAPI {
 
     if (!response.ok) {
       if (response.status === 401) {
-        // Try to refresh token
         const refreshed = await this.refreshToken();
         if (refreshed) {
-          // Retry with new token
           return this.getProfile();
         }
       }

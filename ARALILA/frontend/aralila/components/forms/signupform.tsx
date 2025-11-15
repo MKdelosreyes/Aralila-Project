@@ -7,9 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
 import { authAPI } from "@/lib/api/auth";
-import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Define validation schemas for each step
 const stepOneSchema = z
   .object({
     email: z.string().email({ message: "Please enter a valid email address" }),
@@ -51,10 +49,10 @@ export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const router = useRouter();
-  const { login } = useAuth();
 
-  // Form for step 1
   const stepOneForm = useForm<StepOneFormValues>({
     resolver: zodResolver(stepOneSchema),
     defaultValues: {
@@ -64,7 +62,6 @@ export default function SignupForm() {
     },
   });
 
-  // Form for step 2
   const stepTwoForm = useForm<StepTwoFormValues>({
     resolver: zodResolver(stepTwoSchema),
     defaultValues: {
@@ -90,13 +87,11 @@ export default function SignupForm() {
     setIsLoading(true);
 
     try {
-      await authAPI.register(formData);
-      console.log("User registered successfully");
+      const response = await authAPI.register(formData);
+      console.log("User registered successfully:", response);
 
-      await login(formData.email, formData.password);
-
-      // Redirect to dashboard (no role-based routing)
-      router.push("/student/dashboard");
+      setRegisteredEmail(formData.email);
+      setShowVerificationMessage(true);
     } catch (error: any) {
       console.error("Registration failed:", error);
       alert(error.message || "Registration failed");
@@ -104,6 +99,77 @@ export default function SignupForm() {
       setIsLoading(false);
     }
   };
+
+  const handleResendVerification = async () => {
+    try {
+      setIsLoading(true);
+      await authAPI.resendVerification(registeredEmail);
+      alert("Verification email sent! Please check your inbox.");
+    } catch (error: any) {
+      alert(error.message || "Failed to resend verification email");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (showVerificationMessage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-purple-50">
+        <div className="w-full max-w-md p-6 space-y-6 text-center">
+          <div className="flex justify-center">
+            <Image
+              src="/images/aralila-logo-tr.svg"
+              alt="Aralila Logo"
+              width={150}
+              height={200}
+              className="object-contain"
+            />
+          </div>
+
+          <div className="bg-white rounded-lg p-8 shadow-lg space-y-4">
+            <div className="flex justify-center">
+              <div className="bg-purple-100 rounded-full p-4">
+                <Mail className="w-12 h-12 text-purple-600" />
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-800">
+              Verify your email
+            </h2>
+
+            <p className="text-gray-600">We've sent a verification link to:</p>
+            <p className="text-purple-600 font-semibold">{registeredEmail}</p>
+
+            <p className="text-sm text-gray-500">
+              Please check your inbox and click the verification link to
+              activate your account.
+            </p>
+
+            <div className="pt-4 space-y-2">
+              <p className="text-sm text-gray-600">Didn't receive the email?</p>
+              <Button
+                onClick={handleResendVerification}
+                disabled={isLoading}
+                variant="outline"
+                className="w-full"
+              >
+                {isLoading ? "Sending..." : "Resend verification email"}
+              </Button>
+            </div>
+
+            <div className="pt-4">
+              <Link
+                href="/login"
+                className="text-purple-600 hover:underline text-sm"
+              >
+                Back to login
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-purple-50">

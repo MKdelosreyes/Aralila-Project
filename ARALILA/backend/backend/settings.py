@@ -29,8 +29,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+print("=" * 50)
+print("📧 EMAIL CONFIGURATION")
+print("=" * 50)
+print(f"EMAIL_HOST: {os.environ.get('EMAIL_HOST_USER')}")
+print(f"EMAIL_HOST_PASSWORD: {'*' * len(os.environ.get('EMAIL_HOST_PASSWORD', ''))}")
+print(f"DEFAULT_FROM_EMAIL: {os.environ.get('DEFAULT_FROM_EMAIL')}")
+print(f"FRONTEND_URL: {os.getenv('FRONTEND_URL')}")
+print("=" * 50)
+
 # WebSocket CORS - Add this section
 # ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'aralila-backend.onrender.com']
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com' 
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER') 
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@aralila.com')
 
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 

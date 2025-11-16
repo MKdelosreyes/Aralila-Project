@@ -4,12 +4,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useLobby } from "@/hooks/useLobby";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
-import { env } from "@/lib/env";
 
 export default function Lobby() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   const playerNameParam = searchParams.get("player");
   const playerName = user?.full_name || playerNameParam || "Guest";
@@ -35,7 +34,7 @@ export default function Lobby() {
   });
 
   // Show loading while checking auth
-  if (authLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -43,11 +42,11 @@ export default function Lobby() {
     );
   }
 
-  // NEW: Debounce state updates to prevent flickering
+  // Debounce state updates to prevent flickering
   useEffect(() => {
     const timer = setTimeout(() => {
       setDisplayPlayers(players);
-    }, 100); // Small delay to batch updates
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [players]);
@@ -55,7 +54,7 @@ export default function Lobby() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDisplayConnected(isConnected);
-    }, 150); // Slightly longer delay for connection status
+    }, 150);
 
     return () => clearTimeout(timer);
   }, [isConnected]);
@@ -96,7 +95,7 @@ export default function Lobby() {
     <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
       <h2 className="text-3xl font-bold text-blue-700">🎮 Story Chain Lobby</h2>
 
-      {/* Connection Status - Use displayConnected */}
+      {/* Connection Status */}
       <div className="flex items-center gap-2">
         <div
           className={`w-3 h-3 rounded-full transition-all duration-300 ${
@@ -117,7 +116,7 @@ export default function Lobby() {
         </p>
       </div>
 
-      {/* Players List - Use displayPlayers */}
+      {/* Players List */}
       <div className="bg-white border-2 border-gray-200 rounded-lg p-4 w-80 text-center shadow-sm">
         <h3 className="font-semibold text-lg mb-3">
           Players ({displayPlayers.length}/3)

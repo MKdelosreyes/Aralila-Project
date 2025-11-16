@@ -79,6 +79,25 @@ def evaluate_emoji_sentence(request):
 @permission_classes([IsAuthenticated])
 def get_unlocked_areas(request):
     """Get all areas with lock/unlock status and progress for current user"""
+
+    # ✅ DEBUG: Print BEFORE the query
+    print(f"🔍 request.user type: {type(request.user)}")
+    print(f"🔍 request.user value: {request.user}")
+    print(f"🔍 request.user.__class__.__name__: {request.user.__class__.__name__}")
+    
+    # ✅ EXPLICIT FIX: Ensure we have a CustomUser instance
+    from users.models import CustomUser
+    current_user = request.user
+    
+    if not isinstance(current_user, CustomUser):
+        print(f"❌ WARNING: request.user is {type(current_user)}, not CustomUser!")
+        if hasattr(current_user, 'email'):
+            current_user = CustomUser.objects.get(email=current_user.email)
+        else:
+            return Response({'error': 'Invalid user authentication'}, status=401)
+    
+    print(f"✅ Using user: {current_user} (ID: {current_user.id})")
+
     all_areas = Area.objects.filter(is_active=True).order_by('order_index')
     areas_data = []
     
@@ -92,13 +111,13 @@ def get_unlocked_areas(request):
         
         # Get user's progress for this area
         progress_records = GameProgress.objects.filter(
-            user=request.user,
+            user=current_user,
             area=area,
             completed=True
         ).values('game').annotate(
             best_score=Max('score')
         )
-        
+
         completed_games = progress_records.count()
         
         # Calculate average score
@@ -115,7 +134,7 @@ def get_unlocked_areas(request):
             # Check if previous area is completed
             previous_area = all_areas[index - 1]
             previous_progress = GameProgress.objects.filter(
-                user=request.user,
+                user=current_user,
                 area=previous_area,
                 completed=True
             ).values('game').annotate(

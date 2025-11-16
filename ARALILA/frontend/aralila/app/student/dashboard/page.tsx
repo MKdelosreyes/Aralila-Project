@@ -10,6 +10,7 @@ import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { useAreaUnlocks } from "@/hooks/useAreaUnlocks";
+import { createClient } from "@/lib/supabase/client";
 
 interface Area {
   id: number;
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const supabase = createClient();
 
   const {
     unlockedAreas,
@@ -44,15 +46,29 @@ export default function DashboardPage() {
   } = useAreaUnlocks();
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      console.log("No token found, redirecting to login");
-      router.push("/login");
-      return;
-    }
+    (async () => {
+      // Try Supabase session first, then localStorage
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      let token = session?.access_token || localStorage.getItem("access_token");
 
-    fetchUserData();
-    fetchAreas();
+      if (session?.access_token) {
+        localStorage.setItem("access_token", session.access_token);
+        if (session.refresh_token) {
+          localStorage.setItem("refresh_token", session.refresh_token);
+        }
+      }
+
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        router.push("/login");
+        return;
+      }
+
+      fetchUserData();
+      fetchAreas();
+    })();
   }, []);
 
   const fetchUserData = async () => {
@@ -65,7 +81,7 @@ export default function DashboardPage() {
         return;
       }
 
-      const response = await fetch(`${env.backendUrl}/api/auth/profile/`, {
+      const response = await fetch(`${env.backendUrl}/api/users/profile/`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

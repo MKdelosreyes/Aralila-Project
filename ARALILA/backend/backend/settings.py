@@ -21,6 +21,17 @@ load_dotenv(encoding='utf-8')  # Load environment variables from .env file
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ✅ DEBUG: Print which env file is being used
+env_file = BASE_DIR / '.env.local'
+print(f"🔍 Looking for env file at: {env_file}")
+print(f"🔍 Env file exists: {env_file.exists()}")
+
+load_dotenv(env_file)
+
+# ✅ DEBUG: Print the Redis URL being used
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+print(f"🔍 REDIS_URL: {REDIS_URL}")
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/

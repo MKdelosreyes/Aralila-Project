@@ -12,6 +12,7 @@ import CardCarousel from "@/components/student/challenges/cardcarousel";
 import Image from "next/image";
 import { Lock, TrendingUp } from "lucide-react";
 import { useAreaUnlocks } from "@/hooks/useAreaUnlocks";
+import { createClient } from "@/lib/supabase/client";
 
 interface Area {
   id: number;
@@ -31,6 +32,13 @@ interface Game {
   icon: string;
   best_score: number;
   completed: boolean;
+}
+
+interface UserData {
+  first_name: string;
+  last_name: string;
+  profile_pic?: string;
+  email?: string;
 }
 
 const areaSymbols = [
@@ -93,6 +101,8 @@ function ChallengesPageInner() {
     areaParam ? parseInt(areaParam) : 0
   );
   const [areaData, setAreaData] = useState<Area | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const supabase = createClient();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -103,22 +113,36 @@ function ChallengesPageInner() {
   } = useAreaUnlocks();
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      let token = session?.access_token || localStorage.getItem("access_token");
 
-    if (isAreaLocked(selectedAreaOrder)) {
-      const firstUnlocked = areaSymbols.find(
-        (a) => !isAreaLocked(a.order_index)
-      );
-      if (firstUnlocked) {
-        setSelectedAreaOrder(firstUnlocked.order_index);
+      if (session?.access_token) {
+        localStorage.setItem("access_token", session.access_token);
+        if (session.refresh_token) {
+          localStorage.setItem("refresh_token", session.refresh_token);
+        }
       }
-    } else {
-      fetchAreaData(selectedAreaOrder);
-    }
+
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        router.push("/login");
+        return;
+      }
+
+      if (isAreaLocked(selectedAreaOrder)) {
+        const firstUnlocked = areaSymbols.find(
+          (a) => !isAreaLocked(a.order_index)
+        );
+        if (firstUnlocked) {
+          setSelectedAreaOrder(firstUnlocked.order_index);
+        }
+      } else {
+        fetchAreaData(selectedAreaOrder);
+      }
+    })();
   }, [selectedAreaOrder]);
 
   const fetchAreaData = async (orderIndex: number) => {
@@ -220,7 +244,7 @@ function ChallengesPageInner() {
       )}
 
       {/* Area Selection Symbols at Bottom */}
-      <div className="flex flex-row gap-3 md:gap-5 absolute bottom-0 left-0 right-0 z-[100] p-4 md:p-6 w-full items-center justify-center">
+      <div className="flex flex-row gap-3 md:gap-5 absolute bottom-0 left-0 right-0 z-[10] p-4 md:p-6 w-full items-center justify-center">
         {areaSymbols.map((area) => {
           const locked = isAreaLocked(area.order_index);
           const isSelected = selectedAreaOrder === area.order_index;

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/api/auth";
 import { createClient } from "@/lib/supabase/client";
+import { env } from "@/lib/env";
 
 interface User {
   id: string;
@@ -31,48 +32,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          first_name: session.user.user_metadata.first_name,
-          last_name: session.user.user_metadata.last_name,
-          full_name: session.user.user_metadata.full_name,
-          school_name: session.user.user_metadata.school_name,
-          profile_pic: session.user.user_metadata.profile_pic,
-        });
-        // Mirror tokens for backend calls
-        localStorage.setItem("access_token", session.access_token);
-        if (session.refresh_token) {
-          localStorage.setItem("refresh_token", session.refresh_token);
-        }
-      } else {
-        setUser(null);
+  const fetchUserProfile = async (token: string) => {
+    try {
+      const response = await fetch(`${env.backendUrl}/api/users/profile/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 401) {
+        console.error("Token is invalid or expired");
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        setUser(null);
+        return null;
       }
-      setIsLoading(false);
-    });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        id: data.id,
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        full_name: `${data.first_name} ${data.last_name}`.trim(),
+        school_name: data.school_name,
+        profile_pic: data.profile_pic,
+      };
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        let token =
+          session?.access_token || localStorage.getItem("access_token");
+
+        if (session?.access_token) {
+          localStorage.setItem("access_token", session.access_token);
+          if (session.refresh_token) {
+            localStorage.setItem("refresh_token", session.refresh_token);
+          }
+        }
+
+        if (token) {
+          const userData = await fetchUserProfile(token);
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          first_name: session.user.user_metadata.first_name,
-          last_name: session.user.user_metadata.last_name,
-          full_name: session.user.user_metadata.full_name,
-          school_name: session.user.user_metadata.school_name,
-          profile_pic: session.user.user_metadata.profile_pic,
-        });
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.access_token) {
         localStorage.setItem("access_token", session.access_token);
         if (session.refresh_token) {
           localStorage.setItem("refresh_token", session.refresh_token);
         }
+
+        const userData = await fetchUserProfile(session.access_token);
+        setUser(userData);
       } else {
         setUser(null);
         localStorage.removeItem("access_token");
@@ -86,19 +126,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password });
+
       // Mirror tokens immediately after password login
       localStorage.setItem("access_token", response.session.access_token);
       if (response.session.refresh_token) {
         localStorage.setItem("refresh_token", response.session.refresh_token);
       }
-      setUser({
-        id: response.user.id,
-        email: response.user.email,
-        first_name: response.user.user_metadata.first_name,
-        last_name: response.user.user_metadata.last_name,
-        full_name: response.user.user_metadata.full_name,
-        school_name: response.user.user_metadata.school_name,
-      });
+
+      // Fetch complete user profile from Django backend
+      const userData = await fetchUserProfile(response.session.access_token);
+      setUser(userData);
+
       router.push("/student/dashboard");
     } catch (error) {
       throw error;
@@ -106,17 +144,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await authAPI.logout();
-    setUser(null);
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    router.push("/login");
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      router.push("/login");
+    }
   };
 
   const refreshUser = async () => {
     try {
-      const profile = await authAPI.getProfile();
-      setUser(profile);
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
+      const userData = await fetchUserProfile(token);
+      setUser(userData);
     } catch (error) {
       console.error("Failed to refresh user:", error);
     }

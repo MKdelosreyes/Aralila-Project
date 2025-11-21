@@ -126,11 +126,22 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
             return
 
         state = await self.get_state()
-        if not state or not state["players"]:
+        
+        # ✅ FIX: Validate state and players list
+        if not state or not state.get("players") or len(state["players"]) == 0:
+            print(f"⚠️ Invalid state: {state}")
             return
 
+        # ✅ FIX: Validate current_turn_index is within bounds
+        current_turn_index = state.get("current_turn_index", 0)
+        if current_turn_index >= len(state["players"]):
+            print(f"⚠️ Invalid turn index {current_turn_index}, resetting to 0")
+            current_turn_index = 0
+            state["current_turn_index"] = 0
+            await self.save_state(state)
+
         # Verify it's this player's turn
-        current_player = state["players"][state["current_turn_index"]]
+        current_player = state["players"][current_turn_index]
         if player != current_player:
             print(f"⚠️ {player} tried to submit but it's {current_player}'s turn")
             return
@@ -163,10 +174,18 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
 
     async def start_turn(self, state):
         """Start a player's turn with timer."""
-        if not state["players"]:
+        # ✅ FIX: Validate players list before accessing
+        if not state.get("players") or len(state["players"]) == 0:
+            print("⚠️ Cannot start turn: no players")
             return
 
-        current_player = state["players"][state["current_turn_index"]]
+        current_turn_index = state.get("current_turn_index", 0)
+        if current_turn_index >= len(state["players"]):
+            current_turn_index = 0
+            state["current_turn_index"] = 0
+            await self.save_state(state)
+
+        current_player = state["players"][current_turn_index]
         print(f"🎯 Starting turn for: {current_player}")
 
         await self.broadcast_turn_update(current_player, 20)
@@ -177,10 +196,14 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
     async def next_turn(self):
         """Move to next player's turn."""
         state = await self.get_state()
-        if not state or not state["players"]:
+        
+        # ✅ FIX: Validate state and players
+        if not state or not state.get("players") or len(state["players"]) == 0:
+            print("⚠️ Cannot advance turn: invalid state")
             return
 
-        state["current_turn_index"] = (state["current_turn_index"] + 1) % len(state["players"])
+        current_turn_index = state.get("current_turn_index", 0)
+        state["current_turn_index"] = (current_turn_index + 1) % len(state["players"])
         await self.save_state(state)
 
         next_player = state["players"][state["current_turn_index"]]
@@ -201,11 +224,17 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
         await asyncio.sleep(seconds)
         
         state = await self.get_state()
-        if not state or not state["players"]:
+        
+        # ✅ FIX: Validate state before accessing
+        if not state or not state.get("players") or len(state["players"]) == 0:
+            return
+
+        current_turn_index = state.get("current_turn_index", 0)
+        if current_turn_index >= len(state["players"]):
             return
 
         # Check if it's still this player's turn
-        current_player = state["players"][state["current_turn_index"]]
+        current_player = state["players"][current_turn_index]
         if current_player != player:
             return  # Turn already changed
 
@@ -271,9 +300,14 @@ Give a total score from 1 to 20 (just the number, no explanation).
         """Evaluate the completed sentence."""
         state = await self.get_state()
         
+        # ✅ FIX: Validate state exists
+        if not state:
+            print("⚠️ Cannot evaluate: no state")
+            return
+        
         # Combine all words into full sentence
         full_sentence = " ".join([
-            part["text"] for part in state["current_sentence"] 
+            part["text"] for part in state.get("current_sentence", [])
             if part["text"] != "[missed turn]"
         ])
 
@@ -281,6 +315,13 @@ Give a total score from 1 to 20 (just the number, no explanation).
 
         # Get current image metadata
         current_index = state.get("current_image_index", 0)
+        
+        # ✅ FIX: Validate image index
+        if current_index >= len(story_images):
+            print(f"⚠️ Invalid image index: {current_index}")
+            current_index = 0
+            state["current_image_index"] = 0
+        
         image_data = story_images[current_index]
         image_description = image_data["description"]
 
@@ -288,9 +329,15 @@ Give a total score from 1 to 20 (just the number, no explanation).
         group_score = await self.evaluate_with_ai(full_sentence, image_description)
 
         # Distribute score to players who participated
-        for part in state["current_sentence"]:
-            if part["text"] != "[missed turn]":
-                state["scores"][part["player"]] += group_score // len(state["players"])
+        num_participants = sum(1 for part in state.get("current_sentence", []) 
+                              if part["text"] != "[missed turn]")
+        
+        if num_participants > 0:
+            points_per_player = group_score // num_participants
+            for part in state.get("current_sentence", []):
+                if part["text"] != "[missed turn]":
+                    player_name = part["player"]
+                    state["scores"][player_name] = state["scores"].get(player_name, 0) + points_per_player
 
         await self.save_state(state)
 

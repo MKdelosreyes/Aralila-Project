@@ -10,8 +10,8 @@ export default function Lobby() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
-  const playerNameParam = searchParams.get("player");
-  const playerName = user?.full_name || playerNameParam || "Guest";
+  // ✅ FIX: Use player name from URL, not from user profile
+  const playerName = searchParams.get("player") || "Guest";
   const roomKey = searchParams.get("room") || "";
   const isHost = searchParams.get("isHost") === "true";
 
@@ -20,14 +20,14 @@ export default function Lobby() {
 
   const { players, isStarting, isConnected, connectionError } = useLobby({
     roomCode: roomKey,
-    playerName,
+    playerName, // ✅ This is now the custom name from input
     onGameStart: (turnOrder) => {
       console.log("🚀 Game starting with turn order:", turnOrder);
       setTimeout(() => {
         router.push(
-          `/student/playground/game?player=${playerName}&room=${roomKey}&turnOrder=${turnOrder.join(
-            ","
-          )}`
+          `/student/playground/game?player=${encodeURIComponent(
+            playerName
+          )}&room=${roomKey}&turnOrder=${turnOrder.join(",")}`
         );
       }, 2000);
     },

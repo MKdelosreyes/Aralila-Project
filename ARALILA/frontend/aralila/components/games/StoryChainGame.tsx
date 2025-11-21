@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStoryChain } from "@/hooks/useStoryChain";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 
 export default function StoryChainGame() {
   const searchParams = useSearchParams();
@@ -14,6 +14,7 @@ export default function StoryChainGame() {
   const turnOrder = turnOrderParam.split(",").filter(Boolean);
 
   const [sentence, setSentence] = useState("");
+  const previousImageIndexRef = useRef<number>(0);
 
   const { gameState, isConnected, connectionError, submitSentence, isMyTurn } =
     useStoryChain({
@@ -22,11 +23,39 @@ export default function StoryChainGame() {
       turnOrder,
     });
 
-  // Calculate current sentence being formed
+  // ✅ Calculate current sentence parts (only for current image)
   const currentSentenceParts = useMemo(() => {
-    return gameState.story
-      .filter((s) => s.player !== "SYSTEM" && s.player !== "AI")
-      .slice(-3); // Last 3 player inputs
+    // Filter only player inputs (not SYSTEM or AI messages)
+    const playerInputs = gameState.story.filter(
+      (s) => s.player !== "SYSTEM" && s.player !== "AI"
+    );
+
+    // Get only inputs after the last AI evaluation
+    const lastAIIndex = gameState.story.findLastIndex((s) => s.player === "AI");
+
+    const currentInputs =
+      lastAIIndex === -1
+        ? playerInputs // No AI evaluation yet, take all inputs
+        : gameState.story
+            .slice(lastAIIndex + 1)
+            .filter((s) => s.player !== "SYSTEM" && s.player !== "AI");
+
+    return currentInputs;
+  }, [gameState.story]);
+
+  // ✅ Reset input when image changes
+  useEffect(() => {
+    if (gameState.imageIndex !== previousImageIndexRef.current) {
+      setSentence(""); // Clear input for new image
+      previousImageIndexRef.current = gameState.imageIndex;
+    }
+  }, [gameState.imageIndex]);
+
+  // ✅ Calculate completed sentences (only AI evaluations)
+  const completedSentences = useMemo(() => {
+    return gameState.story.filter(
+      (s) => s.player === "AI" || s.player === "SYSTEM"
+    );
   }, [gameState.story]);
 
   const handleSubmit = () => {
@@ -131,7 +160,7 @@ export default function StoryChainGame() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-3xl font-bold text-center mb-2">
@@ -194,35 +223,71 @@ export default function StoryChainGame() {
         </div>
       </div>
 
-      {/* Current Image */}
-      {gameState.imageUrl ? (
-        <div className="mb-6">
-          <div className="relative">
-            <img
-              src={gameState.imageUrl}
-              alt="Story scene"
-              className="rounded-lg mx-auto shadow-xl max-h-80 object-contain border-4 border-blue-200"
-            />
-            <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-              Image {gameState.imageIndex + 1}
+      {/* ✅ MAIN LAYOUT: Image + Previous Sentences Side-by-Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Current Image (2/3 width on large screens) */}
+        <div className="lg:col-span-2">
+          {gameState.imageUrl ? (
+            <div>
+              <div className="relative">
+                <img
+                  src={gameState.imageUrl}
+                  alt="Story scene"
+                  className="rounded-lg w-full shadow-xl object-cover border-4 border-blue-200"
+                  style={{ maxHeight: "500px" }}
+                />
+                <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                  Image {gameState.imageIndex + 1}
+                </div>
+              </div>
+              {gameState.imageDescription && (
+                <p className="mt-3 text-sm text-gray-600 text-center italic bg-gray-50 p-3 rounded-lg">
+                  💭 {gameState.imageDescription}
+                </p>
+              )}
             </div>
-          </div>
-          {gameState.imageDescription && (
-            <p className="mt-3 text-sm text-gray-600 text-center italic bg-gray-50 p-3 rounded-lg">
-              💭 {gameState.imageDescription}
-            </p>
+          ) : (
+            <div className="bg-gray-100 rounded-lg p-12 text-center">
+              <p className="text-gray-400 text-lg">📷 Loading image...</p>
+            </div>
           )}
         </div>
-      ) : (
-        <div className="mb-6 bg-gray-100 rounded-lg p-12 text-center">
-          <p className="text-gray-400 text-lg">📷 Loading image...</p>
-        </div>
-      )}
 
-      {/* Current Sentence Being Formed - HORIZONTAL DISPLAY */}
+        {/* ✅ Previous Sentences (1/3 width on large screens) */}
+        <div className="lg:col-span-1">
+          <div className="bg-white border-2 border-gray-200 rounded-lg p-4 h-full">
+            <h3 className="font-bold text-sm text-gray-600 mb-3 flex items-center gap-2">
+              <span>📜</span>
+              <span>Previous Sentences</span>
+            </h3>
+            {completedSentences.length === 0 ? (
+              <p className="text-gray-400 italic text-sm text-center py-8">
+                No completed sentences yet...
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-[450px] overflow-y-auto pr-2">
+                {completedSentences.map((line, i) => (
+                  <div
+                    key={i}
+                    className={`text-sm p-3 rounded-lg ${
+                      line.player === "AI"
+                        ? "bg-green-50 border-l-4 border-green-400"
+                        : "bg-gray-50 border-l-4 border-gray-300"
+                    }`}
+                  >
+                    {line.text}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ✅ Current Sentence Being Formed - RESETS PER IMAGE */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
         <h3 className="font-bold text-sm text-gray-600 mb-2">
-          📝 Current Sentence:
+          📝 Current Sentence (Image {gameState.imageIndex + 1}):
         </h3>
         <div className="flex flex-wrap items-center gap-2 min-h-[40px]">
           {currentSentenceParts.length === 0 ? (
@@ -243,37 +308,12 @@ export default function StoryChainGame() {
               </span>
             ))
           )}
-          {isMyTurn && currentSentenceParts.length < 3 && (
+          {isMyTurn && currentSentenceParts.length < turnOrder.length && (
             <span className="px-3 py-1 rounded-lg bg-green-200 border-2 border-green-400 animate-pulse">
               ✍️ Your word here...
             </span>
           )}
         </div>
-      </div>
-
-      {/* Story History */}
-      <div className="bg-white border-2 border-gray-200 rounded-lg p-4 mb-6 max-h-48 overflow-y-auto">
-        <h3 className="font-bold text-sm text-gray-600 mb-2 sticky top-0 bg-white">
-          📜 Previous Sentences:
-        </h3>
-        {gameState.story.filter((s) => s.player === "AI").length === 0 ? (
-          <p className="text-gray-400 italic text-sm text-center py-4">
-            No completed sentences yet...
-          </p>
-        ) : (
-          <div className="space-y-1">
-            {gameState.story
-              .filter((s) => s.player === "AI" || s.player === "SYSTEM")
-              .map((line, i) => (
-                <p
-                  key={i}
-                  className="text-sm text-gray-700 p-2 bg-gray-50 rounded"
-                >
-                  {line.text}
-                </p>
-              ))}
-          </div>
-        )}
       </div>
 
       {/* Input Area */}

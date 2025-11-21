@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Play } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface ChallengeCardProps {
   card: {
@@ -27,6 +28,9 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
   isActive,
   areaId,
 }) => {
+  const [isNavigating, setIsNavigating] = useState(false);
+  const router = useRouter();
+
   const scale = isActive ? 1.05 : 0.75;
   const opacity = isActive ? 1 : 0.3;
 
@@ -42,6 +46,16 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
       return "Start Challenge";
     }
     return `Continue`;
+  };
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsNavigating(true);
+
+    // Navigate to the game intro page
+    router.push(
+      `/student/challenges/${areaId}/games/${card.slug}?area=${areaId}&difficulty=${nextDifficulty}`
+    );
   };
 
   return (
@@ -77,12 +91,12 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
                     : "/images/art/Inactive-Star.png"
                 }
                 alt={`star-${starNum}`}
-                width={starNum === 2 ? 100 : 80} // Middle star slightly bigger
+                width={starNum === 2 ? 100 : 80}
                 height={starNum === 2 ? 100 : 80}
                 className={`mt-[-10px] transition-all duration-300 ${
                   starNum <= starsEarned
-                    ? "animate-pulse" // Active stars pulse
-                    : "opacity-50 grayscale" // Inactive stars are dimmed
+                    ? "animate-pulse"
+                    : "opacity-50 grayscale"
                 }`}
               />
             </motion.div>
@@ -113,20 +127,6 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
             <p className="text-slate-600 text-sm leading-relaxed mb-2">
               {card.description}
             </p>
-
-            {/* Progress Indicator */}
-            {/* {starsEarned > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <div className="text-xs font-semibold text-purple-600">
-                  ⭐ {starsEarned}/3 completed
-                </div>
-                {replayMode && (
-                  <div className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                    ✓ Mastered
-                  </div>
-                )}
-              </div>
-            )} */}
           </div>
 
           {/* Play Button */}
@@ -137,20 +137,58 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
               >
-                <Link
-                  href={`/student/challenges/${areaId}/games/${card.slug}?area=${areaId}&difficulty=${nextDifficulty}`}
+                <button
+                  onClick={handlePlayClick}
+                  disabled={isNavigating}
+                  className={`w-full font-bold py-3 px-6 rounded-xl text-base flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                    replayMode
+                      ? "bg-gradient-to-r from-green-600 to-emerald-700 text-white"
+                      : "bg-gradient-to-r from-purple-600 to-purple-700 text-white"
+                  }`}
                 >
-                  <button
-                    className={`w-full font-bold py-3 px-6 rounded-xl text-base flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] ${
-                      replayMode
-                        ? "bg-gradient-to-r from-green-600 to-emerald-700 text-white"
-                        : "bg-gradient-to-r from-purple-600 to-purple-700 text-white"
-                    }`}
-                  >
-                    <Play className="w-4 h-4" fill="currentColor" />
-                    {getButtonText()}
-                  </button>
-                </Link>
+                  {isNavigating ? (
+                    <>
+                      <span>Loading</span>
+                      <span className="flex gap-1">
+                        <motion.span
+                          animate={{ opacity: [0, 1, 0] }}
+                          transition={{
+                            duration: 1.2,
+                            repeat: Infinity,
+                            delay: 0,
+                          }}
+                        >
+                          .
+                        </motion.span>
+                        <motion.span
+                          animate={{ opacity: [0, 1, 0] }}
+                          transition={{
+                            duration: 1.2,
+                            repeat: Infinity,
+                            delay: 0.2,
+                          }}
+                        >
+                          .
+                        </motion.span>
+                        <motion.span
+                          animate={{ opacity: [0, 1, 0] }}
+                          transition={{
+                            duration: 1.2,
+                            repeat: Infinity,
+                            delay: 0.4,
+                          }}
+                        >
+                          .
+                        </motion.span>
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" fill="currentColor" />
+                      {getButtonText()}
+                    </>
+                  )}
+                </button>
               </motion.div>
             </div>
           )}

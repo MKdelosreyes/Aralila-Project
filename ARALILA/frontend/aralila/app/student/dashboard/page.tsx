@@ -10,7 +10,7 @@ import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { useAreaUnlocks } from "@/hooks/useAreaUnlocks";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Area {
   id: number;
@@ -34,9 +34,9 @@ export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [areas, setAreas] = useState<Area[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
 
   const {
     unlockedAreas,
@@ -46,65 +46,15 @@ export default function DashboardPage() {
   } = useAreaUnlocks();
 
   useEffect(() => {
-    (async () => {
-      // Try Supabase session first, then localStorage
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      let token = session?.access_token || localStorage.getItem("access_token");
-
-      if (session?.access_token) {
-        localStorage.setItem("access_token", session.access_token);
-        if (session.refresh_token) {
-          localStorage.setItem("refresh_token", session.refresh_token);
-        }
-      }
-
-      if (!token) {
-        console.log("No token found, redirecting to login");
-        router.push("/login");
-        return;
-      }
-
-      fetchUserData();
-      fetchAreas();
-    })();
-  }, []);
-
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-
-      if (!token) {
-        console.error("No authentication token found");
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch(`${env.backendUrl}/api/users/profile/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.status === 401) {
-        console.error("Token is invalid or expired");
-        localStorage.removeItem("access_token");
-        router.push("/login");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user data: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setUserData(data);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
+    if (!authLoading && !user) {
+      router.push("/login");
+      return;
     }
-  };
+
+    if (user) {
+      fetchAreas();
+    }
+  }, [user, authLoading]);
 
   const fetchAreas = async () => {
     try {
@@ -219,10 +169,6 @@ export default function DashboardPage() {
     }
   };
 
-  const fullName = userData
-    ? `${userData.first_name} ${userData.last_name}`.trim()
-    : "";
-
   if (loading || progressLoading) {
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black text-white flex items-center justify-center">
@@ -236,14 +182,7 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
-      <Header
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-        firstname={userData?.first_name}
-        lastname={userData?.last_name}
-        profile_pic={userData?.profile_pic}
-        email={userData?.email}
-      />
+      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <FullscreenMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <AnimatedBackground />
       <Sidebar />

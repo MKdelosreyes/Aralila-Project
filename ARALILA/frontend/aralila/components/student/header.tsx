@@ -1,28 +1,19 @@
-// components/student/Header.tsx
 "use client";
 
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
 
 type HeaderProps = {
   menuOpen: boolean;
   setMenuOpen: (value: boolean) => void;
-  firstname?: string;
-  lastname?: string;
-  profile_pic?: string;
-  email?: string;
 };
 
-export default function Header({
-  menuOpen,
-  setMenuOpen,
-  firstname,
-  lastname,
-  profile_pic,
-  email,
-}: HeaderProps) {
+export default function Header({ menuOpen, setMenuOpen }: HeaderProps) {
+  const { user } = useAuth();
+
   return (
     <header className="absolute top-0 left-0 right-0 z-[100] p-4 md:p-6 flex justify-between items-center">
       <a href="#" className="w-28 md:w-32">
@@ -40,25 +31,24 @@ export default function Header({
         />
       </a>
 
-      {!menuOpen && (
+      {!menuOpen && user && (
         <div className="flex items-center gap-6">
           <div className="flex flex-row gap-2 items-center justify-center">
             <Avatar className="w-12 h-12 relative ring-2 ring-purple-500 shadow-[0_0_12px_3px_rgba(168,85,247,0.5)]">
               <AvatarImage
                 alt="Student Avatar"
                 className="object-cover"
-                src={profile_pic}
+                src={user.profile_pic}
               />
               <AvatarFallback className="bg-purple-900 text-white">
-                {(firstname?.charAt(0) || "G") + (lastname?.charAt(0) || "u")}
+                {(user.first_name?.charAt(0) || "G") +
+                  (user.last_name?.charAt(0) || "u")}
               </AvatarFallback>
             </Avatar>
 
             <div className="flex flex-col">
-              <span className="font-semibold">
-                {firstname + " " + lastname}
-              </span>
-              <span className="text-sm text-purple-400">{email}</span>
+              <span className="font-semibold text-white">{user.full_name}</span>
+              <span className="text-sm text-purple-400">{user.email}</span>
             </div>
           </div>
 

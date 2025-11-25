@@ -10,7 +10,7 @@ export default function Home() {
       <Navbar />
       <main className="text-white">
         <section
-        className="min-h-screen bg-[url('/images/bg/forestbg.jpg')] bg-no-repeat bg-center bg-cover flex flex-col items-center justify-center text-center px-4"
+        className="min-h-screen bg-[url('/images/bg/landing-bg.png')] bg-no-repeat bg-center bg-cover flex flex-col items-center justify-center text-center px-4"
         id="getting-started"
       >
         <h1 className="text-5xl font-bold mb-6">Welcome to Aralila</h1>

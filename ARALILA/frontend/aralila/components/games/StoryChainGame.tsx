@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStoryChain } from "@/hooks/useStoryChain";
 import { useState, useMemo, useEffect, useRef } from "react";
+import Image from 'next/image';
 import { BookOpen, Clock, Image as ImageIcon, FileText, Zap, Trophy, Star, Edit3 } from "lucide-react";
 
 export default function StoryChainGame() {
@@ -240,7 +241,7 @@ export default function StoryChainGame() {
           {gameState.imageUrl ? (
             <div>
               <div className="relative">
-                <img
+                <Image
                   src={gameState.imageUrl}
                   alt="Story scene"
                   className="rounded-lg w-full shadow-xl object-cover border-4 border-purple-200"

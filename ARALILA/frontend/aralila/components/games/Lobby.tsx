@@ -13,7 +13,7 @@ interface LobbyProps {
 export default function Lobby({ showHeader = true }: LobbyProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   // Use player name from URL or fallback to Guest
   const playerName = searchParams.get("player") || "Guest";
@@ -25,7 +25,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
 
   const { players, isStarting, isConnected, connectionError } = useLobby({
     roomCode: roomKey,
-    playerName, // ✅ This is now the custom name from input
+    playerName,
     onGameStart: (turnOrder) => {
       console.log("🚀 Game starting with turn order:", turnOrder);
       setTimeout(() => {
@@ -38,16 +38,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     },
   });
 
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // Debounce state updates to prevent flickering
+  // ✅ MOVED UP: Effects must be before any return statements
   useEffect(() => {
     const timer = setTimeout(() => {
       setDisplayPlayers(players);
@@ -63,6 +54,15 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
 
     return () => clearTimeout(timer);
   }, [isConnected]);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   // Error state
   if (connectionError) {
@@ -96,6 +96,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     );
   }
 
+  // Main Render
   return (
     <div className="flex flex-col items-center gap-6 px-4">
       {showHeader && (
@@ -151,7 +152,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
 
       {/* Host Info */}
       {isHost && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 max-w-md text-center">
+        <div className="bg-purple-5 border border-purple-200 rounded-lg p-3 max-w-md text-center">
           <p className="text-sm text-purple-800 flex items-center gap-2 justify-center"><Star className="text-yellow-400"/> You are the host. Game starts automatically when 3 players join.</p>
         </div>
       )}

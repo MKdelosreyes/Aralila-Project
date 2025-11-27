@@ -1,0 +1,481 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle2, XCircle, Star, Zap, X, HandHelping } from "lucide-react";
+import { ConfirmationModal } from "../confirmation-modal";
+
+export interface WordAssociationQuestion {
+  images: string[];
+  answer: string;
+  hint: string;
+  difficulty: "easy" | "medium" | "hard";
+}
+
+export interface WordAssociationResult {
+  questionData: WordAssociationQuestion;
+  userAnswer: string;
+  isCorrect: boolean;
+}
+
+interface GameProps {
+  questions: WordAssociationQuestion[];
+  onGameComplete: (summary: {
+    score: number;
+    results: WordAssociationResult[];
+  }) => void;
+  onExit: () => void;
+}
+
+const TIME_LIMIT = 90;
+const BASE_POINTS = 100;
+const BONUS_TIME = 5;
+const MAX_ASSISTS = 3;
+
+function shuffleArray<T>(array: T[]): T[] {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+type LilaState = "normal" | "happy" | "sad" | "worried" | "thumbsup";
+
+export const WordAssociationGame = ({
+  questions,
+  onGameComplete,
+  onExit,
+}: GameProps) => {
+  const [shuffledQuestions, setShuffledQuestions] = useState<
+    WordAssociationQuestion[]
+  >([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [userLetters, setUserLetters] = useState<string[]>([]);
+  const [results, setResults] = useState<WordAssociationResult[]>([]);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error" | "skipped";
+  } | null>(null);
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [lilaState, setLilaState] = useState<LilaState>("normal");
+  const [animationKey, setAnimationKey] = useState(0);
+  const [dialogue, setDialogue] = useState("Let's find the common word!");
+
+  // Assists system
+  const [assists, setAssists] = useState(MAX_ASSISTS);
+  const [showAssistAnimation, setShowAssistAnimation] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState<Set<number>>(
+    new Set()
+  );
+
+  const currentQuestion = shuffledQuestions[currentIndex];
+  const happyStates: LilaState[] = ["happy", "thumbsup"];
+
+  useEffect(() => {
+    setShuffledQuestions(shuffleArray(questions).slice(0, 10));
+  }, [questions]);
+
+  useEffect(() => {
+    if (currentQuestion) {
+      setUserLetters(Array(currentQuestion.answer.length).fill(""));
+      setRevealedIndices(new Set());
+      setDialogue(currentQuestion.hint);
+      setTimeout(() => document.getElementById("letter-0")?.focus(), 100);
+    }
+  }, [currentQuestion]);
+
+  const handleEndGame = useCallback(() => {
+    const finalResults = [...results];
+    for (let i = currentIndex; i < shuffledQuestions.length; i++) {
+      finalResults.push({
+        questionData: shuffledQuestions[i],
+        userAnswer: "",
+        isCorrect: false,
+      });
+    }
+    onGameComplete({ score, results: finalResults });
+  }, [score, results, currentIndex, shuffledQuestions, onGameComplete]);
+
+  useEffect(() => {
+    if (timeLeft <= 15 && lilaState === "normal") {
+      setLilaState("worried");
+      setDialogue("Uh oh, the clock is ticking!");
+    }
+
+    if (timeLeft <= 0) {
+      handleEndGame();
+    }
+
+    if (timeLeft > 0 && !feedback) {
+      const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [timeLeft, feedback, handleEndGame, lilaState]);
+
+  const advanceToNext = useCallback(() => {
+    if (currentIndex + 1 >= shuffledQuestions.length) {
+      handleEndGame();
+    } else {
+      setCurrentIndex((prev) => prev + 1);
+      setFeedback(null);
+      setLilaState("normal");
+      setAnimationKey((prev) => prev + 1);
+    }
+  }, [currentIndex, shuffledQuestions.length, handleEndGame]);
+
+  const processAnswer = (
+    userWord: string,
+    isCorrect: boolean,
+    isSkipped = false
+  ) => {
+    const newResult: WordAssociationResult = {
+      questionData: currentQuestion,
+      userAnswer: userWord,
+      isCorrect,
+    };
+
+    if (isSkipped) {
+      setStreak(0);
+      setFeedback({ type: "skipped" });
+      setLilaState("sad");
+      setDialogue("No problem, let's try the next one.");
+    } else if (isCorrect) {
+      const points = streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS;
+      setScore((prev) => prev + points);
+      setStreak((prev) => prev + 1);
+      setFeedback({ type: "success" });
+      setLilaState(happyStates[Math.floor(Math.random() * happyStates.length)]);
+      setDialogue("You got it! Great job!");
+      setTimeLeft((prev) => Math.min(prev + BONUS_TIME, TIME_LIMIT));
+    } else {
+      setStreak(0);
+      setFeedback({ type: "error" });
+      setLilaState("sad");
+      setDialogue("Oops, that's not quite right.");
+    }
+    setResults((prev) => [...prev, newResult]);
+    setTimeout(advanceToNext, 2000);
+  };
+
+  const handleUseAssist = () => {
+    if (assists <= 0 || feedback) return;
+
+    // Find the next empty letter position
+    const emptyIndex = userLetters.findIndex(
+      (letter, idx) => !letter && !revealedIndices.has(idx)
+    );
+
+    if (emptyIndex === -1) return; // No empty slots
+
+    // Get the correct letter for that position
+    const correctLetter = currentQuestion.answer[emptyIndex].toUpperCase();
+
+    // Update the letters and mark this index as revealed
+    const newLetters = [...userLetters];
+    newLetters[emptyIndex] = correctLetter;
+    setUserLetters(newLetters);
+
+    const newRevealed = new Set(revealedIndices);
+    newRevealed.add(emptyIndex);
+    setRevealedIndices(newRevealed);
+
+    // Decrease assists
+    setAssists((prev) => prev - 1);
+
+    // Show animation
+    setShowAssistAnimation(true);
+    setTimeout(() => setShowAssistAnimation(false), 1000);
+
+    // Check if word is complete after assist
+    if (newLetters.every((letter) => letter)) {
+      setTimeout(() => {
+        handleSubmit();
+      }, 500);
+    } else {
+      // Focus on the next empty input
+      const nextEmptyIndex = newLetters.findIndex(
+        (letter, idx) => !letter && idx > emptyIndex
+      );
+      if (nextEmptyIndex !== -1) {
+        setTimeout(() => {
+          document.getElementById(`letter-${nextEmptyIndex}`)?.focus();
+        }, 100);
+      }
+    }
+  };
+
+  const handleSubmit = () => {
+    if (feedback) return;
+    const userWord = userLetters.join("");
+    const isCorrect =
+      userWord.toLowerCase() === currentQuestion.answer.toLowerCase();
+    processAnswer(userWord, isCorrect);
+  };
+
+  const handleSkip = () => {
+    if (feedback) return;
+    processAnswer("", false, true);
+  };
+
+  const updateLetter = (index: number, letter: string) => {
+    // Don't allow editing revealed letters
+    if (revealedIndices.has(index)) return;
+
+    if (/^[a-zA-Z]$/.test(letter) || letter === "") {
+      const newLetters = [...userLetters];
+      newLetters[index] = letter.toUpperCase();
+      setUserLetters(newLetters);
+      if (letter && index < currentQuestion.answer.length - 1) {
+        document.getElementById(`letter-${index + 1}`)?.focus();
+      }
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === "Enter" && userLetters.every((l) => l)) handleSubmit();
+    else if (e.key === "Backspace" && !userLetters[index] && index > 0) {
+      document.getElementById(`letter-${index - 1}`)?.focus();
+    }
+  };
+
+  if (!currentQuestion) return <div>Loading...</div>;
+
+  const lilaImage = `/images/character/lila-${lilaState}.png`;
+  const boxSize =
+    currentQuestion.answer.length <= 6
+      ? "w-14 h-14 text-2xl"
+      : currentQuestion.answer.length <= 9
+      ? "w-11 h-11 text-xl"
+      : "w-9 h-9 text-lg";
+
+  return (
+    <div className="relative z-10 max-w-7xl w-full mx-auto">
+      <ConfirmationModal
+        isOpen={isExitModalOpen}
+        onClose={() => setIsExitModalOpen(false)}
+        onConfirm={onExit}
+      />
+      <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xl border border-slate-200 flex flex-col w-full">
+        {/* Header */}
+        <div className="w-full flex items-center gap-4 mb-4 flex-shrink-0">
+          <button
+            onClick={() => setIsExitModalOpen(true)}
+            className="text-slate-400 hover:text-purple-600 p-2 rounded-full hover:bg-purple-100"
+          >
+            <X />
+          </button>
+          <div className="w-full bg-slate-200 rounded-full h-4">
+            <motion.div
+              className={`h-4 rounded-full ${
+                timeLeft <= 15
+                  ? "bg-red-500"
+                  : "bg-gradient-to-r from-purple-500 to-fuchsia-500"
+              }`}
+              animate={{ width: `${(timeLeft / TIME_LIMIT) * 100}%` }}
+              transition={{ duration: 1, ease: "linear" }}
+            />
+          </div>
+          <div className="flex items-center gap-4 text-slate-700">
+            <div className="flex items-center gap-2">
+              <Star className="text-yellow-400" />
+              <span className="text-xl font-bold">{score}</span>
+            </div>
+            {streak > 1 && (
+              <motion.div
+                className="flex items-center gap-1 text-orange-500"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+              >
+                <Zap />
+                <span className="text-lg font-bold">{streak}x</span>
+              </motion.div>
+            )}
+            {/* Assists counter */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
+              <HandHelping className="w-5 h-5 text-purple-600" />
+              <span className="text-lg font-bold text-purple-600">
+                {assists}
+              </span>
+            </div>
+          </div>
+          <div className="text-slate-500 text-lg font-mono whitespace-nowrap">
+            {currentIndex + 1} / {shuffledQuestions.length}
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-grow w-full flex flex-row items-center justify-center gap-6 py-2">
+          {/* Lila Character with Dialogue */}
+          <motion.div
+            key={animationKey}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-4"
+          >
+            <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md max-w-[280px] text-center">
+              {feedback ? (
+                <div className="flex flex-col items-center gap-2">
+                  {feedback.type === "success" ? (
+                    <>
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">✓</span>
+                      </div>
+                      <p className="text-green-600 font-bold text-lg">Tama!</p>
+                      <p className="text-green-700 text-sm">
+                        +{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <span className="text-2xl">✗</span>
+                      </div>
+                      <p className="text-red-600 font-bold text-lg">
+                        {feedback.type === "skipped" ? "Nilaktawan!" : "Mali!"}
+                      </p>
+                      <p className="text-red-700 text-sm">
+                        Ang tamang sagot:{" "}
+                        <span className="font-bold">
+                          {currentQuestion.answer}
+                        </span>
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <p className="text-md text-slate-800">{dialogue}</p>
+              )}
+
+              <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-purple-50"></div>
+            </div>
+            <motion.div
+              key={lilaState}
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+            >
+              <Image
+                src={lilaImage}
+                alt="Lila"
+                width={150}
+                height={150}
+                priority
+              />
+            </motion.div>
+          </motion.div>
+
+          <div className="flex flex-col items-center justify-center w-full max-w-lg relative">
+            {/* Assist Animation Overlay */}
+            <AnimatePresence>
+              {showAssistAnimation && (
+                <motion.div
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-40"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    className="text-6xl font-bold text-green-500"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: [1, 1.5, 1], rotate: 0 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                  >
+                    ✨
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="w-full grid grid-cols-2 gap-2 mb-4 px-15">
+              {currentQuestion.images.map((src, idx) => (
+                <div
+                  key={idx}
+                  className="w-full aspect-square rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm max-w-[200px] mx-auto"
+                >
+                  <Image
+                    src={src}
+                    alt={`Clue ${idx + 1}`}
+                    width={150}
+                    height={150}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-center gap-2 flex-nowrap w-full px-2 py-2 overflow-x-auto">
+              {currentQuestion.answer.split("").map((_, index) => (
+                <motion.input
+                  key={index}
+                  id={`letter-${index}`}
+                  type="text"
+                  maxLength={1}
+                  value={userLetters[index] || ""}
+                  onChange={(e) => updateLetter(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyPress(e, index)}
+                  initial={
+                    showAssistAnimation &&
+                    revealedIndices.has(index) &&
+                    userLetters[index]
+                      ? { scale: 0, backgroundColor: "#10b981" }
+                      : {}
+                  }
+                  animate={
+                    showAssistAnimation &&
+                    revealedIndices.has(index) &&
+                    userLetters[index]
+                      ? {
+                          scale: [1.5, 1],
+                          backgroundColor: ["#10b981", "#f1f5f9"],
+                        }
+                      : {}
+                  }
+                  transition={{ duration: 0.5 }}
+                  className={`${boxSize} font-bold text-center rounded-lg border-2 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0 ${
+                    revealedIndices.has(index)
+                      ? "bg-green-50 border-green-400 text-green-700 cursor-not-allowed"
+                      : "bg-slate-100 border-slate-300 text-slate-800"
+                  }`}
+                  autoFocus={index === 0}
+                  disabled={!!feedback || revealedIndices.has(index)}
+                  readOnly={revealedIndices.has(index)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Buttons */}
+        <div className="w-full flex justify-between items-center pt-4 border-t border-slate-200 flex-shrink-0">
+          <button
+            onClick={handleSkip}
+            disabled={!!feedback}
+            className="px-8 py-3 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold rounded-xl transition-all text-lg"
+          >
+            SKIP
+          </button>
+
+          <button
+            onClick={handleUseAssist}
+            disabled={assists <= 0 || !!feedback || userLetters.every((l) => l)}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+          >
+            <HandHelping className="w-5 h-5" />
+            <span>Gamitin Assist</span>
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={userLetters.some((l) => !l) || !!feedback}
+            className={`px-8 py-3 text-white font-bold rounded-xl transition-all transform text-lg shadow-lg ${
+              userLetters.some((l) => !l) || !!feedback
+                ? "bg-gray-400 cursor-not-allowed shadow-none"
+                : "bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:scale-105"
+            }`}
+          >
+            CHECK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

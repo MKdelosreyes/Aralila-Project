@@ -1,0 +1,184 @@
+const handleDragEnd = (event: any) => {
+    if (!event.over) return;
+
+    const droppedOn = event.over.id;
+    const word = event.active.id; // dragged word (highlighted one)
+    const correct = droppedOn === currentQ.correctAnswer;
+
+    setSelectedAnswer(droppedOn);
+    setIsCorrect(correct);
+    setShowFeedback(true);
+
+    let newScore = score;
+    let newStreak = streak;
+    let newTimeLeft = timeLeft;
+
+    if (correct) {
+      const bonus = currentSettings.correctBonus;
+      const points = newStreak >= 2 ? bonus * 2 : bonus;
+      newScore += points;
+      newStreak += 1;
+      newTimeLeft += bonus;
+      setLilaState(happyStates[Math.floor(Math.random() * happyStates.length)]);
+    } else {
+      newStreak = 0;
+      const penalty = currentSettings.wrongPenalty;
+      newTimeLeft = Math.max(0, newTimeLeft - penalty);
+      setLilaState(sadStates[Math.floor(Math.random() * sadStates.length)]);
+    }
+
+    setScore(newScore);
+    setStreak(newStreak);
+    setTimeLeft(newTimeLeft);
+    setResults((prev) => [
+      ...prev,
+      {
+        question: currentQ,
+        userAnswer: droppedOn,
+        isCorrect: correct,
+        skipped: false,
+        hintUsed: false,
+      },
+    ]);
+
+    setTimeout(() => {
+      nextQuestion();
+    }, 2000);
+  };
+
+  const renderSentenceWithHighlight = (sentence: string, word: string) => {
+    const parts = sentence.split(new RegExp(`(\\b${word}\\b)`, "gi"));
+    return parts.map((part, index) => (
+      <span
+        key={index}
+        className={
+          part.toLowerCase() === word.toLowerCase()
+            ? "bg-purple-200 px-2 py-1 rounded-lg font-bold text-purple-800"
+            : ""
+        }
+      >
+        {part}
+      </span>
+    ));
+  };
+
+  const lilaImage = `/images/character/lila-${lilaState}.png`;
+
+  return (
+    <div className="relative z-10 max-w-4xl w-full mx-auto">
+      <ConfirmationModal
+        isOpen={isExitModalOpen}
+        onClose={() => setIsExitModalOpen(false)}
+        onConfirm={onExit}
+      />
+
+      <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[70vh] w-full">
+        {/* ======== HEADER: Corrected Layout ======== */}
+        <div className="w-full flex items-center gap-4 mb-8">
+          <button
+            onClick={() => setIsExitModalOpen(true)}
+            className="text-slate-400 hover:text-purple-600 transition-colors p-2 rounded-full hover:bg-purple-100 flex-shrink-0"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          {/* Use flex-grow to allow the progress bar to fill available space */}
+          <div className="flex-grow bg-slate-200 rounded-full h-4">
+            <motion.div
+              className={`h-4 rounded-full transition-colors duration-500 ${
+                progress > 50
+                  ? "bg-gradient-to-r from-purple-500 to-fuchsia-500"
+                  : progress > 25
+                  ? "bg-gradient-to-r from-yellow-500 to-orange-500"
+                  : "bg-gradient-to-r from-red-500 to-red-600"
+              }`}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 1, ease: "linear" }}
+            />
+          </div>
+          {/* Group score, streak, and count into a single non-shrinking flex item */}
+          <div className="flex items-center gap-6 text-slate-700 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <Star className="w-6 h-6 text-yellow-400" />
+              <span className="text-xl font-bold">{score}</span>
+            </div>
+            {streak > 1 && (
+              <motion.div
+                className="flex items-center gap-1 text-orange-500"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+              >
+                <Zap className="w-5 h-5" />
+                <span className="text-lg font-bold">{streak}x</span>
+              </motion.div>
+            )}
+            <div className="text-slate-500 text-lg font-mono whitespace-nowrap">
+              {currentQuestionIndex + 1} / {questions.length}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Game Content */}
+        <DndContext onDragEnd={handleDragEnd}>
+          <div className="flex-grow w-full flex flex-col items-center justify-center">
+            {/* Character + Question */}
+            <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
+              {/* Lila */}
+              <motion.div
+                className="relative"
+                key={lilaState}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+              >
+                <Image
+                  src={`/images/character/lila-${lilaState}.png`}
+                  alt="Lila"
+                  width={150}
+                  height={150}
+                />
+              </motion.div>
+
+              {/* Sentence with draggable word */}
+              <div className="text-2xl text-slate-800 font-medium leading-relaxed bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm w-full flex items-center justify-between gap-4">
+                <div className="flex gap-4 flex-wrap justify-center">
+                  {currentQ.sentence.split(" ").map((part, i) =>
+                    part.toLowerCase() === currentQ.word.toLowerCase() ? (
+                      <DraggableWord key={i} word={part} />
+                    ) : (
+                      <span key={i} className="mx-1">
+                        {part}
+                      </span>
+                    )
+                  )}
+                </div>
+                <button
+                  onClick={handleListen}
+                  className="p-2 bg-purple-100 hover:bg-purple-200 border border-purple-200 rounded-full text-purple-700"
+                >
+                  <Volume2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Drop Zones */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-2xl">
+              {currentQ.options.map((option) => (
+                <DropZone key={option} option={option} />
+              ))}
+            </div>
+          </div>
+        </DndContext>
+
+        {/* Bottom Action Buttons */}
+        <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
+          <button
+            onClick={skipQuestion}
+            disabled={showFeedback}
+            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
+          >
+            SKIP
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

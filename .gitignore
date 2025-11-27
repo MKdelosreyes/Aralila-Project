@@ -1,0 +1,38 @@
+﻿# Virtual environments
+venv/
+virtenv/
+**/venv/
+**/virtenv/
+
+# Env files
+.env
+.env.*
+**/.env*
+ARALILA/backend/.env*
+*.env
+
+# Python bytecode/cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# DB
+db.sqlite3
+*.db
+
+# Frontend
+node_modules/
+dist/
+build/
+
+# Django
+staticfiles/
+media/
+*.log
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

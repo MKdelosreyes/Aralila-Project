@@ -18,4 +18,8 @@ urlpatterns = [
     path('parts-of-speech/<int:area_id>/', views.get_parts_of_speech_questions, name='parts_of_speech_questions'),
     path('punctuation/<int:area_id>/', views.get_punctuation_questions, name='punctuation_questions'),
     path('word-association/<int:area_id>/', views.get_word_association_questions, name='word_association_questions'),
+
+    path('assessment/<int:area_id>/', views.get_assessment_lesson, name='assessment_lesson'),
+    path('assessment/submit-challenge/', views.submit_assessment_challenge, name='submit_challenge'),
+    path('assessment/complete/', views.complete_assessment, name='complete_assessment'),
 ]

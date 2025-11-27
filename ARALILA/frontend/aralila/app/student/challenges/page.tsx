@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useRef, useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
@@ -74,6 +74,74 @@ const areaSymbols = [
   },
 ];
 
+const areaStories = [
+  {
+    order_index: 0,
+    titleFil: "Maligayang Pagdating sa Laruan!",
+    titleEng: "Welcome to the Playground!",
+    storyFil:
+      "Dito nagsisimula ang iyong paglalakbay! Ang laruan ay puno ng masayang hamon na tutulong sa'yo matuto ng mga pangunahing kaalaman. Bawat laro na iyong tataposin ay maghahanda sa'yo para sa mas malalaking pakikipagsapalaran. Handa ka na bang maglaro at matuto?",
+    storyEng:
+      "This is where your journey begins! The playground is filled with fun challenges that will help you learn the basics. Every game you complete will prepare you for bigger adventures ahead. Are you ready to play and learn?",
+    funFactFil:
+      "Ang paglalaro ay tumutulong sa ating utak na lumaki at matuto nang mas mabilis!",
+    funFactEng: "Playing helps our brain grow and learn faster!",
+    icon: "🎮",
+  },
+  {
+    order_index: 1,
+    titleFil: "Oras na para sa Klase!",
+    titleEng: "Time for Class!",
+    storyFil:
+      "Napakahusay! Ngayon ay oras na para dalhin ang iyong mga natutunang kasanayan sa silid-aralan. Dito, haharapin mo ang mas nakatuon na mga hamon na magpapatalas ng iyong isipan. Tandaan, bawat mahusay na mag-aaral ay nagsisimula sa pagkamausisa at pagsasanay!",
+    storyEng:
+      "Well done! Now it's time to take your skills to the classroom. Here, you'll face more focused challenges that will sharpen your mind. Remember, every great student starts with curiosity and practice!",
+    funFactFil:
+      "Ang pag-aaral nang may saya ay nakakatulong sa atin na tandaan ang mga bagay nang mas matagal!",
+    funFactEng: "Learning with joy helps us remember things longer!",
+    icon: "📚",
+  },
+  {
+    order_index: 2,
+    titleFil: "Pauwi na Tayo!",
+    titleEng: "Back Home",
+    storyFil:
+      "Ang pag-aaral ay hindi nagtatapos sa labas ng silid-aralan! Sa bahay, matutuklasan mo kung paano gamitin ang iyong natutunan sa pang-araw-araw na sitwasyon. Ang mga hamong ito ay pamilyar ngunit kapana-panabik pa rin. Ipakita mo ang iyong natutuhan!",
+    storyEng:
+      "Learning doesn't stop outside the classroom! At home, you'll discover how to apply what you've learned in everyday situations. These challenges will feel familiar yet exciting. Show what you've learned!",
+    funFactFil:
+      "Ang mga natutunan natin sa tahanan ay nananatili sa atin habambuhay!",
+    funFactEng: "What we learn at home stays with us for life!",
+    icon: "🏠",
+  },
+  {
+    order_index: 3,
+    titleFil: "Tuklasin ang Bayan!",
+    titleEng: "Explore the Town!",
+    storyFil:
+      "Ang bayan ay puno ng aktibidad! Lubhang lumaki ka na, at ngayon ay oras na para subukan ang iyong mga kasanayan sa mas malawak na komunidad. Makilala ang mga bagong hamon, tumulong sa mga kapitbahay, at patunayan na handa ka na para sa mas dakilang pakikipagsapalaran!",
+    storyEng:
+      "The town is buzzing with activity! You've grown so much, and now it's time to test your skills in the wider community. Meet new challenges, help neighbors, and prove you're ready for even greater adventures!",
+    funFactFil:
+      "Ang pagtulong sa iba ay nagpapalakas din ng ating sariling kaalaman!",
+    funFactEng: "Helping others also strengthens our own knowledge!",
+    icon: "🏘️",
+  },
+  {
+    order_index: 4,
+    titleFil: "Abutin ang Rurok!",
+    titleEng: "Reach New Heights!",
+    storyFil:
+      "Nakarating ka sa Bundok - ang pinakamataas na hamon! Tanging ang pinaka-dedikadong mag-aaral lamang ang nakakaabot dito. Ang mga hamon dito ay mahirap, ngunit napatunayan mo na may kakayahan ka. Umakyat nang mas mataas at maging tunay na dalubhasa!",
+    storyEng:
+      "You've made it to the Mountainside - the ultimate test! Only the most dedicated learners reach this far. The challenges here are tough, but you've proven you have what it takes. Climb higher and become a true master!",
+    funFactFil:
+      "Ang mga pinakamahirap na hamon ay nagdudulot ng pinakamasayang tagumpay!",
+    funFactEng: "The toughest challenges bring the sweetest victories!",
+    icon: "⛰️",
+  },
+];
+
 export default function ChallengesPage() {
   return (
     <Suspense
@@ -105,12 +173,36 @@ function ChallengesPageInner() {
   const supabase = createClient();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [useEnglish, setUseEnglish] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showTopShadow, setShowTopShadow] = useState(false);
+  const [showBottomShadow, setShowBottomShadow] = useState(false);
 
   const {
     isAreaLocked,
     getAreaProgress,
     loading: progressLoading,
   } = useAreaUnlocks();
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const checkShadows = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+
+      setShowTopShadow(scrollTop > 0);
+      setShowBottomShadow(scrollTop + clientHeight < scrollHeight);
+    };
+    const t = setTimeout(checkShadows, 10);
+
+    el.addEventListener("scroll", checkShadows);
+    return () => {
+      clearTimeout(t);
+      el.removeEventListener("scroll", checkShadows);
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -189,7 +281,14 @@ function ChallengesPageInner() {
       return;
     }
     setSelectedAreaOrder(orderIndex);
+    setShowPopup(true);
   };
+
+  useEffect(() => {
+    if (!progressLoading && !loading) {
+      setShowPopup(true);
+    }
+  }, [selectedAreaOrder, progressLoading, loading]);
 
   const getBackgroundComponent = () => {
     const selectedArea = areaSymbols.find(
@@ -201,7 +300,56 @@ function ChallengesPageInner() {
     return <AnimatedBackground />;
   };
 
+  const currentStory = areaStories.find(
+    (s) => s.order_index === selectedAreaOrder
+  );
   const progress = getAreaProgress(selectedAreaOrder);
+  const progressPercentage = areaData
+    ? Math.round((areaData.completed_games / areaData.total_games) * 100)
+    : 0;
+
+  const getPopupContainer = () => {
+    if (selectedAreaOrder === 0) {
+      return "/images/bg/palaruan-popup-container.png";
+    } else if (selectedAreaOrder === 1) {
+      return "/images/bg/paaralan-popup-container.png";
+    } else if (selectedAreaOrder === 2) {
+      return "/images/bg/bahay-popup-container.png";
+    } else if (selectedAreaOrder === 3) {
+      return "/images/bg/pamilihan-popup-container.png";
+    } else {
+      return "/images/bg/kabundukan-popup-container.png";
+    }
+  };
+
+  const getPopupContent = () => {
+    if (selectedAreaOrder === 0) {
+      if (useEnglish) {
+        return "/images/bg/palaruan-graphics-us.png";
+      }
+      return "/images/bg/palaruan-graphics-ph.png";
+    } else if (selectedAreaOrder === 1) {
+      if (useEnglish) {
+        return "/images/bg/paaralan-graphics-us.png";
+      }
+      return "/images/bg/paaralan-graphics-ph.png";
+    } else if (selectedAreaOrder === 2) {
+      if (useEnglish) {
+        return "/images/bg/bahay-graphics-us.png";
+      }
+      return "/images/bg/bahay-graphics-ph.png";
+    } else if (selectedAreaOrder === 3) {
+      if (useEnglish) {
+        return "/images/bg/pamilihan-graphics-us.png";
+      }
+      return "/images/bg/pamilihan-graphics-ph.png";
+    } else {
+      if (useEnglish) {
+        return "/images/bg/kabundukan-graphics-us.png";
+      }
+      return "/images/bg/kabundukan-graphics-ph.png";
+    }
+  };
 
   if (progressLoading) {
     return (
@@ -218,6 +366,82 @@ function ChallengesPageInner() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black">
+      <AnimatePresence>
+        {showPopup && currentStory && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/0 backdrop-blur-xs"
+            onClick={() => setShowPopup(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 50 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-[60%] h-[78%] min-w-[60%] mx-4 rounded-2xl"
+              style={{
+                backgroundImage: `url('${getPopupContainer()}')`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            >
+              <div className="relative z-10 flex flex-row ml-[66%] mt-[-3%] items-center">
+                <Image
+                  src={"/images/character/lila-happy.png"}
+                  alt="Lila Happy"
+                  width={200}
+                  height={200}
+                  // style={{ marginLeft: "70%", marginTop: "-3%" }}
+                ></Image>
+
+                {/* Language Toggle */}
+                <button
+                  onClick={() => setUseEnglish(!useEnglish)}
+                  className="relative mt-[20%] ml-[-5%] px-3 py-1 border-2 border-purple-600 text-purple-950 hover:bg-purple-200 hover:text-black rounded-lg text-xs font-bold transition-colors"
+                >
+                  {useEnglish ? "🇵🇭 Filipino" : "🇺🇸 English"}
+                </button>
+              </div>
+
+              <div
+                ref={scrollRef}
+                className="relative w-[90%] max-h-[71%] mt-[-5%] mx-[50px] overflow-y-auto overflow-x-hidden scrollbar-purple rounded-2xl"
+              >
+                {/* Top Fade Shadow */}
+                {/* {showTopShadow && (
+                  <div
+                    className="pointer-events-none absolute top-0 left-0 w-full h-6 
+                        bg-gradient-to-b from-[rgba(159,89,223,0.25)] to-transparent z-10"
+                  />
+                )} */}
+
+                {/* Bottom Fade Shadow */}
+                {/* {showBottomShadow && (
+                  <div
+                    className="pointer-events-none absolute bottom-0 left-0 w-full h-6 
+                        bg-gradient-to-t from-[rgba(159,89,223,0.25)] to-transparent z-10"
+                  />
+                )} */}
+
+                <div className="relative w-auto min-h-[400px]">
+                  <Image
+                    src={getPopupContent()}
+                    alt="Playground illustration"
+                    width={2000}
+                    height={1200}
+                    className="w-full h-auto"
+                    priority
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <FullMenuScreen menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 

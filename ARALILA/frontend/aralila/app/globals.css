@@ -175,9 +175,10 @@
 .animate-pulse-24-7 {
   animation: pulse-24-7 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
 .scrollbar-purple {
   scrollbar-width: thin;
-  scrollbar-color: rgb(187, 138, 234) rgb(243 244 246);
+  scrollbar-color: rgb(187, 138, 234) transparent;
 }
 
 .scrollbar-purple::-webkit-scrollbar {
@@ -185,7 +186,7 @@
 }
 
 .scrollbar-purple::-webkit-scrollbar-track {
-  background: rgb(243 244 246);
+  background: transparent;
   border-radius: 8px;
 }
 
@@ -196,4 +197,10 @@
 
 .scrollbar-purple::-webkit-scrollbar-thumb:hover {
   background: rgb(83, 47, 114);
+}
+
+.scrollbar-purple::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
 }

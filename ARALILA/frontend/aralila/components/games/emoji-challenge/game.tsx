@@ -17,6 +17,8 @@ interface Question {
 interface GameResult {
   questionData: Question;
   isCorrect: boolean;
+  userAnswer: string;
+  pointsEarned: number;
 }
 interface GameProps {
   questions: Question[];
@@ -30,7 +32,7 @@ interface GameProps {
 }
 
 // --- Constants ---
-const TIME_LIMIT = 180; // 3 minutes total
+const TIME_LIMIT = 240; // 3 minutes total
 const BONUS_TIME = 5; // +5 seconds for a correct answer
 const MAX_MISTAKES = 6;
 
@@ -69,6 +71,7 @@ export const EmojiHulaSalitaGame = ({
   const [lilaState, setLilaState] = useState<LilaState>("thinking");
   const [dialogue, setDialogue] = useState(".....");
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [isCheckingAnswer, setIsCheckingAnswer] = useState(false);
 
   const currentQuestion = useMemo(
     () => shuffledQuestions[currentQuestionIndex],
@@ -79,9 +82,19 @@ export const EmojiHulaSalitaGame = ({
   const advanceToNextQuestion = useCallback(() => {
     if (currentQuestionIndex < shuffledQuestions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
+      setStatus("playing");
+      setLilaState("normal");
     } else {
       const correctCount = results.filter((r) => r.isCorrect).length;
-      const percentScore = Math.round((correctCount / results.length) * 100);
+      const totalEarnedPoints = results.reduce(
+        (sum, r) => sum + r.pointsEarned,
+        0
+      );
+      const totalPossiblePoints = results.length * 20;
+      const percentScore =
+        totalPossiblePoints > 0
+          ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
+          : 0;
 
       onGameComplete({
         percentScore,
@@ -118,13 +131,18 @@ export const EmojiHulaSalitaGame = ({
 
   // --- Timer Logic ---
   useEffect(() => {
-    if (status !== "playing") return;
+    if (status !== "playing" || isCheckingAnswer) return;
 
     if (timeLeft <= 0) {
       const correctCount = results.filter((r) => r.isCorrect).length;
+      const totalEarnedPoints = results.reduce(
+        (sum, r) => sum + r.pointsEarned,
+        0
+      );
+      const totalPossiblePoints = results.length * 20;
       const percentScore =
-        results.length > 0
-          ? Math.round((correctCount / results.length) * 100)
+        totalPossiblePoints > 0
+          ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
           : 0;
 
       onGameComplete({
@@ -135,18 +153,35 @@ export const EmojiHulaSalitaGame = ({
       return;
     }
 
-    if (timeLeft <= 15) {
+    if (
+      timeLeft <= 15 &&
+      lilaState !== "worried" &&
+      lilaState !== "sad" &&
+      lilaState !== "crying"
+    ) {
       setLilaState("worried");
       setDialogue("Naku, paubos na ang oras! 😥");
     }
 
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft, status, onGameComplete, score, results, lilaState]);
+  }, [
+    timeLeft,
+    status,
+    isCheckingAnswer,
+    onGameComplete,
+    score,
+    results,
+    lilaState,
+  ]);
 
   // --- Main Guessing Logic ---
   const handleSubmitAnswer = async () => {
-    if (status !== "playing" || !studentAnswer.trim()) return;
+    if (status !== "playing" || !studentAnswer.trim() || isCheckingAnswer)
+      return;
+
+    setIsCheckingAnswer(true);
+    setDialogue("Sinusuri ko ang iyong sagot... 🤔");
 
     try {
       const result = await emojiSentenceAPI.checkAnswer(
@@ -154,71 +189,226 @@ export const EmojiHulaSalitaGame = ({
         currentQuestion.keywords
       );
 
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      const pointsEarned = result.points || (result.valid ? 20 : 0);
+      const basePoints = pointsEarned;
+      const streakBonus = streak >= 3 ? Math.floor(basePoints * 0.25) : 0;
+      const totalPoints = basePoints + streakBonus;
+
+      const newResult: GameResult = {
+        questionData: currentQuestion,
+        isCorrect: result.valid,
+        userAnswer: studentAnswer.trim(),
+        pointsEarned: totalPoints,
+      };
+
+      const updatedResults = [...results, newResult];
+
       if (result.valid) {
         // Correct
         setStatus("completed");
-        const points = 20 + streak * 5;
-        setScore((prev) => prev + points);
+        const newScore = score + totalPoints;
+        setScore(newScore);
         setStreak((prev) => prev + 1);
         setTimeLeft((prev) => Math.min(prev + BONUS_TIME, TIME_LIMIT));
-        setResults((prev) => [
-          ...prev,
-          { questionData: currentQuestion, isCorrect: true },
-        ]);
-        setLilaState(Math.random() > 0.5 ? "happy" : "thumbsup");
-        setDialogue(result.explanation || "Magaling! Nakuha mo! ✨");
-        setTimeout(() => {
-          setStudentAnswer("");
-          advanceToNextQuestion();
-        }, 2500);
+
+        setResults(updatedResults);
+
+        if (pointsEarned === 20) {
+          setLilaState(Math.random() > 0.5 ? "happy" : "thumbsup");
+          const bonusText = streakBonus > 0 ? ` + ${streakBonus} bonus` : "";
+          setDialogue(
+            result.explanation ||
+              `Perfect! Lahat ay tama! ✨ +${totalPoints}${
+                bonusText ? ` (${pointsEarned}${bonusText})` : ""
+              }`
+          );
+        } else if (pointsEarned >= 15) {
+          setLilaState("happy");
+          const bonusText = streakBonus > 0 ? ` + ${streakBonus} bonus` : "";
+          setDialogue(
+            result.explanation ||
+              `Magaling! May konting English words pero ok na. +${totalPoints}${
+                bonusText ? ` (${pointsEarned}${bonusText})` : ""
+              }`
+          );
+        } else if (pointsEarned >= 10) {
+          setLilaState("normal");
+          const bonusText = streakBonus > 0 ? ` + ${streakBonus} bonus` : "";
+          setDialogue(
+            result.explanation ||
+              `Pwede na, pero maraming English words. +${totalPoints}${
+                bonusText ? ` (${pointsEarned}${bonusText})` : ""
+              }`
+          );
+        }
+
+        if (currentQuestionIndex === shuffledQuestions.length - 1) {
+          setTimeout(() => {
+            setIsCheckingAnswer(false);
+
+            const totalEarnedPoints = updatedResults.reduce(
+              (sum, r) => sum + r.pointsEarned,
+              0
+            );
+            const totalPossiblePoints = updatedResults.length * 20;
+            const percentScore =
+              totalPossiblePoints > 0
+                ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
+                : 0;
+
+            onGameComplete({
+              percentScore,
+              rawPoints: newScore,
+              results: updatedResults,
+            });
+          }, 3500);
+        } else {
+          setTimeout(() => {
+            setStudentAnswer("");
+            setIsCheckingAnswer(false);
+            setCurrentQuestionIndex((prev) => prev + 1);
+            setStatus("playing");
+            setLilaState("normal");
+          }, 3500);
+        }
       } else {
         // Incorrect
         const newMistakes = mistakes + 1;
         setMistakes(newMistakes);
         setLilaState("sad");
-        setDialogue(result.explanation || "Ay, mali! Subukan muli.");
         setStreak(0);
-        setResults((prev) => [
-          ...prev,
-          { questionData: currentQuestion, isCorrect: false },
-        ]);
-        setTimeout(() => {
-          setStudentAnswer("");
-          advanceToNextQuestion();
-        }, 5000);
+
+        let newScore = score;
+        if (pointsEarned > 0) {
+          newScore = score + pointsEarned;
+          setScore(newScore);
+        }
+
+        setDialogue(
+          result.explanation ||
+            `Ay, may mali. ${
+              pointsEarned > 0
+                ? `+${pointsEarned} points lang`
+                : "Walang points"
+            }.`
+        );
+
+        setResults(updatedResults);
+
+        if (currentQuestionIndex === shuffledQuestions.length - 1) {
+          setTimeout(() => {
+            setIsCheckingAnswer(false);
+
+            const totalEarnedPoints = updatedResults.reduce(
+              (sum, r) => sum + r.pointsEarned,
+              0
+            );
+            const totalPossiblePoints = updatedResults.length * 20;
+            const percentScore =
+              totalPossiblePoints > 0
+                ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
+                : 0;
+
+            onGameComplete({
+              percentScore,
+              rawPoints: newScore,
+              results: updatedResults,
+            });
+          }, 4000);
+        } else {
+          setTimeout(() => {
+            setStudentAnswer("");
+            setIsCheckingAnswer(false);
+            setCurrentQuestionIndex((prev) => prev + 1);
+            setStatus("playing");
+            setLilaState("normal");
+          }, 4000);
+        }
 
         if (newMistakes >= MAX_MISTAKES) {
           setStatus("failed");
           setLilaState("crying");
-          setDialogue("Oh hindi! Sa susunod ulit.");
-          setStreak(0);
-          setResults((prev) => [
-            ...prev,
-            { questionData: currentQuestion, isCorrect: false },
-          ]);
-          setTimeout(() => {
-            setStudentAnswer("");
-            advanceToNextQuestion();
-          }, 5000);
+          setDialogue("Maraming mali. Subukan muli!");
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error checking answer:", err);
-      setDialogue("Nagkaroon ng error sa pagsusuri. Subukan muli.");
+
+      let errorMessage = "Nagkaroon ng error. Subukan muli.";
+
+      if (err.response?.status === 429) {
+        errorMessage = "Masyadong maraming request. Sandali lang... ⏳";
+        setLilaState("worried");
+      } else if (err.response?.status === 408) {
+        errorMessage = "Timeout. Subukan ulit! ⏱️";
+        setLilaState("worried");
+      } else if (err.message) {
+        errorMessage = err.message;
+        setLilaState("sad");
+      }
+
+      setDialogue(errorMessage);
+
+      if (err.response?.status === 429) {
+        setTimeout(() => {
+          setDialogue("Subukan mo ulit ngayon! 😊");
+          setLilaState("normal");
+          setIsCheckingAnswer(false);
+        }, 3000);
+      } else {
+        setIsCheckingAnswer(false);
+      }
     }
   };
 
   const handleSkip = () => {
-    if (status !== "playing") return;
+    if (status !== "playing" || isCheckingAnswer) return;
+
     setStatus("skipped");
     setLilaState("sad");
     setDialogue("Okay lang 'yan. Eto ang susunod.");
     setStreak(0);
-    setResults((prev) => [
-      ...prev,
-      { questionData: currentQuestion, isCorrect: false },
-    ]);
-    setTimeout(advanceToNextQuestion, 2500);
+
+    const skippedResult: GameResult = {
+      questionData: currentQuestion,
+      isCorrect: false,
+      userAnswer: "(skipped)",
+      pointsEarned: 0,
+    };
+
+    const updatedResults = [...results, skippedResult];
+    setResults(updatedResults);
+
+    if (currentQuestionIndex === shuffledQuestions.length - 1) {
+      setTimeout(() => {
+        const totalEarnedPoints = updatedResults.reduce(
+          (sum, r) => sum + r.pointsEarned,
+          0
+        );
+        const totalPossiblePoints = updatedResults.length * 20;
+        const percentScore =
+          totalPossiblePoints > 0
+            ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
+            : 0;
+
+        onGameComplete({
+          percentScore,
+          rawPoints: score,
+          results: updatedResults,
+        });
+      }, 2500);
+    } else {
+      setTimeout(() => {
+        setStudentAnswer("");
+        setCurrentQuestionIndex((prev) => prev + 1);
+        setStatus("playing");
+        setLilaState("normal");
+      }, 2500);
+    }
   };
 
   if (!currentQuestion) return <div>Nagloloading...</div>;
@@ -340,17 +530,45 @@ export const EmojiHulaSalitaGame = ({
         <div className="w-full flex justify-between items-center pt-6 mt-auto border-t border-slate-200">
           <button
             onClick={handleSkip}
-            disabled={status !== "playing"}
+            disabled={status !== "playing" || isCheckingAnswer}
             className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold rounded-2xl text-base"
           >
             SKIP
           </button>
           <button
             onClick={handleSubmitAnswer}
-            disabled={status !== "playing"}
-            className="px-7 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-base transition disabled:opacity-50"
+            disabled={
+              status !== "playing" || isCheckingAnswer || !studentAnswer.trim()
+            }
+            className="px-7 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-base transition disabled:opacity-50 flex items-center gap-2 min-w-[180px] justify-center"
           >
-            Submit Answer
+            {isCheckingAnswer ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>Checking...</span>
+              </>
+            ) : (
+              "Submit Answer"
+            )}
           </button>
         </div>
       </div>

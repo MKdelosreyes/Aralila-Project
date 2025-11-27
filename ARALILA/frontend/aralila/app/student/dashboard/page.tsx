@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Lock, CheckCircle, TrendingUp, BookOpen } from "lucide-react";
+import { Lock, CheckCircle, TrendingUp, BookOpen, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
@@ -169,6 +169,14 @@ export default function DashboardPage() {
     }
   };
 
+  // NEW: Check if user can take assessment
+  const canTakeAssessment = (progress: any) => {
+    if (!progress) return false;
+
+    // User needs at least 1 star in all 6 games
+    return progress.gamesWithStars >= 6;
+  };
+
   if (loading || progressLoading) {
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black text-white flex items-center justify-center">
@@ -193,8 +201,8 @@ export default function DashboardPage() {
             Your Learning Journey
           </h1>
           <p className="text-gray-400 text-center mb-4">
-            Complete assessments to unlock new areas. Practice in Challenges
-            first!
+            Earn at least 1 star in all practice games, then take the assessment
+            to unlock new areas!
           </p>
 
           {/* Quick Stats */}
@@ -252,6 +260,7 @@ export default function DashboardPage() {
                 const locked = isAreaLocked(area.order_index);
                 const progress = getAreaProgress(area.order_index);
                 const isComplete = area.completed_games === area.total_games;
+                const canAssess = canTakeAssessment(progress);
 
                 return (
                   <motion.div
@@ -263,7 +272,7 @@ export default function DashboardPage() {
                       type: "spring",
                       stiffness: 200,
                     }}
-                    className="flex flex-col items-center w-32"
+                    className="flex flex-col items-center w-40"
                   >
                     {/* Node Display */}
                     <motion.div
@@ -313,9 +322,15 @@ export default function DashboardPage() {
                         <p className="text-xs text-gray-500 mt-1">🔒 Locked</p>
                       ) : (
                         <>
-                          {/* Readiness Indicator */}
+                          {/* Stars Progress */}
                           {progress && !progress.assessmentPassed && (
                             <div className="mt-2 space-y-1">
+                              {/* Star Count */}
+                              <div className="text-xs text-yellow-400">
+                                ⭐ {progress.gamesWithStars || 0}/6 games
+                              </div>
+
+                              {/* Readiness Indicator */}
                               <div
                                 className={`text-[10px] px-2 py-1 rounded-full border inline-block ${getReadinessColor(
                                   progress.recommendedReadiness
@@ -325,9 +340,6 @@ export default function DashboardPage() {
                                   progress.recommendedReadiness
                                 )}
                               </div>
-                              <p className="text-[10px] text-gray-400">
-                                {progress.challengesPracticed}/6 practiced
-                              </p>
 
                               {/* Practice Button */}
                               <button
@@ -339,15 +351,59 @@ export default function DashboardPage() {
                                 className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center justify-center gap-1 mx-auto mt-1"
                               >
                                 <BookOpen size={10} />
-                                Practice
+                                Practice Games
                               </button>
+
+                              {/* NEW: Assessment Button */}
+                              {/* {canAssess && !progress.assessmentPassed && (
+                                <motion.button
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() =>
+                                    router.push(
+                                      `/student/assessment/${area.order_index}`
+                                    )
+                                  }
+                                  className="mt-2 px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-[11px] font-bold rounded-lg shadow-lg hover:shadow-yellow-500/50 transition-all flex items-center gap-1 mx-auto"
+                                >
+                                  <Trophy size={12} />
+                                  Take Assessment
+                                </motion.button>
+                              )} */}
+                              <motion.button
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() =>
+                                  router.push(`/student/assessment/${area.id}`)
+                                }
+                                className="mt-2 px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-[11px] font-bold rounded-lg shadow-lg hover:shadow-yellow-500/50 transition-all flex items-center gap-1 mx-auto"
+                              >
+                                <Trophy size={12} />
+                                Take Assessment
+                              </motion.button>
+
+                              {/* Not Ready Message */}
+                              {/* {!canAssess && !progress.assessmentPassed && (
+                                <p className="text-[9px] text-gray-500 mt-1">
+                                  Earn 1 star in all games to unlock assessment
+                                </p>
+                              )} */}
                             </div>
                           )}
 
                           {progress?.assessmentPassed && (
-                            <p className="text-xs text-green-400 mt-1">
-                              ✓ Completed
-                            </p>
+                            <div className="mt-2">
+                              <p className="text-xs text-green-400">
+                                ✓ Assessment Passed
+                              </p>
+                              <p className="text-[10px] text-gray-400">
+                                Area Completed!
+                              </p>
+                            </div>
                           )}
 
                           {!progress && (

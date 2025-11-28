@@ -6,14 +6,28 @@ import { motion } from "framer-motion";
 import { PlayCircle, ArrowLeft } from "lucide-react";
 
 interface WordAssociationIntroProps {
+  difficulty: number;
+  unlocked?: { [k: number]: boolean };
+  onSelectDifficulty?: (d: number) => void;
   onStartChallenge: () => void;
+  onReviewLessons?: () => void;
   onBack?: () => void;
 }
 
 export const WordAssociationIntro = ({
+  difficulty,
+  unlocked,
+  onSelectDifficulty,
   onStartChallenge,
-  onBack,
+  onBack, 
 }: WordAssociationIntroProps) => {
+  const difficultyLabel = { 1: "Easy", 2: "Medium", 3: "Hard" }[difficulty];
+  const difficultyColor = {
+    1: "bg-green-500",
+    2: "bg-yellow-500",
+    3: "bg-red-500",
+  }[difficulty];
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Back Button - Top Left Corner */}
@@ -67,6 +81,38 @@ export const WordAssociationIntro = ({
           <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
             WORD ASSOCIATION
           </div>
+        </motion.div>
+
+        {/* ✅ Difficulty selector */}
+        <motion.div
+          className="mb-5 flex gap-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.35 }}
+        >
+          {[1, 2, 3].map((d) => {
+            const isUnlocked = unlocked ? !!unlocked[d] : d === 1;
+            const isActive = difficulty === d;
+            return (
+              <button
+                key={d}
+                disabled={!isUnlocked}
+                onClick={() =>
+                  onSelectDifficulty && isUnlocked && onSelectDifficulty(d)
+                }
+                className={`px-5 py-2 rounded-full font-bold text-sm transition-all ${
+                  isActive
+                    ? "bg-purple-600 text-white"
+                    : isUnlocked
+                    ? "bg-white/90 text-purple-700 border border-purple-300 hover:bg-white"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                }`}
+                aria-pressed={isActive}
+              >
+                {d === 1 ? "Easy" : d === 2 ? "Medium" : "Hard"}
+              </button>
+            );
+          })}
         </motion.div>
 
         <motion.div

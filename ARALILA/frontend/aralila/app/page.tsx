@@ -122,8 +122,7 @@ export default function Home() {
           </motion.div>
 
           {/* --- CENTER: THE PORTAL BUTTON --- */}
-          {/* Added translate-y-14 to move it down (y-50 simulation) */}
-          <div className="flex flex-col items-center justify-center relative translate-y-14">
+          <div className="flex flex-col items-center justify-center relative translate-y-45">
             
             {/* Mobile Title (Only visible on small screens) */}
             <div className="lg:hidden text-center mb-8 space-y-2 -translate-y-14">
@@ -149,7 +148,6 @@ export default function Home() {
                 className="relative z-10 animate-[spin_12s_linear_infinite_reverse] w-[300px] md:w-[450px] lg:w-[600px] drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]"
               />
               
-              {/* "Click to Enter" Tooltip/Text appearing on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
                 <span className={`${cinzel.className} text-xl md:text-2xl font-bold uppercase tracking-widest drop-shadow-lg bg-black/50 px-6 py-3 rounded-xl backdrop-blur-md border border-purple-500/30`}>
                   Click to Start
@@ -183,7 +181,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* --- MINIMAL FOOTER --- */}
+      {/* ---FOOTER --- */}
       <motion.footer 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -192,10 +190,9 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-xs text-white/40 font-mono gap-2">
             
-            {/* Left: Copyright */}
+
             <span>© {new Date().getFullYear()} ARALILA. SYSTEM V.1.0</span>
 
-            {/* Right: Minimal Socials */}
             <div className="flex gap-4">
                <a href="#" className="hover:text-purple-400 transition-colors"><Github size={14} /></a>
                <a href="#" className="hover:text-purple-400 transition-colors"><Twitter size={14} /></a>

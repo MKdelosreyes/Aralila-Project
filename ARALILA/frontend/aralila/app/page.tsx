@@ -20,38 +20,44 @@ const spaceGrotesk = Space_Grotesk({
 
 // --- FLOATING PARTICLES ---
 const FloatingParticles = () => {
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
+  const particles = Array.from({ length: 60 }).map((_, i) => ({
     id: i,
     initialX: Math.random() * 100,
     initialY: Math.random() * 100,
-    duration: Math.random() * 20 + 10,
-    size: Math.random() * 3 + 1,
+    duration: Math.random() * 15 + 10, 
+    size: Math.random() * 6 + 2,
+    delay: Math.random() * 5,
   }));
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-0">
+    <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
       {particles.map((p) => (
         <motion.div
           key={p.id}
-          className="absolute rounded-full bg-purple-400/80 blur-[1px] shadow-[0_0_8px_rgba(168,85,247,0.8)]"
-          initial={{ x: `${p.initialX}vw`, y: `${p.initialY}vh`, opacity: 0 }}
+          className="absolute rounded-full bg-purple-200 shadow-[0_0_15px_rgba(168,85,247,1)]"
+          initial={{ 
+            x: `${p.initialX}vw`, 
+            y: `${p.initialY}vh`, 
+            opacity: 0 
+          }}
           animate={{
             y: [
               `${p.initialY}vh`,
-              `${p.initialY - 15}vh`,
+              `${p.initialY - 25}vh`, 
               `${p.initialY + 15}vh`,
             ],
             x: [
               `${p.initialX}vw`,
-              `${p.initialX + 5}vw`,
-              `${p.initialX - 5}vw`,
+              `${p.initialX + 15}vw`,
+              `${p.initialX - 15}vw`,
             ],
-            opacity: [0, 0.8, 0],
+            opacity: [0, 1, 0], 
           }}
           transition={{
             duration: p.duration,
             repeat: Infinity,
-            ease: "linear",
+            ease: "easeInOut",
+            delay: p.delay,
           }}
           style={{ width: p.size, height: p.size }}
         />
@@ -59,7 +65,6 @@ const FloatingParticles = () => {
     </div>
   );
 };
-
 export default function Home() {
   const router = useRouter();
 
@@ -68,26 +73,20 @@ export default function Home() {
   };
 
   return (
-    // h-screen + overflow-hidden makes it unscrollable
     <div className={`relative h-screen w-full overflow-hidden text-white selection:bg-purple-500 selection:text-white ${spaceGrotesk.className}`}>
       
       {/* --- BACKGROUND LAYERS --- */}
-      {/* 1. The Forest Image */}
       <div className="absolute inset-0 z-[-3]">
         <Image
             src="/images/bg/bg-landing-2.png"
             alt="Forest Background"
             fill
-            // object-center aligns the center of the image (the tree) with the center of the div
             className="object-cover object-center"
             priority
         />
       </div>
-
-      {/* 2. Dark Gradient Overlay (Focus on center visibility) */}
       <div className="absolute inset-0 z-[-2] bg-gradient-to-b from-black/50 via-purple-950/10 to-black/80" />
       
-      {/* 3. Vignette (Darkens edges to focus on the tree/portal) */}
       <div className="absolute inset-0 z-[-2] bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
 
       {/* 4. Particles */}

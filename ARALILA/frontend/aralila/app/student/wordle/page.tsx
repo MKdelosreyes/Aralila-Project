@@ -164,7 +164,7 @@ export default function FilipinoWordle() {
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center py-4 font-sans select-none overflow-hidden relative">
       
-      {/* --- NEW BACKGROUND IMPLEMENTATION --- */}
+      {/* Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <AnimatedBackground />
       </div>
@@ -204,12 +204,18 @@ export default function FilipinoWordle() {
                 // Animation delay for reveal
                 const delay = isSubmitted ? `${colIndex * 150}ms` : "0ms";
 
-                let cellClass = "border-2 border-slate-700 bg-slate-800/50"; // default
-                if (letter && !isSubmitted) cellClass = "border-purple-400/50 bg-slate-700/50 shadow-[0_0_10px_rgba(168,85,247,0.2)] scale-105"; // typing
+                // Defining the glass styles based on state
+                let cellClass = "border-2 border-white/10 bg-white/5"; // Default empty glass
+
+                if (letter && !isSubmitted) {
+                    // Typing state glass
+                    cellClass = "border-2 border-purple-400/60 bg-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.3)] scale-105";
+                }
                 
-                if (status === "correct") cellClass = "bg-green-600 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]";
-                if (status === "present") cellClass = "bg-yellow-600 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.4)]";
-                if (status === "absent") cellClass = "bg-slate-700 border-slate-600 opacity-60";
+                // Submitted states (translucent colors)
+                if (status === "correct") cellClass = "bg-green-600/90 border-green-500/80 shadow-[0_0_15px_rgba(34,197,94,0.4)]";
+                if (status === "present") cellClass = "bg-yellow-600/90 border-yellow-500/80 shadow-[0_0_15px_rgba(234,179,8,0.4)]";
+                if (status === "absent") cellClass = "bg-slate-800/80 border-slate-700/60 opacity-70";
 
                 return (
                   <div
@@ -217,8 +223,10 @@ export default function FilipinoWordle() {
                     style={{ transitionDelay: delay }}
                     className={`
                       w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
-                      text-2xl font-bold uppercase rounded-md transition-all duration-500 transform
-                      backdrop-blur-sm
+                      text-2xl font-bold uppercase transition-all duration-500 transform
+                      rounded-xl font-medium
+                      backdrop-blur-md
+                      shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_4px_10px_rgba(0,0,0,0.1)]
                       ${isSubmitted ? "rotate-x-0" : ""}
                       ${cellClass}
                     `}

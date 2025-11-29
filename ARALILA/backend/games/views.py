@@ -926,8 +926,6 @@ def get_word_association_questions(request, area_id):
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         return Response({'error': str(e)}, status=500)
-    
-
 
 
 @api_view(['GET'])
@@ -1000,6 +998,7 @@ def get_assessment_lesson(request, area_id):
         
         return Response({
             'id': lesson.id,
+            'areaId': area.id,
             'title': lesson.title,
             'challenges': challenges_data
         })
@@ -1028,7 +1027,7 @@ def submit_assessment_challenge(request):
         
         return Response({
             'success': True,
-            'points': 10  # Award 10 points per challenge
+            'points': 10
         })
         
     except AssessmentChallenge.DoesNotExist:
@@ -1037,74 +1036,100 @@ def submit_assessment_challenge(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def reduce_hearts(request):
+    """Reduce user hearts (placeholder - implement based on your user model)"""
+    try:
+        # TODO: Implement heart reduction based on your user model
+        # For now, just return success
+        return Response({'success': True})
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def complete_assessment(request):
     """Complete assessment and unlock next area"""
     try:
+        # ✅ ADD: Debug logging
+        print(f"📥 Received assessment completion request")
+        print(f"📦 Request data: {request.data}")
+        
         area_id = request.data.get('areaId')
         percentage = request.data.get('percentage')
         
-        area = Area.objects.get(id=area_id)
+        # ✅ ADD: Validate and convert area_id
+        if not area_id:
+            return Response({'error': 'Missing areaId'}, status=400)
         
-        # Double-check that user has at least 1 star in all practice games
-        game_ids = GameItem.objects.filter(area=area).values_list('game_id', flat=True).distinct()
-        total_practice_games = Game.objects.filter(id__in=game_ids).count()
+        try:
+            area_id = int(area_id)
+        except (ValueError, TypeError):
+            return Response({'error': f'Invalid areaId: {area_id}'}, status=400)
         
-        if total_practice_games == 0:
-            total_practice_games = 6
+        print(f"🔍 Looking for area with ID: {area_id} (type: {type(area_id)})")
         
-        games_with_stars = GameProgress.objects.filter(
-            user=request.user,
-            area=area,
-            stars_earned__gte=1
-        ).count()
-        
-        if games_with_stars < total_practice_games:
-            return Response({
-                'error': 'You must have at least 1 star in all practice games',
-                'games_with_stars': games_with_stars,
-                'total_games': total_practice_games
-            }, status=403)
+        try:
+            area = Area.objects.get(id=area_id)
+            print(f"✅ Found area: {area.name}")
+        except Area.DoesNotExist:
+            print(f"❌ Area with ID {area_id} does not exist")
+            all_areas = Area.objects.all().values_list('id', 'name')
+            print(f"📋 Available areas: {list(all_areas)}")
+            return Response({'error': f'Area with ID {area_id} not found'}, status=404)
         
         # Check if passed assessment (80% required)
         passed = percentage >= 80
         
+        print(f"📊 Score: {percentage}% - {'PASSED' if passed else 'FAILED'}")
+        
         if passed:
-            # Mark area assessment as passed
+            # ✅ Mark assessment as passed
             lesson = AssessmentLesson.objects.get(area=area)
+            challenges = AssessmentChallenge.objects.filter(lesson=lesson)
             
-            # Update or create assessment completion record
-            from django.db.models import Q
-            AssessmentProgress.objects.filter(
-                user=request.user,
-                area=area,
-                challenge__lesson=lesson
-            ).update(passed=True)
+            print(f"📝 Marking {challenges.count()} challenges as passed")
             
-            # Get next area
+            for challenge in challenges:
+                AssessmentProgress.objects.update_or_create(
+                    user=request.user,
+                    area=area,
+                    challenge=challenge,
+                    defaults={
+                        'completed': True,
+                        'passed': True,
+                        'score': percentage
+                    }
+                )
+            
+            # ✅ Unlock next area
             next_area = Area.objects.filter(
                 order_index=area.order_index + 1,
                 is_active=True
             ).first()
             
+            print(f"🎉 Assessment completed! Next area: {next_area.name if next_area else 'None'}")
+            
             return Response({
                 'success': True,
                 'passed': True,
                 'percentage': percentage,
-                'nextArea': {
-                    'id': next_area.id,
-                    'name': next_area.name,
-                    'order_index': next_area.order_index
-                } if next_area else None
+                'next_area_unlocked': next_area is not None,
+                'next_area': next_area.name if next_area else None,
+                'message': 'Congratulations! You passed the assessment!'
             })
         else:
+            print(f"❌ Assessment failed. Need 80%+")
             return Response({
                 'success': True,
                 'passed': False,
                 'percentage': percentage,
-                'message': 'You need 80% to unlock the next area. Try again!'
+                'message': 'You need at least 80% to pass. Try again!'
             })
             
-    except Area.DoesNotExist:
-        return Response({'error': 'Area not found'}, status=404)
     except Exception as e:
+        import traceback
+        print(f"💥 Error in complete_assessment:")
+        print(traceback.format_exc())
         return Response({'error': str(e)}, status=500)

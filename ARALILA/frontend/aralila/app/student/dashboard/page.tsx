@@ -169,7 +169,6 @@ export default function DashboardPage() {
     }
   };
 
-  // NEW: Check if user can take assessment
   const canTakeAssessment = (progress: any) => {
     if (!progress) return false;
 
@@ -326,12 +325,12 @@ export default function DashboardPage() {
                           {progress && !progress.assessmentPassed && (
                             <div className="mt-2 space-y-1">
                               {/* Star Count */}
-                              <div className="text-xs text-yellow-400">
+                              {/* <div className="text-xs text-yellow-400">
                                 ⭐ {progress.gamesWithStars || 0}/6 games
-                              </div>
+                              </div> */}
 
                               {/* Readiness Indicator */}
-                              <div
+                              {/* <div
                                 className={`text-[10px] px-2 py-1 rounded-full border inline-block ${getReadinessColor(
                                   progress.recommendedReadiness
                                 )}`}
@@ -339,7 +338,7 @@ export default function DashboardPage() {
                                 {getReadinessLabel(
                                   progress.recommendedReadiness
                                 )}
-                              </div>
+                              </div> */}
 
                               {/* Practice Button */}
                               <button

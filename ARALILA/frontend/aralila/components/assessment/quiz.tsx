@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
-import { useAudio, useWindowSize, useMount } from "react-use";
+import { useWindowSize, useMount } from "react-use";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -35,19 +35,10 @@ export const Quiz = ({
   initialPercentage,
   initialHearts,
   initialLessonId,
+  initialAreaId,
   initialLessonChallenges,
   userSubscription,
 }: QuizProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [correctAudio, _c, correctControls] = useAudio({ src: "/correct.wav" });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [incorrectAudio, _i, incorrectControls] = useAudio({
-    src: "/incorrect.wav",
-  });
-  const [finishAudio] = useAudio({
-    src: "/finish.mp3",
-    autoPlay: true,
-  });
   const { width, height } = useWindowSize();
 
   const router = useRouter();
@@ -60,6 +51,7 @@ export const Quiz = ({
   });
 
   const [lessonId] = useState(initialLessonId);
+  const [areaId] = useState(initialAreaId);
   const [hearts, setHearts] = useState(initialHearts);
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
@@ -78,6 +70,22 @@ export const Quiz = ({
 
   const challenge = challenges[activeIndex];
   const options = challenge?.challengeOptions ?? [];
+
+  // Play audio functions using native Audio API
+  const playCorrectSound = () => {
+    const audio = new Audio("/correct.wav");
+    audio.play().catch((err) => console.log("Audio play failed:", err));
+  };
+
+  const playIncorrectSound = () => {
+    const audio = new Audio("/incorrect.wav");
+    audio.play().catch((err) => console.log("Audio play failed:", err));
+  };
+
+  const playFinishSound = () => {
+    const audio = new Audio("/finish.mp3");
+    audio.play().catch((err) => console.log("Audio play failed:", err));
+  };
 
   const onNext = () => {
     setActiveIndex((current) => current + 1);
@@ -170,7 +178,7 @@ export const Quiz = ({
               return;
             }
 
-            void correctControls.play();
+            playCorrectSound();
             setStatus("correct");
             setPercentage((prev) => prev + 100 / challenges.length);
 
@@ -182,28 +190,88 @@ export const Quiz = ({
           .catch(() => toast.error("Something went wrong. Please try again."));
       });
     } else {
-      startTransition(() => {
-        reduceHearts()
-          .then((response) => {
-            if (response?.error === "hearts") {
-              openHeartsModal();
-              return;
-            }
+      // playIncorrectSound();
+      setStatus("wrong");
 
-            void incorrectControls.play();
-            setStatus("wrong");
+      if (initialPercentage !== 100) {
+        startTransition(() => {
+          reduceHearts()
+            .then((response) => {
+              if (response?.error === "hearts") {
+                openHeartsModal();
+                return;
+              }
 
-            if (!response?.error) setHearts((prev) => Math.max(prev - 1, 0));
-          })
-          .catch(() => toast.error("Something went wrong. Please try again."));
-      });
+              if (!response?.error) {
+                setHearts((prev) => Math.max(prev - 1, 0));
+              }
+            })
+            .catch(() =>
+              toast.error("Something went wrong. Please try again.")
+            );
+        });
+      }
     }
   };
 
   if (!challenge) {
+    playFinishSound();
+
+    const submitAssessmentCompletion = async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        console.log("📤 Submitting assessment:", {
+          areaId,
+          percentage,
+          areaIdType: typeof areaId,
+        });
+
+        const response = await fetch(
+          `${env.backendUrl}/api/games/assessment/complete/`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              areaId: Number(areaId),
+              percentage: Math.round(percentage),
+            }),
+          }
+        );
+
+        const data = await response.json();
+        console.log("Assessment completion:", data);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Assessment submission error:", errorData);
+          throw new Error(errorData.error || "Failed to submit assessment");
+        }
+
+        if (data.passed) {
+          toast.success(data.message);
+          if (data.next_area_unlocked) {
+            toast.success(`🎉 ${data.next_area} unlocked!`);
+          }
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        console.error("Error submitting assessment:", error);
+        toast.error("Failed to save assessment progress");
+      }
+    };
+
+    submitAssessmentCompletion();
+
     return (
       <>
-        {finishAudio}
         <Confetti
           recycle={false}
           numberOfPieces={500}
@@ -213,11 +281,11 @@ export const Quiz = ({
         />
         <div className="mx-auto flex h-full max-w-lg flex-col items-center justify-center gap-y-4 text-center lg:gap-y-8">
           <Image
-            src="/finish.svg"
+            src="/images/character/lila-happy.png"
             alt="Finish"
             className="hidden lg:block"
-            height={100}
-            width={100}
+            height={200}
+            width={200}
           />
 
           <Image
@@ -257,8 +325,6 @@ export const Quiz = ({
 
   return (
     <>
-      {incorrectAudio}
-      {correctAudio}
       <Header
         hearts={hearts}
         percentage={percentage}

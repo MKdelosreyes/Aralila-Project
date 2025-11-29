@@ -176,6 +176,7 @@ export type QuizProps = {
   initialPercentage: number;
   initialHearts: number;
   initialLessonId: number;
+  initialAreaId: number;
   initialLessonChallenges: ChallengeType[];
   userSubscription: {
     isActive: boolean;

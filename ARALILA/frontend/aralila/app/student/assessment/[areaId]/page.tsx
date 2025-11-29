@@ -9,6 +9,7 @@ import { ChallengeType } from "@/types/games";
 
 type LessonData = {
   id: number;
+  areaId: number;
   title: string;
   challenges: ChallengeType[];
 };
@@ -36,6 +37,12 @@ export default function AssessmentPage() {
     }
 
     try {
+      const areaId = parseInt(params.areaId as string, 10);
+
+      if (isNaN(areaId)) {
+        throw new Error("Invalid area ID");
+      }
+
       const response = await fetch(
         `${env.backendUrl}/api/games/assessment/${params.areaId}/`,
         {
@@ -53,7 +60,10 @@ export default function AssessmentPage() {
       if (!response.ok) throw new Error("Failed to load assessment");
 
       const data = await response.json();
-      setLessonData(data);
+      setLessonData({
+        ...data,
+        areaId: areaId,
+      });
     } catch (error) {
       console.error("Error:", error);
       alert("Failed to load assessment");
@@ -82,12 +92,15 @@ export default function AssessmentPage() {
     100;
 
   return (
-    <Quiz
-      initialLessonId={lessonData.id}
-      initialLessonChallenges={lessonData.challenges}
-      initialHearts={hearts}
-      initialPercentage={initialPercentage}
-      userSubscription={null}
-    />
+    <div className="h-full">
+      <Quiz
+        initialLessonId={lessonData.id}
+        initialAreaId={lessonData.areaId}
+        initialLessonChallenges={lessonData.challenges}
+        initialHearts={hearts}
+        initialPercentage={initialPercentage}
+        userSubscription={null}
+      />
+    </div>
   );
 }

@@ -21,5 +21,6 @@ urlpatterns = [
 
     path('assessment/<int:area_id>/', views.get_assessment_lesson, name='assessment_lesson'),
     path('assessment/submit-challenge/', views.submit_assessment_challenge, name='submit_challenge'),
+    path('assessment/reduce-hearts/', views.reduce_hearts, name='reduce_hearts'),
     path('assessment/complete/', views.complete_assessment, name='complete_assessment'),
 ]

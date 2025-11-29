@@ -8,17 +8,17 @@ export const QuestionBubble = ({ question }: QuestionBubbleProps) => {
   return (
     <div className="mb-6 flex items-center gap-x-4">
       <Image
-        src="/mascot.svg"
+        src="/images/character/lila-normal.png"
         alt="Mascot"
-        height={60}
-        width={60}
+        height={120}
+        width={120}
         className="hidden lg:block"
       />
       <Image
-        src="/mascot.svg"
+        src="/images/character/lila-normal.png"
         alt="Mascot"
-        height={40}
-        width={40}
+        height={60}
+        width={60}
         className="block lg:hidden"
       />
 

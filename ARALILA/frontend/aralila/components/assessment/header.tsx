@@ -28,7 +28,7 @@ export const Header = ({
 
       <div className="flex items-center font-bold text-rose-500">
         <Image
-          src="/heart.svg"
+          src="/images/art/heart.svg"
           height={28}
           width={28}
           alt="Heart"

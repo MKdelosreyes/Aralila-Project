@@ -147,7 +147,7 @@ export default function Lobby() {
       {isHost && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 max-w-md text-center">
           <p className="text-sm text-blue-800">
-            ⭐ You are the host. Game starts automatically when 3 players join.
+            ⭐ You are the host. Game starts automatically when 2 players join.
           </p>
         </div>
       )}

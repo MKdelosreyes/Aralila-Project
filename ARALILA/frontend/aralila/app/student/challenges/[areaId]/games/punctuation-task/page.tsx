@@ -292,10 +292,23 @@ const PunctuationChallengePage = () => {
     router.push(`/student/challenges?area=${areaId}`);
   };
 
+  const getAreaBGImage = () => {
+    if (resolvedAreaId === null) {
+      return "/images/bg/forestbg-learn.jpg";
+    }
+
+    if (resolvedAreaId === 4) return "/images/bg/Playground.png";
+    else if (resolvedAreaId === 5) return "/images/bg/Classroom.png";
+    else if (resolvedAreaId === 6) return "/images/bg/Home.png";
+    else if (resolvedAreaId === 7) return "/images/bg/Town.png";
+    else if (resolvedAreaId === 8) return "/images/bg/Mountainside.png";
+    else return "/images/bg/Playground.png";
+  };
+
   if (loading) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
+        <AnimatedBackground imagePath={getAreaBGImage()} />
         <div className="relative z-20 rounded-3xl p-8 max-w-md w-full">
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
@@ -309,7 +322,7 @@ const PunctuationChallengePage = () => {
   if (error) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
+        <AnimatedBackground imagePath={getAreaBGImage()} />
         <div className="relative z-20 bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <div className="text-6xl">😕</div>
@@ -372,7 +385,7 @@ const PunctuationChallengePage = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-slate-800">
-      <AnimatedBackground />
+      <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>

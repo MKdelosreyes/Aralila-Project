@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { PlayCircle, ArrowLeft } from "lucide-react";
+import { PlayCircle, ArrowLeft, HelpCircle } from "lucide-react";
 import { PartsOfSpeechDifficulty } from "@/types/games";
 
 interface PartsOfSpeechIntroProps {
@@ -13,6 +13,7 @@ interface PartsOfSpeechIntroProps {
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
+  onHelp?: () => void; // ✅ Added
 }
 
 export const PartsOfSpeechIntro = ({
@@ -21,10 +22,11 @@ export const PartsOfSpeechIntro = ({
   onSelectDifficulty,
   onStartChallenge,
   onBack,
+  onHelp, // ✅ Added
 }: PartsOfSpeechIntroProps) => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Back Button - Top Left Corner */}
+      {/* Back Button */}
       {onBack && (
         <motion.div
           className="absolute top-10 left-8 z-20"
@@ -78,7 +80,7 @@ export const PartsOfSpeechIntro = ({
           </div>
         </motion.div>
 
-        {/* ✅ Difficulty selector */}
+        {/* Difficulty selector */}
         <motion.div
           className="mb-5 flex gap-3"
           initial={{ opacity: 0, y: 10 }}
@@ -86,7 +88,6 @@ export const PartsOfSpeechIntro = ({
           transition={{ duration: 0.3, delay: 0.35 }}
         >
           {([1, 2, 3] as PartsOfSpeechDifficulty[]).map((d) => {
-            // ✅ Type assertion
             const isUnlocked = unlocked ? !!unlocked[d] : d === 1;
             const isActive = difficulty === d;
             return (
@@ -111,8 +112,9 @@ export const PartsOfSpeechIntro = ({
           })}
         </motion.div>
 
+        {/* Start + Help Buttons */}
         <motion.div
-          className="relative group flex items-center justify-center"
+          className="relative flex items-center justify-center gap-10"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{
@@ -122,22 +124,8 @@ export const PartsOfSpeechIntro = ({
             delay: 0.5,
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
-          </div>
-
-          <motion.div
-            className="relative group flex items-center justify-center"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{
-              type: "spring",
-              stiffness: 260,
-              damping: 20,
-              delay: 0.5,
-            }}
-          >
-            {/* Pulsing circle animation */}
+          {/* Start Button */}
+          <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
             </div>
@@ -149,7 +137,6 @@ export const PartsOfSpeechIntro = ({
               whileTap={{ scale: 0.95 }}
             >
               <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
-              {/* Start tooltip */}
               <div
                 className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
                 style={{ pointerEvents: "none" }}
@@ -157,7 +144,29 @@ export const PartsOfSpeechIntro = ({
                 Start
               </div>
             </motion.button>
-          </motion.div>
+          </div>
+
+          {/* Help Button (NEW) */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+            </div>
+
+            <motion.button
+              onClick={onHelp}
+              className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <HelpCircle className="w-36 h-36 text-white cursor-pointer" />
+              <div
+                className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                style={{ pointerEvents: "none" }}
+              >
+                Help
+              </div>
+            </motion.button>
+          </div>
         </motion.div>
       </div>
     </div>

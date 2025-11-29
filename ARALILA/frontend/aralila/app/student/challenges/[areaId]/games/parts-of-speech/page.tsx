@@ -13,6 +13,7 @@ import {
   PartsOfSpeechResult,
   SpellingResult,
 } from "@/types/games";
+import { TutorialModal } from "../TutorialModal"; // <-- added import
 
 type GameState = "intro" | "playing" | "summary";
 
@@ -43,6 +44,24 @@ const PartsOfSpeechPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+
+  // Tutorial modal state
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  const tutorialSteps = [
+    {
+      videoSrc: "/videos/SALITAT_URI/1.mp4",
+      description: "Basahin ang buong pangungusap.",
+    },
+    {
+      videoSrc: "/videos/SALITAT_URI/2.mp4",
+      description: "Tukuyin kung anong bahagi ng pananalita ang may guhit",
+    },
+    {
+      videoSrc: "/videos/SALITAT_URI/3.mp4",
+      description: "Pindutin at hilahin ang salitang may guhit papunta sa iyong sagot.",
+    },
+  ];
 
   const toDifficulty = (n: number): PartsOfSpeechDifficulty => {
     if (n === 2) return 2;
@@ -372,6 +391,7 @@ const PartsOfSpeechPage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            onHelp={() => setShowTutorial(true)} // <-- added help handler
           />
         );
     }
@@ -383,6 +403,11 @@ const PartsOfSpeechPage = () => {
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>
+
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <TutorialModal steps={tutorialSteps} onClose={() => setShowTutorial(false)} />
+      )}
     </div>
   );
 };

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Lock, CheckCircle, TrendingUp, BookOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Lock, CheckCircle, BookOpen, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
@@ -30,21 +30,32 @@ interface UserData {
   email?: string;
 }
 
+const badgeList = [
+  { id: "1", name: "3 Days Login streak", icon: "/images/badges/3days.png" },
+  { id: "2", name: "5 Days Login streak", icon: "/images/badges/5days.png" },
+  { id: "3", name: "30 Days Login Streak", icon: "/images/badges/30days.png" },
+  { id: "4", name: "100 Days Login Streak", icon: "/images/badges/100days.png" },
+  { id: "5", name: "200 Days Login Streak", icon: "/images/badges/200days.png" },
+];
+
 export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [areas, setAreas] = useState<Area[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
   const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+
+  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [recentBadge, setRecentBadge] = useState<any | null>(null);
+  const [showBadgePopup, setShowBadgePopup] = useState(false);
+
   const router = useRouter();
+  const { unlockedAreas, isAreaLocked, getAreaProgress, loading: progressLoading } =
+    useAreaUnlocks();
 
-  const {
-    unlockedAreas,
-    isAreaLocked,
-    getAreaProgress,
-    loading: progressLoading,
-  } = useAreaUnlocks();
-
+  // -------------------------
+  // FETCH AREAS
+  // -------------------------
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -53,119 +64,105 @@ export default function DashboardPage() {
 
     if (user) {
       fetchAreas();
+      fetchBadges();
     }
   }, [user, authLoading]);
 
   const fetchAreas = async () => {
     try {
       const token = localStorage.getItem("access_token");
+      if (!token) return router.push("/login");
 
-      if (!token) {
-        console.error("No authentication token found");
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch(`${env.backendUrl}/api/games/areas/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      const res = await fetch(`${env.backendUrl}/api/games/areas/`, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
 
-      if (response.status === 401) {
-        console.error("Token is invalid or expired");
-        localStorage.removeItem("access_token");
-        router.push("/login");
-        return;
-      }
+      if (!res.ok) throw new Error("Failed to fetch areas");
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch areas: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await res.json();
       setAreas(data.areas);
-    } catch (error) {
-      console.error("Error fetching areas:", error);
-
-      // Fallback data
+    } catch (err) {
+      console.error(err);
       setAreas([
-        {
-          id: 1,
-          name: "Playground",
-          is_locked: false,
-          order_index: 0,
-          completed_games: 0,
-          total_games: 6,
-          average_score: 0,
-          message: "Start your journey here!",
-        },
-        {
-          id: 2,
-          name: "Classroom",
-          is_locked: true,
-          order_index: 1,
-          completed_games: 0,
-          total_games: 6,
-          average_score: 0,
-          message: "Complete Playground to unlock",
-        },
-        {
-          id: 3,
-          name: "Dinner Table",
-          is_locked: true,
-          order_index: 2,
-          completed_games: 0,
-          total_games: 6,
-          average_score: 0,
-          message: "Complete Classroom to unlock",
-        },
-        {
-          id: 4,
-          name: "Town Market",
-          is_locked: true,
-          order_index: 3,
-          completed_games: 0,
-          total_games: 6,
-          average_score: 0,
-          message: "Complete Town Market to unlock",
-        },
-        {
-          id: 5,
-          name: "Mountain",
-          is_locked: true,
-          order_index: 4,
-          completed_games: 0,
-          total_games: 6,
-          average_score: 0,
-          message: "Complete Town Market to unlock",
-        },
+        { id: 1, name: "Playground", is_locked: false, order_index: 0, completed_games: 0, total_games: 6, average_score: 0, message: "Start your journey here!" },
+        { id: 2, name: "Classroom", is_locked: true, order_index: 1, completed_games: 0, total_games: 6, average_score: 0, message: "Complete Playground to unlock" },
+        { id: 3, name: "Dinner Table", is_locked: true, order_index: 2, completed_games: 0, total_games: 6, average_score: 0, message: "Complete Classroom to unlock" },
+        { id: 4, name: "Town Market", is_locked: true, order_index: 3, completed_games: 0, total_games: 6, average_score: 0, message: "Complete Town Market to unlock" },
+        { id: 5, name: "Mountain", is_locked: true, order_index: 4, completed_games: 0, total_games: 6, average_score: 0, message: "Complete Town Market to unlock" },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
+  // -------------------------
+  // FETCH USER BADGES
+  // -------------------------
+  const fetchBadges = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const res = await fetch(`${env.backendUrl}/api/users/me/badges/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch badges");
+
+      const data = await res.json();
+      const unclaimed = data.badges.filter((b: any) => b.status === "unclaimed");
+      setUserBadges(unclaimed);
+
+      if (unclaimed.length > 0) {
+        setRecentBadge(unclaimed[0]);
+        setShowBadgePopup(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // -------------------------
+  // CLAIM BADGE
+  // -------------------------
+  const claimBadge = async (badgeId: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${env.backendUrl}/api/users/me/badges/${badgeId}/claim/`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to claim badge");
+
+      // Update frontend
+      setUserBadges(prev => prev.filter(b => b.id !== badgeId));
+      setRecentBadge(null);
+      setShowBadgePopup(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const closeBadgePopup = () => {
+    setRecentBadge(null);
+    setShowBadgePopup(false);
+  };
+
+  // -------------------------
+  // READINESS HELPERS
+  // -------------------------
   const getReadinessColor = (readiness: string) => {
     switch (readiness) {
-      case "well-prepared":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "ready":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-      default:
-        return "bg-red-500/20 text-red-400 border-red-500/30";
+      case "well-prepared": return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "ready": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      default: return "bg-red-500/20 text-red-400 border-red-500/30";
     }
   };
 
   const getReadinessLabel = (readiness: string) => {
     switch (readiness) {
-      case "well-prepared":
-        return "🎯 Well Prepared!";
-      case "ready":
-        return "✅ Ready to Try";
-      default:
-        return "📚 Practice More";
+      case "well-prepared": return "🎯 Well Prepared!";
+      case "ready": return "✅ Ready to Try";
+      default: return "📚 Practice More";
     }
   };
 
@@ -180,6 +177,9 @@ export default function DashboardPage() {
     );
   }
 
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
@@ -189,21 +189,16 @@ export default function DashboardPage() {
 
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4 pt-28 pb-10 md:p-8 md:pl-24 md:pt-32 md:pb-12">
         <div className="w-full max-w-6xl">
-          <h1 className="text-4xl font-bold mb-4 text-center">
-            Your Learning Journey
-          </h1>
+          <h1 className="text-4xl font-bold mb-4 text-center">Your Learning Journey</h1>
           <p className="text-gray-400 text-center mb-4">
-            Complete assessments to unlock new areas. Practice in Challenges
-            first!
+            Complete assessments to unlock new areas. Practice in Challenges first!
           </p>
 
           {/* Quick Stats */}
           <div className="flex justify-center gap-4 mb-8">
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2">
               <p className="text-xs text-gray-400">Areas Unlocked</p>
-              <p className="text-2xl font-bold text-purple-400">
-                {unlockedAreas.length}/5
-              </p>
+              <p className="text-2xl font-bold text-purple-400">{unlockedAreas.length}/5</p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2">
               <p className="text-xs text-gray-400">Total Progress</p>
@@ -213,13 +208,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Level Map Container */}
+          {/* Level Map */}
           <div className="relative w-full py-12">
-            {/* Glowing Connection Line */}
-            <svg
-              className="absolute top-1/2 left-0 w-full h-1 -translate-y-1/2"
-              style={{ zIndex: 0 }}
-            >
+            {/* Connection Line */}
+            <svg className="absolute top-1/2 left-0 w-full h-1 -translate-y-1/2" style={{ zIndex: 0 }}>
               <defs>
                 <filter id="glow">
                   <feGaussianBlur stdDeviation="3" result="coloredBlur" />
@@ -244,10 +236,7 @@ export default function DashboardPage() {
             </svg>
 
             {/* Area Nodes */}
-            <div
-              className="relative flex justify-between items-center px-12"
-              style={{ zIndex: 1 }}
-            >
+            <div className="relative flex justify-between items-center px-12" style={{ zIndex: 1 }}>
               {areas.map((area, index) => {
                 const locked = isAreaLocked(area.order_index);
                 const progress = getAreaProgress(area.order_index);
@@ -258,14 +247,9 @@ export default function DashboardPage() {
                     key={area.id}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{
-                      delay: index * 0.2,
-                      type: "spring",
-                      stiffness: 200,
-                    }}
+                    transition={{ delay: index * 0.2, type: "spring", stiffness: 200 }}
                     className="flex flex-col items-center w-32"
                   >
-                    {/* Node Display */}
                     <motion.div
                       whileHover={!locked ? { scale: 1.1 } : {}}
                       className={`relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-4 shadow-xl transition-all ${
@@ -276,10 +260,7 @@ export default function DashboardPage() {
                           : "bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-600 shadow-blue-500/50 cursor-pointer"
                       }`}
                     >
-                      {/* Lock Icon */}
                       {locked && <Lock className="text-gray-300" size={32} />}
-
-                      {/* Completion Badge */}
                       {!locked && isComplete && (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
@@ -289,53 +270,24 @@ export default function DashboardPage() {
                           <CheckCircle className="text-white" size={16} />
                         </motion.div>
                       )}
-
-                      {/* Area Number */}
-                      {!locked && (
-                        <span className="text-2xl font-bold text-white">
-                          {area.id}
-                        </span>
-                      )}
+                      {!locked && <span className="text-2xl font-bold text-white">{area.id}</span>}
                     </motion.div>
 
                     {/* Area Info */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.2 + 0.3 }}
-                      className="mt-4 text-center w-full"
-                    >
-                      <p className="text-sm md:text-base font-bold">
-                        {area.name}
-                      </p>
-
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.2 + 0.3 }} className="mt-4 text-center w-full">
+                      <p className="text-sm md:text-base font-bold">{area.name}</p>
                       {locked ? (
                         <p className="text-xs text-gray-500 mt-1">🔒 Locked</p>
                       ) : (
                         <>
-                          {/* Readiness Indicator */}
                           {progress && !progress.assessmentPassed && (
                             <div className="mt-2 space-y-1">
-                              <div
-                                className={`text-[10px] px-2 py-1 rounded-full border inline-block ${getReadinessColor(
-                                  progress.recommendedReadiness
-                                )}`}
-                              >
-                                {getReadinessLabel(
-                                  progress.recommendedReadiness
-                                )}
+                              <div className={`text-[10px] px-2 py-1 rounded-full border inline-block ${getReadinessColor(progress.recommendedReadiness)}`}>
+                                {getReadinessLabel(progress.recommendedReadiness)}
                               </div>
-                              <p className="text-[10px] text-gray-400">
-                                {progress.challengesPracticed}/6 practiced
-                              </p>
-
-                              {/* Practice Button */}
+                              <p className="text-[10px] text-gray-400">{progress.challengesPracticed}/6 practiced</p>
                               <button
-                                onClick={() =>
-                                  router.push(
-                                    `/student/challenges?area=${area.order_index}`
-                                  )
-                                }
+                                onClick={() => router.push(`/student/challenges?area=${area.order_index}`)}
                                 className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center justify-center gap-1 mx-auto mt-1"
                               >
                                 <BookOpen size={10} />
@@ -343,18 +295,8 @@ export default function DashboardPage() {
                               </button>
                             </div>
                           )}
-
-                          {progress?.assessmentPassed && (
-                            <p className="text-xs text-green-400 mt-1">
-                              ✓ Completed
-                            </p>
-                          )}
-
-                          {!progress && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Not Started
-                            </p>
-                          )}
+                          {progress?.assessmentPassed && <p className="text-xs text-green-400 mt-1">✓ Completed</p>}
+                          {!progress && <p className="text-xs text-gray-500 mt-1">Not Started</p>}
                         </>
                       )}
                     </motion.div>
@@ -365,6 +307,58 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* ---------------------------- */}
+      {/* RECENT BADGE POPUP */}
+      {/* ---------------------------- */}
+      <AnimatePresence>
+        {showBadgePopup && recentBadge && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
+          >
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center  backdrop-blur-sm p-4">
+              <div className="relative w-full h-full flex flex-col items-center justify-center">
+                {/* Close Button */}
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                  onClick={closeBadgePopup}
+                >
+                  <X size={48} />
+                </button>
+
+                {/* Title */}
+                <h1 className="text-6xl font-extrabold mb-8 text-white text-center">
+                  New Badge!
+                </h1>
+
+                {/* Badge Image */}
+               <img
+                  src={badgeList.find((b) => b.id === recentBadge.id.toString())?.icon}
+                  alt={recentBadge.name}
+                  className="w-96 h-96 md:w-[500px] md:h-[500px] mb-8 object-contain"
+                />
+
+                <p className="text-4xl font-bold text-white mb-8 text-center">
+                  {badgeList.find((b) => b.id === recentBadge.id.toString())?.name || recentBadge.name}
+                </p>
+
+
+                {/* Claim Button */}
+                <button
+                  onClick={() => claimBadge(recentBadge.id)}
+                  className="cursor-pointer bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-10 rounded-xl text-2xl"
+                >
+                  Claim
+                </button>
+              </div>
+            </div>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -14,6 +14,8 @@ interface User {
   full_name: string;
   school_name?: string;
   profile_pic?: string;
+  ls_points: number;
+  collected_badges: string[]; // <-- Add this
 }
 
 interface AuthContextType {
@@ -32,42 +34,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const supabase = createClient();
 
-  const fetchUserProfile = async (token: string) => {
-    try {
-      const response = await fetch(`${env.backendUrl}/api/users/profile/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+ const fetchUserProfile = async (token: string) => {
+  try {
+    const response = await fetch(`${env.backendUrl}/api/users/profile/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-      if (response.status === 401) {
-        console.error("Token is invalid or expired");
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        setUser(null);
-        return null;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user data: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return {
-        id: data.id,
-        email: data.email,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        full_name: `${data.first_name} ${data.last_name}`.trim(),
-        school_name: data.school_name,
-        profile_pic: data.profile_pic,
-      };
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+    if (response.status === 401) {
+      console.error("Token is invalid or expired");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
       return null;
     }
-  };
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user data: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      id: data.id,
+      email: data.email,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      full_name: `${data.first_name} ${data.last_name}`.trim(),
+      school_name: data.school_name,
+      profile_pic: data.profile_pic,
+      ls_points: data.ls_points,
+      collected_badges: data.collected_badges || [], // <-- map collected badges
+    };
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
+  }
+};
+
 
   useEffect(() => {
     const initializeAuth = async () => {

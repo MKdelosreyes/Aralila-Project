@@ -9,10 +9,25 @@ import { SpellingChallengeGame } from "@/components/games/spelling-challenge/gam
 import { SpellingChallengeSummary } from "@/components/games/spelling-challenge/summary";
 import { SpellingResult } from "@/types/games";
 import { spellingChallengeData } from "@/data/games/spelling-challenge";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
-
 type Difficulty = 1 | 2 | 3;
+
+const tutorialSteps = [
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/1.mp4",
+    description: "Basahin ang hinihingi sa pangungusap.",
+  },
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/2.mp4",
+    description: "Suriin at tiyaking tugma ang iyong sagot sa blankong nasa gilid.",
+  },
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/3.mp4",
+    description: "Sa pagpili ng sagot, gamitin ang left and right arrow sa keyboard."
+  },
+];
 
 const SpellingChallengePage = () => {
   const router = useRouter();
@@ -34,6 +49,7 @@ const SpellingChallengePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false); // <-- initially false
 
   const toDifficulty = (n: number): Difficulty => {
     if (n === 2) return 2;
@@ -72,10 +88,8 @@ const SpellingChallengePage = () => {
           };
           setUnlocked(mapped);
 
-          // Validate URL difficulty; fallback to highest available or 1
           const requestedRaw = initialDifficulty;
           const requested = toDifficulty(requestedRaw);
-
           const highest: Difficulty = mapped[3] ? 3 : mapped[2] ? 2 : 1;
           setCurrentDifficulty(mapped[requested] ? requested : highest);
           setGameData(spelling);
@@ -104,84 +118,50 @@ const SpellingChallengePage = () => {
         return;
       }
 
-      // 1. Treat incoming param as order_index, resolve real area id
-      const orderIndex = parseInt(rawAreaParam, 10);
-      let actualAreaId = orderIndex;
-
+      let actualAreaId = parseInt(rawAreaParam, 10);
       try {
         const areaResp = await fetch(
-          `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
+          `${env.backendUrl}/api/games/area/order/${actualAreaId}/`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (areaResp.ok) {
           const areaData = await areaResp.json();
           actualAreaId = areaData.area.id;
           setResolvedAreaId(actualAreaId);
-        } else {
-          // fallback: assume param already is an id
-          console.warn("Area-by-order lookup failed, using raw param as id.");
         }
       } catch (e) {
-        console.warn("Area-by-order request error, using raw param as id.");
+        console.warn("Failed to resolve area ID. Using raw param.");
       }
 
-      // 2. Fetch questions with resolved area id
       const response = await fetch(
         `${env.backendUrl}/api/games/questions/${actualAreaId}/spelling-challenge/${difficulty}/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.status === 403) {
-        const data = await response.json();
-        setError(data.error || "Access denied");
-        alert(data.error);
-        router.back();
-        return;
-      }
-
-      if (response.status === 500) {
-        let errorDetails = "Internal server error. Please try again later.";
-        try {
-          const errorData = await response.json();
-          errorDetails = errorData.error || errorDetails;
-        } catch {}
-        setError(errorDetails);
-        return;
-      }
-
       if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        let msg = `HTTP ${response.status}: ${response.statusText}`;
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          msg = errorData.error || msg;
         } catch {}
-        throw new Error(errorMessage);
+        throw new Error(msg);
       }
 
       const data = await response.json();
-
       if (!data.questions || data.questions.length === 0) {
         setError("No questions available for this difficulty level.");
         return;
       }
 
       const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 10);
-
-      setQuestions(selected);
+      setQuestions(shuffled.slice(0, 10));
       setGameData({
         ...data,
         total_pool: data.questions.length,
-        used_count: selected.length,
+        used_count: 10,
       });
-      if (data.skip_message) {
-        console.log("Skip message:", data.skip_message);
-      }
-    } catch (error) {
-      console.error("Failed to fetch questions:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load questions"
-      );
+    } catch (err: any) {
+      setError(err.message || "Failed to load questions");
     } finally {
       setLoading(false);
     }
@@ -206,26 +186,19 @@ const SpellingChallengePage = () => {
 
     try {
       const token = localStorage.getItem("access_token");
-      const response = await fetch(
-        `${env.backendUrl}/api/games/submit-score/`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            area_id: resolvedAreaId ?? parseInt(areaId, 10),
-            game_type: "spelling-challenge",
-            difficulty: currentDifficulty,
-            score: percentScore,
-          }),
-        }
-      );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        console.error("submit-score failed", response.status, err);
-      }
+      const response = await fetch(`${env.backendUrl}/api/games/submit-score/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          area_id: resolvedAreaId ?? parseInt(areaId, 10),
+          game_type: "spelling-challenge",
+          difficulty: currentDifficulty,
+          score: percentScore,
+        }),
+      });
       const data = await response.json().catch(() => ({}));
       setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
     } catch (error) {
@@ -242,60 +215,9 @@ const SpellingChallengePage = () => {
     fetchQuestions(areaId, currentDifficulty);
   };
 
-  const handleNextDifficulty = () => {
-    if (gameData?.next_difficulty) {
-      setCurrentDifficulty(gameData.next_difficulty);
-      setGameState("intro");
-      setFinalScore(0);
-      setFinalResults([]);
-    }
-  };
-
-  const handleSkipToHard = () => {
-    setCurrentDifficulty(3);
-    setGameState("intro");
-    setFinalScore(0);
-    setFinalResults([]);
-  };
-
   const handleBack = () => {
     router.push(`/student/challenges?area=${areaId}`);
   };
-
-  if (loading) {
-    return (
-      <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
-        <div className="relative z-20 rounded-3xl p-8 max-w-md w-full">
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
-            <p className="text-white font-semibold">Loading questions...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
-        <div className="relative z-20 bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
-          <div className="flex flex-col items-center justify-center gap-4 text-center">
-            <div className="text-6xl">😕</div>
-            <h2 className="text-2xl font-bold text-red-600">Oops!</h2>
-            <p className="text-gray-700">{error}</p>
-            <button
-              onClick={handleBack}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
-            >
-              Go Back to Challenges
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const renderGameState = () => {
     switch (gameState) {
@@ -335,10 +257,46 @@ const SpellingChallengePage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            onHelp={() => setShowTutorial(true)} // <-- trigger tutorial modal
           />
         );
     }
   };
+
+  if (loading) {
+    return (
+      <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+        <AnimatedBackground />
+        <div className="relative z-20 rounded-3xl p-8 max-w-md w-full">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
+            <p className="text-white font-semibold">Loading questions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+        <AnimatedBackground />
+        <div className="relative z-20 bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="flex flex-col items-center justify-center gap-4 text-center">
+            <div className="text-6xl">😕</div>
+            <h2 className="text-2xl font-bold text-red-600">Oops!</h2>
+            <p className="text-gray-700">{error}</p>
+            <button
+              onClick={handleBack}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
+            >
+              Go Back to Challenges
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
@@ -346,6 +304,11 @@ const SpellingChallengePage = () => {
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>
+
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <TutorialModal steps={tutorialSteps} onClose={() => setShowTutorial(false)} />
+      )}
     </div>
   );
 };

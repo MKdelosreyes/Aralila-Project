@@ -1,12 +1,18 @@
 import SidebarIcon from "./sidebar-icon";
 import { Home, BookOpen, Swords, ListTodo, Settings } from "lucide-react";
 
+
+
+
+
 const sidebarItems = [
+  
   { icon: Home, text: "Home", href: "/student/dashboard" },
-  // { icon: BookOpen, text: "Classroom", href: "/student/classroom" },
   { icon: Swords, text: "Challenges", href: "/student/challenges" },
-  // { icon: ListTodo, text: "Assignments", href: "#" },
+  { icon: BookOpen, text: "Review", href: "/student/review" }, 
   { icon: Settings, text: "Settings", href: "#" },
+//{ icon: BookOpen, text: "Classroom", href: "/student/classroom" },
+//{ icon: ListTodo, text: "Assignments", href: "#" },
 ];
 
 const Sidebar = () => (
@@ -20,3 +26,6 @@ const Sidebar = () => (
 );
 
 export default Sidebar;
+
+
+

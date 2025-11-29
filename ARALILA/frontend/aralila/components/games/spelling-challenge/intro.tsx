@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { PlayCircle, ArrowLeft, Info } from "lucide-react";
+import { PlayCircle, ArrowLeft, HelpCircle } from "lucide-react";
 
 interface SpellingChallengeIntroProps {
   difficulty: number;
@@ -12,6 +12,7 @@ interface SpellingChallengeIntroProps {
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
+  onHelp?: () => void; // ✅ Added
 }
 
 export const SpellingChallengeIntro = ({
@@ -20,17 +21,11 @@ export const SpellingChallengeIntro = ({
   onSelectDifficulty,
   onStartChallenge,
   onBack,
+  onHelp, // ✅ Added
 }: SpellingChallengeIntroProps) => {
-  const difficultyLabel = { 1: "Easy", 2: "Medium", 3: "Hard" }[difficulty];
-  const difficultyColor = {
-    1: "bg-green-500",
-    2: "bg-yellow-500",
-    3: "bg-red-500",
-  }[difficulty];
-
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Back Button - Top Left Corner */}
+      {/* Back Button */}
       {onBack && (
         <motion.div
           className="absolute top-10 left-8 z-20"
@@ -84,7 +79,7 @@ export const SpellingChallengeIntro = ({
           </div>
         </motion.div>
 
-        {/* ✅ Difficulty selector */}
+        {/* Difficulty Selector */}
         <motion.div
           className="mb-5 flex gap-3"
           initial={{ opacity: 0, y: 10 }}
@@ -116,8 +111,9 @@ export const SpellingChallengeIntro = ({
           })}
         </motion.div>
 
+        {/* Start + Help Buttons */}
         <motion.div
-          className="relative group flex items-center justify-center"
+          className="relative flex items-center justify-center gap-10"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{
@@ -127,24 +123,49 @@ export const SpellingChallengeIntro = ({
             delay: 0.5,
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+          {/* Start Button */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+            </div>
+
+            <motion.button
+              onClick={onStartChallenge}
+              className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <PlayCircle className="w-32 h-32 text-white cursor-pointer" />
+              <div
+                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                style={{ pointerEvents: "none" }}
+              >
+                Start
+              </div>
+            </motion.button>
           </div>
 
-          <motion.button
-            onClick={onStartChallenge}
-            className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <PlayCircle className="w-32 h-32 text-white cursor-pointer" />
-            <div
-              className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-              style={{ pointerEvents: "none" }}
-            >
-              Start
+          {/* Help Button — NEW */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
             </div>
-          </motion.button>
+
+            <motion.button
+              onClick={onHelp}
+              className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <HelpCircle className="w-32 h-32 text-white cursor-pointer" />
+              <div
+                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                style={{ pointerEvents: "none" }}
+              >
+                Help
+              </div>
+            </motion.button>
+          </div>
         </motion.div>
       </div>
     </div>

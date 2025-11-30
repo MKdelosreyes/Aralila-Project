@@ -297,7 +297,7 @@ function ChallengesPageInner() {
     if (selectedArea?.bgPath) {
       return <ChallengesBackground img_path={selectedArea.bgPath} />;
     }
-    return <AnimatedBackground />;
+    return <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />;
   };
 
   const currentStory = areaStories.find(

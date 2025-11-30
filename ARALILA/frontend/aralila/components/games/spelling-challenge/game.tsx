@@ -560,7 +560,7 @@ export const SpellingChallengeGame = ({
             </div>
 
             <div className="relative">
-              <div className="text-5xl text-purple-800 tracking-widest font-game">
+              <div className="text-5xl text-orange-500 tracking-widest font-game">
                 {currentWordData.word
                   .split("")
                   .map((char, idx) =>

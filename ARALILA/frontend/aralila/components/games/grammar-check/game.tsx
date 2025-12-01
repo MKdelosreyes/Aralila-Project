@@ -532,51 +532,6 @@ export const GrammarCheckGame = ({
           </DndContext>
         </div>
 
-        {/* Feedback */}
-        {/* <div className="flex items-center justify-center h-20 my-4">
-          <AnimatePresence mode="wait">
-            {feedback && (
-              <motion.div
-                key={feedback.type + currentQIndex}
-                className="text-center"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                {feedback.type === "success" && (
-                  <div className="flex flex-col items-center gap-1">
-                    <CheckCircle2 className="w-12 h-12 text-green-500" />
-                    <p className="text-xl font-bold text-green-600">Tama!</p>
-                  </div>
-                )}
-                {feedback.type === "error" && (
-                  <div className="flex flex-col items-center gap-1">
-                    <XCircle className="w-12 h-12 text-red-500" />
-                    <p className="text-lg text-slate-600">
-                      Ang tamang sagot:{" "}
-                      <span className="font-bold text-purple-700">
-                        {currentQ.correctTokens.join(" ")}
-                      </span>
-                    </p>
-                  </div>
-                )}
-                {feedback.type === "skipped" && (
-                  <div className="flex flex-col items-center gap-1">
-                    <XCircle className="w-12 h-12 text-orange-500" />
-                    <p className="text-lg text-slate-600">
-                      Na-skip. Tamang sagot:{" "}
-                      <span className="font-bold text-purple-700">
-                        {currentQ.correctTokens.join(" ")}
-                      </span>
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div> */}
-
         {/* Controls */}
         <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
           <div className="flex gap-3">

@@ -68,7 +68,9 @@ export const GrammarCheckIntro = ({
             height={300}
             className="mx-auto"
           />
-          <h1 className="text-7xl font-bold text-white mb-4">Grammar Check!</h1>
+          <h1 className="text-7xl font-bold text-white mb-4">
+            Gramatika Galore!
+          </h1>
 
           <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
             GRAMMAR

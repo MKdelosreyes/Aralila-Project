@@ -25,9 +25,18 @@ const MAX_ASSISTS = 3;
 
 type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thumbsup";
 
-const DraggableWord = ({ word }: { word: string }) => {
+const DraggableWord = ({
+  word,
+  disabled,
+}: {
+  word: string;
+  disabled?: boolean;
+}) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: word });
+    useDraggable({
+      id: word,
+      disabled: disabled,
+    });
 
   return (
     <>
@@ -51,7 +60,11 @@ const DraggableWord = ({ word }: { word: string }) => {
           position: isDragging ? "fixed" : "relative",
           zIndex: isDragging ? 9999 : "auto",
         }}
-        className="bg-purple-200 border-2 border-dashed border-purple-400 px-8 py-4 rounded-2xl font-bold text-purple-800 text-2xl cursor-grab active:cursor-grabbing shadow-lg"
+        className={`bg-purple-200 border-2 border-dashed border-purple-400 px-8 py-4 rounded-2xl font-bold text-purple-800 text-2xl shadow-lg ${
+          disabled
+            ? "cursor-not-allowed opacity-50"
+            : "cursor-grab active:cursor-grabbing"
+        }`}
       >
         {word}
       </div>
@@ -63,27 +76,45 @@ const DropZone = ({
   option,
   isCorrect,
   showFeedback,
+  isHighlighted,
 }: {
   option: string;
   isCorrect: boolean;
   showFeedback: boolean;
+  isHighlighted?: boolean;
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: option });
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
+      initial={isHighlighted ? { scale: 1 } : {}}
+      animate={
+        isHighlighted
+          ? {
+              scale: [1, 1.05, 1],
+              boxShadow: [
+                "0 0 0px rgba(147, 51, 234, 0)",
+                "0 0 20px rgba(147, 51, 234, 0.6)",
+                "0 0 0px rgba(147, 51, 234, 0)",
+              ],
+            }
+          : {}
+      }
+      transition={{ duration: 0.6, repeat: isHighlighted ? Infinity : 0 }}
       className={`p-6 rounded-2xl border-2 shadow-md transition-all text-lg font-semibold text-center min-h-[80px] flex items-center justify-center
         ${
           showFeedback && isCorrect
             ? "bg-green-100 border-dashed transition-all border-green-400 text-green-700"
+            : isHighlighted
+            ? "bg-purple-200 border-solid border-purple-500 text-purple-800 ring-4 ring-purple-300"
             : isOver
             ? "bg-purple-100 border-dashed transition-all border-purple-400"
             : "bg-white border-dashed transition-all border-slate-300"
         }`}
     >
       {option}
-    </div>
+    </motion.div>
   );
 };
 
@@ -109,10 +140,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
   // Assists system
   const [assists, setAssists] = useState(MAX_ASSISTS);
-  const [showAssistPrompt, setShowAssistPrompt] = useState(false);
-  const [pendingWrongAnswer, setPendingWrongAnswer] = useState<string | null>(
-    null
-  );
+  const [showAssistHighlight, setShowAssistHighlight] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -177,6 +205,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const nextQuestion = useCallback(() => {
     setSelectedAnswer(null);
     setShowFeedback(false);
+    setShowAssistHighlight(false);
     setAnimationKey((prev) => prev + 1);
     setLilaState("normal");
 
@@ -187,48 +216,8 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     }
   }, [currentQuestionIndex, questions.length, finishGame]);
 
-  const proceedAfterWrongAnswer = useCallback(() => {
-    setLilaState("sad");
-    setStreak(0);
-    const penalty = currentSettings.wrongPenalty;
-    setTimeLeft((prev) => Math.max(0, prev - penalty));
-
-    setResults((prev) => [
-      ...prev,
-      {
-        question: currentQ,
-        userAnswer: pendingWrongAnswer || "skipped",
-        isCorrect: false,
-        skipped: false,
-        hintUsed: false,
-      },
-    ]);
-
-    setTimeout(() => {
-      nextQuestion();
-    }, 2000);
-  }, [
-    currentQ,
-    currentSettings.wrongPenalty,
-    nextQuestion,
-    pendingWrongAnswer,
-  ]);
-
-  const handleUseAssist = () => {
-    setAssists((a) => a - 1);
-    setShowAssistPrompt(false);
-    setPendingWrongAnswer(null);
-    setLilaState("normal");
-    // Player can try again
-  };
-
-  const handleDeclineAssist = () => {
-    setShowAssistPrompt(false);
-    proceedAfterWrongAnswer();
-  };
-
   const handleDragEnd = (event: any) => {
-    if (!event.over) return;
+    if (!event.over || showAssistHighlight) return;
 
     const droppedOn = event.over.id;
     const correct = droppedOn === currentQ.correctAnswer;
@@ -260,37 +249,56 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         nextQuestion();
       }, 2000);
     } else {
-      if (assists > 0) {
-        setPendingWrongAnswer(droppedOn);
-        setShowAssistPrompt(true);
-        setShowFeedback(false);
-        setLilaState("worried");
-      } else {
-        setLilaState("sad");
-        setStreak(0);
-        const penalty = currentSettings.wrongPenalty;
-        setTimeLeft((prev) => Math.max(0, prev - penalty));
+      setLilaState("sad");
+      setStreak(0);
+      const penalty = currentSettings.wrongPenalty;
+      setTimeLeft((prev) => Math.max(0, prev - penalty));
 
-        setResults((prev) => [
-          ...prev,
-          {
-            question: currentQ,
-            userAnswer: droppedOn,
-            isCorrect: false,
-            skipped: false,
-            hintUsed: false,
-          },
-        ]);
+      setResults((prev) => [
+        ...prev,
+        {
+          question: currentQ,
+          userAnswer: droppedOn,
+          isCorrect: false,
+          skipped: false,
+          hintUsed: false,
+        },
+      ]);
 
-        setTimeout(() => {
-          nextQuestion();
-        }, 2000);
-      }
+      setTimeout(() => {
+        nextQuestion();
+      }, 2000);
     }
   };
 
+  const handleUseAssist = () => {
+    if (assists <= 0 || showFeedback || showAssistHighlight) return;
+
+    setAssists((a) => a - 1);
+    setShowAssistHighlight(true);
+    setLilaState("thumbsup");
+
+    // Record as hint used
+    setResults((prev) => [
+      ...prev,
+      {
+        question: currentQ,
+        userAnswer: currentQ.correctAnswer,
+        isCorrect: true,
+        skipped: false,
+        hintUsed: true,
+      },
+    ]);
+
+    // Don't add points for assisted answers
+    // Move to next question after 3 seconds
+    setTimeout(() => {
+      nextQuestion();
+    }, 3000);
+  };
+
   const skipQuestion = () => {
-    if (showFeedback || showAssistPrompt) return;
+    if (showFeedback || showAssistHighlight) return;
     setStreak(0);
     setShowFeedback(true);
     setIsCorrect(false);
@@ -382,45 +390,6 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         description="Sigurado ka ba na gusto mong umalis? Hindi mase-save ang iyong score."
       />
 
-      {/* Assist Prompt Modal */}
-      {showAssistPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
-          >
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                <HandHelping className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-800">Mali!</h3>
-              <p className="text-slate-600 text-center">
-                Gusto mo bang gumamit ng assist para subukan ulit?
-              </p>
-              <div className="flex items-center gap-2 text-purple-600">
-                <HandHelping className="w-5 h-5" />
-                <span className="font-bold">{assists} assists natitira</span>
-              </div>
-              <div className="flex gap-3 w-full mt-4">
-                <button
-                  onClick={handleDeclineAssist}
-                  className="flex-1 px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all"
-                >
-                  Hindi
-                </button>
-                <button
-                  onClick={handleUseAssist}
-                  className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
-                >
-                  Oo, gamitin
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
       <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[70vh] w-full">
         {/* Header */}
         <div className="w-full flex items-center gap-4 mb-8">
@@ -483,7 +452,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
                   <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[20px] border-t-slate-300"></div>
                   <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-t-[18px] border-t-slate-100"></div>
 
-                  <div className="text-base text-slate-800 leading-relaxed text-center break-words">
+                  <div className="text-lg text-slate-800 leading-relaxed text-center break-words">
                     {renderSentenceWithHighlight()}
                   </div>
 
@@ -512,7 +481,10 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
                 {/* Draggable Word - Below Character */}
                 <div className="mt-4">
-                  <DraggableWord word={currentQ.word} />
+                  <DraggableWord
+                    word={currentQ.word}
+                    disabled={showAssistHighlight}
+                  />
                 </div>
               </div>
 
@@ -527,6 +499,9 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
                       selectedAnswer === option
                     }
                     showFeedback={showFeedback}
+                    isHighlighted={
+                      showAssistHighlight && option === currentQ.correctAnswer
+                    }
                   />
                 ))}
               </div>
@@ -535,13 +510,22 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         </div>
 
         {/* Bottom Action Buttons */}
-        <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200 mt-8">
+        <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
           <button
             onClick={skipQuestion}
-            disabled={showFeedback || showAssistPrompt}
-            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
+            disabled={showAssistHighlight}
+            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-100 disabled:cursor-not-allowed text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
           >
             SKIP
+          </button>
+
+          <button
+            onClick={handleUseAssist}
+            disabled={assists <= 0 || showAssistHighlight || showFeedback}
+            className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:bg-purple-400 disabled:bg-slate-300 disabled:border-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+          >
+            <HandHelping className="w-5 h-5" />
+            <span>Gamitin ang Assist</span>
           </button>
         </div>
       </div>

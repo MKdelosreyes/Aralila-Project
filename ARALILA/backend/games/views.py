@@ -58,6 +58,8 @@ Example response for mixed language:
   "english_words_found": ["run", "water"],
   "filipino_equivalents": {{"run": "takbo", "water": "tubig"}}
 }}
+
+Use Filipino only in explanations. No english if possible.
 """
 
         response = client.responses.create(

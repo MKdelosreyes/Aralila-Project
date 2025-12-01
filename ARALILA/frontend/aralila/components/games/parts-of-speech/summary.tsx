@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { Target, Trophy, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { PartsOfSpeechResult } from "@/types/games";
+import Leaderboard from "@/components/games/common/Leaderboard";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -149,13 +150,14 @@ export const PartsOfSpeechSummary = ({
   };
 
   return (
-    <>
-      <motion.div
-        className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-2">
+        <motion.div
+          className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
         {/* Header */}
         <div className="text-center mb-6">
           <motion.h2
@@ -307,7 +309,13 @@ export const PartsOfSpeechSummary = ({
             </ul>
           </div>
         )}
-      </motion.div>
-    </>
+        </motion.div>
+      </div>
+
+      <div className="md:col-span-1">
+        <Leaderboard gameType="parts-of-speech" difficulty={difficulty} limit={10} />
+      </div>
+
+    </div>
   );
 };

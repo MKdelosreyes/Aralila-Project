@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
+// Leaderboard is now included inside intro/summary components
 import { PartsOfSpeechIntro } from "@/components/games/parts-of-speech/intro";
 import { PartsOfSpeechGame } from "@/components/games/parts-of-speech/game";
 import { PartsOfSpeechSummary } from "@/components/games/parts-of-speech/summary";

@@ -21,8 +21,10 @@ export interface WordAssociationResult {
 
 interface GameProps {
   questions: WordAssociationQuestion[];
+  difficulty?: number,
   onGameComplete: (summary: {
     score: number;
+    rawPoints: number;
     results: WordAssociationResult[];
   }) => void;
   onExit: () => void;
@@ -41,6 +43,7 @@ type LilaState = "normal" | "happy" | "sad" | "worried" | "thumbsup";
 
 export const WordAssociationGame = ({
   questions,
+  difficulty = 1,
   onGameComplete,
   onExit,
 }: GameProps) => {
@@ -134,6 +137,7 @@ export const WordAssociationGame = ({
       isCorrect,
     };
 
+    // Handle feedback and scoring
     if (isSkipped) {
       setStreak(0);
       setFeedback({ type: "skipped" });
@@ -153,9 +157,30 @@ export const WordAssociationGame = ({
       setLilaState("sad");
       setDialogue("Oops, that's not quite right.");
     }
-    setResults((prev) => [...prev, newResult]);
-    setTimeout(advanceToNext, 2000);
+
+    setResults((prev) => {
+      const updatedResults = [...prev, newResult];
+
+      // If last question, defer parent update
+      if (currentIndex + 1 >= shuffledQuestions.length) {
+        setTimeout(() => {
+          const finalScore = isCorrect
+            ? score + (streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS)
+            : score;
+          onGameComplete({
+            score: finalScore,
+            results: updatedResults,
+          });
+        }, 50); // small delay ensures it runs after render
+      } else {
+        // Not last question -> move to next after delay
+        setTimeout(advanceToNext, 2000);
+      }
+
+      return updatedResults;
+    });
   };
+
 
   const handleUseAssist = () => {
     if (assists <= 0 || feedback) return;

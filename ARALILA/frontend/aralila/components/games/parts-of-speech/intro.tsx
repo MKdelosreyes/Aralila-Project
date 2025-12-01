@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlayCircle, ArrowLeft } from "lucide-react";
 import { PartsOfSpeechDifficulty } from "@/types/games";
+import Leaderboard from "@/components/games/common/Leaderboard";
 
 interface PartsOfSpeechIntroProps {
   difficulty: PartsOfSpeechDifficulty;
@@ -23,36 +24,39 @@ export const PartsOfSpeechIntro = ({
   onBack,
 }: PartsOfSpeechIntroProps) => {
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      {/* Back Button - Top Left Corner */}
-      {onBack && (
-        <motion.div
-          className="absolute top-10 left-8 z-20"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="relative group flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50"></div>
-            </div>
-            <motion.button
-              onClick={onBack}
-              className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-slate-500/40 transition-shadow duration-300"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+    <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <div className="md:col-span-2">
+        <div className="relative w-full h-screen overflow-hidden">
+          {/* Back Button - Top Left Corner */}
+          {onBack && (
+            <motion.div
+              className="absolute top-10 left-8 z-20"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <ArrowLeft className="w-16 h-16 text-white cursor-pointer" />
-              <div
-                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap"
-                style={{ pointerEvents: "none" }}
-              >
-                Back
+              <div className="relative group flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+                </div>
+                <motion.button
+                  onClick={onBack}
+                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-slate-500/40 transition-shadow duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <ArrowLeft className="w-16 h-16 text-white cursor-pointer" />
+                  <div
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    Back
+                  </div>
+                </motion.button>
               </div>
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
+            </motion.div>
+          )}
+        </div>
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center justify-start h-full overflow-hidden">
@@ -159,6 +163,11 @@ export const PartsOfSpeechIntro = ({
             </motion.button>
           </motion.div>
         </motion.div>
+        </div>
+      </div>
+
+      <div className="md:col-span-1">
+        <Leaderboard gameType="parts-of-speech" difficulty={difficulty} limit={10} />
       </div>
     </div>
   );

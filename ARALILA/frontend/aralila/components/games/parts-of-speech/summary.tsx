@@ -313,7 +313,7 @@ export const PartsOfSpeechSummary = ({
       </div>
 
       <div className="md:col-span-1">
-        <Leaderboard gameType="parts-of-speech" difficulty={difficulty} limit={10} />
+        <Leaderboard gameId={4} gameType="parts-of-speech" areaId={4} difficulty={difficulty} limit={10} />
       </div>
 
     </div>

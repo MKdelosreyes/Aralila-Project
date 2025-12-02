@@ -7,6 +7,7 @@ import Confetti from "react-confetti";
 import { Target, Trophy, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { PunctuationResult } from "@/types/games";
 import { splitIntoWords } from "@/data/games/punctuation-task";
+import Leaderboard from "@/components/games/common/Leaderboard";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -206,10 +207,12 @@ export const PunctuationChallengeSummary = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+        className="relative z-20 bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl"
       >
-        {/* Header */}
-        <div className="text-center mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="md:col-span-2">
+          {/* Header */}
+          <div className="text-center mb-6">
           <motion.h2
             initial={{ y: -20 }}
             animate={{ y: 0 }}
@@ -291,8 +294,8 @@ export const PunctuationChallengeSummary = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
+          {/* Action Buttons */}
+          <div className="space-y-3">
           {/* Retry Current Difficulty */}
           <button
             onClick={onRestart}
@@ -321,8 +324,8 @@ export const PunctuationChallengeSummary = ({
           </button>
         </div>
 
-        {showReview && (
-          <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
+          {showReview && (
+            <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
             <h3 className="font-semibold text-gray-700 mb-2 text-sm">
               Answer Review
             </h3>
@@ -355,8 +358,13 @@ export const PunctuationChallengeSummary = ({
                 </li>
               ))}
             </ul>
+            </div>
+          )}
           </div>
-        )}
+          <div className="md:col-span-1">
+            <Leaderboard gameId={3} gameType="punctuation-task" areaId={4} difficulty={difficulty} limit={10} />
+          </div>
+        </div>
       </motion.div>
     </>
   );

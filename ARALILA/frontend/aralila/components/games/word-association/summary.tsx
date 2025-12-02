@@ -212,7 +212,7 @@ export const WordAssociationSummary = ({
       </div>
 
         <div className="md:col-span-1">
-          <Leaderboard gameType="word-association" difficulty={difficulty} limit={10} />
+          <Leaderboard gameId={5} gameType="word-association" areaId={4} difficulty={difficulty} limit={10} />
         </div>
 
       </div>

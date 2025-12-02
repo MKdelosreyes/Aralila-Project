@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { SpellingResult } from "@/types/games";
 import { Trophy, Star, Zap, RotateCcw } from "lucide-react";
+import Leaderboard from "@/components/games/common/Leaderboard";
 import Image from "next/image";
 
 interface SummaryProps {
@@ -59,8 +60,10 @@ export const SpellingChallengeSummary = ({
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+      className="relative z-20 bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl"
     >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="md:col-span-2">
       {/* Header */}
       <div className="text-center mb-6">
         <motion.h2
@@ -200,6 +203,11 @@ export const SpellingChallengeSummary = ({
           </ul>
         </div>
       )}
+        </div>
+        <div className="md:col-span-1">
+          <Leaderboard gameId={1} gameType="spelling-challenge" areaId={4} difficulty={difficulty} limit={10} />
+        </div>
+      </div>
     </motion.div>
   );
 };

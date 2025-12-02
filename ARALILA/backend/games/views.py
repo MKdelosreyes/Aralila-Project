@@ -11,7 +11,6 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
-from progress.models import GameProgress
 
 MINIMUM_SCORE_THRESHOLD = 70  # 70% average required
 
@@ -21,57 +20,88 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @csrf_exempt
 def evaluate_emoji_sentence(request):
-    data = json.loads(request.body)
-    student_answer = data.get("answer", "")
-    emojis = data.get("emojis", [])
-
-    # Build the prompt for evaluation
-    prompt = f"""
-        You are a Filipino language teacher. 
-        Keywords shown to the student: {emojis}
-        Student's sentence: "{student_answer}"
-
-        The student's answer must be pure Filipino text (no emojis).
-
-        Please:
-        1. Check if it is grammatically correct in Filipino.
-        2. Check if the meaning matches the given key concepts ({emojis}). 
-        It is acceptable if not every keyword is mentioned literally, as long as the main idea is correct.
-        3. Give a short explanation (in Filipino) about what is right or wrong.
-        4. Provide a corrected version if needed.
-
-        Respond ONLY in valid JSON with keys:
-        valid (true/false), explanation (string), corrected (string).
-        """
-
-
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",   # 💡 you can also use gpt-5-mini if available
-            messages=[
-                {"role": "system", "content": "You are a helpful teacher."},
+        data = json.loads(request.body)
+        student_answer = data.get("answer", "")
+        emojis = data.get("emojis", [])
+
+        prompt = f"""You are a Filipino language teacher. Evaluate this student's sentence.
+
+Keywords to use: {emojis}
+Student's sentence: "{student_answer}"
+
+Evaluation criteria:
+1. Check if ALL words are in Filipino (Tagalog). If English words are used, note them.
+2. Check grammar correctness in Filipino.
+3. Check if meaning matches the keywords.
+
+Scoring rules:
+- All Filipino words + correct grammar + matches keywords = 20 points (valid: true)
+- Has 1-2 English words but otherwise correct = 15 points (valid: true)
+- Has 3+ English words or major grammar issues = 10 points (valid: false)
+- Completely wrong or nonsensical = 0 points (valid: false)
+
+Respond ONLY in valid JSON:
+{{
+  "valid": true/false,
+  "points": 0-20,
+  "explanation": "Filipino text explaining what's good/wrong. If English words found, mention them and give Filipino equivalents.",
+  "english_words_found": ["word1", "word2"] or [],
+  "filipino_equivalents": {{"english_word": "Filipino_word"}} or {{}}
+}}
+
+Example response for mixed language:
+{{
+  "valid": true,
+  "points": 15,
+  "explanation": "Maganda ang sentence mo pero may English words: 'run' (dapat 'takbo'), 'water' (dapat 'tubig'). Gamitin: 'Tumakbo siya para sa tubig.'",
+  "english_words_found": ["run", "water"],
+  "filipino_equivalents": {{"run": "takbo", "water": "tubig"}}
+}}
+
+Use Filipino only in explanations. No english if possible.
+"""
+
+        response = client.responses.create(
+            model="gpt-4o-mini",  
+            input=[
+                {"role": "system", "content": "Respond ONLY in valid JSON."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            max_output_tokens=120,  
         )
 
-        raw_text = response.choices[0].message.content
+        ai_msg = response.output_text.strip()
 
-        # Try parsing into JSON
-        result = {}
-        try:
-            # remove code fences if present
-            cleaned = raw_text.strip().replace("```json", "").replace("```", "").strip()
-            result = json.loads(cleaned)
-        except json.JSONDecodeError:
-            result = {
-                "valid": False,
-                "explanation": "AI did not return valid JSON.",
-                "corrected": raw_text
-            }
+        cleaned = (
+            ai_msg.replace("```json", "")
+                  .replace("```", "")
+                  .strip()
+        )
 
+        result = json.loads(cleaned)
+        
+        if "points" not in result:
+            result["points"] = 20 if result.get("valid") else 0
+        if "english_words_found" not in result:
+            result["english_words_found"] = []
+        if "filipino_equivalents" not in result:
+            result["filipino_equivalents"] = {}
+            
         return JsonResponse(result)
 
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON returned by AI."},
+            status=500
+        )
+
     except Exception as e:
+        if "429" in str(e):
+            return JsonResponse(
+                {"error": "Rate limit exceeded. Please try again."},
+                status=429
+            )
         return JsonResponse({"error": str(e)}, status=500)
 
 
@@ -80,12 +110,10 @@ def evaluate_emoji_sentence(request):
 def get_unlocked_areas(request):
     """Get all areas with lock/unlock status and progress for current user"""
 
-    # ✅ DEBUG: Print BEFORE the query
     print(f"🔍 request.user type: {type(request.user)}")
     print(f"🔍 request.user value: {request.user}")
     print(f"🔍 request.user.__class__.__name__: {request.user.__class__.__name__}")
     
-    # ✅ EXPLICIT FIX: Ensure we have a CustomUser instance
     from users.models import CustomUser
     current_user = request.user
     
@@ -109,19 +137,34 @@ def get_unlocked_areas(request):
         if total_games == 0:
             total_games = 6
         
-        # Get user's progress for this area
+        # ✅ FIX: Remove 'completed=True' filter - use stars_earned instead
         progress_records = GameProgress.objects.filter(
             user=current_user,
             area=area,
-            completed=True
+            stars_earned__gte=1  # ✅ Changed: Games with at least 1 star
         ).values('game').annotate(
-            best_score=Max('score')
+            best_score=Max('difficulty_3_score')  # ✅ Use highest difficulty score
         )
 
         completed_games = progress_records.count()
         
-        # Calculate average score
-        best_scores = [p['best_score'] for p in progress_records]
+        # Calculate average score from all difficulty levels
+        all_progress = GameProgress.objects.filter(
+            user=current_user,
+            area=area
+        )
+        
+        # Get best score across all difficulties for each game
+        best_scores = []
+        for progress in all_progress:
+            max_score = max(
+                progress.difficulty_1_score,
+                progress.difficulty_2_score,
+                progress.difficulty_3_score
+            )
+            if max_score > 0:
+                best_scores.append(max_score)
+        
         average_score = sum(best_scores) / len(best_scores) if best_scores else 0
         
         is_locked = False
@@ -133,36 +176,44 @@ def get_unlocked_areas(request):
         else:
             # Check if previous area is completed
             previous_area = all_areas[index - 1]
+            
+            # Check practice games progress
             previous_progress = GameProgress.objects.filter(
                 user=current_user,
-                area=previous_area,
-                completed=True
-            ).values('game').annotate(
-                best_score=Max('score')
+                area=previous_area
             )
             
-            prev_completed = previous_progress.count()
-            prev_total = GameItem.objects.filter(area=previous_area).count()
+            # Get total games in previous area
+            prev_game_ids = GameItem.objects.filter(area=previous_area).values_list('game_id', flat=True).distinct()
+            prev_total = Game.objects.filter(id__in=prev_game_ids).count()
             
             if prev_total == 0:
                 prev_total = 6
             
-            prev_scores = [p['best_score'] for p in previous_progress]
-            prev_avg = sum(prev_scores) / len(prev_scores) if prev_scores else 0
+            # Count games with at least 1 star
+            prev_games_with_stars = previous_progress.filter(stars_earned__gte=1).count()
             
-            # Check completion criteria
-            if prev_completed < prev_total:
+            # Check if previous area's assessment was passed
+            prev_assessment_passed = AssessmentProgress.objects.filter(
+                user=current_user,
+                area=previous_area,
+                passed=True
+            ).exists()
+            
+            # Both conditions must be met
+            if prev_games_with_stars < prev_total:
                 is_locked = True
-                message = f"Complete all games in {previous_area.name} to unlock"
-            elif prev_avg < MINIMUM_SCORE_THRESHOLD:
+                message = f"Earn at least 1 star in all games in {previous_area.name} ({prev_games_with_stars}/{prev_total})"
+            elif not prev_assessment_passed:
                 is_locked = True
-                message = f"Achieve 70% average in {previous_area.name} (current: {prev_avg:.0f}%)"
+                message = f"Pass the assessment in {previous_area.name} with 80%+"
             else:
                 is_locked = False
                 message = "Unlocked!"
+            
         
         areas_data.append({
-            'id': area.id,  # Database ID (for reference)
+            'id': area.id,  
             'order_index': area.order_index, 
             'name': area.name,
             'description': area.description,
@@ -414,13 +465,7 @@ def submit_game_score(request):
         else:
             next_unlocked_difficulty = 1  # cycle back
 
-        # Overall best score (keep legacy)
-        progress.score = max(
-            progress.difficulty_1_score,
-            progress.difficulty_2_score,
-            progress.difficulty_3_score
-        )
-        progress.completed = progress.difficulty_3_completed
+        # ✅ REMOVED: progress.score and progress.completed fields
         progress.save()
         
         return Response({
@@ -449,6 +494,8 @@ def submit_game_score(request):
         return Response({'error': 'Game not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+
 
 
 @api_view(['GET'])
@@ -483,13 +530,21 @@ def get_area_detail(request, area_id):
         
         if progress:
             if not progress.difficulty_1_completed:
-                    next_difficulty = 1
+                next_difficulty = 1
             elif not progress.difficulty_2_completed:
                 next_difficulty = 2
             elif not progress.difficulty_3_completed:
                 next_difficulty = 3
             else:
                 next_difficulty = 1
+            
+            best_score = max(
+                progress.difficulty_1_score,
+                progress.difficulty_2_score,
+                progress.difficulty_3_score
+            )
+            
+            is_completed = progress.stars_earned >= 1
             
             games_data.append({
                 'id': game.id,
@@ -508,8 +563,8 @@ def get_area_detail(request, area_id):
                     2: progress.difficulty_1_completed,
                     3: progress.difficulty_2_completed,
                 },
-                'best_score': progress.score,
-                'completed': progress.completed,
+                'best_score': best_score, 
+                'completed': is_completed, 
                 'attempts': attempts,
                 'replay_mode': progress.stars_earned == 3,
             })
@@ -532,7 +587,6 @@ def get_area_detail(request, area_id):
     completed_count = sum(1 for g in games_data if g['completed'])
     total_games = len(games_data)
     
-    # ✅ Handle empty games
     if total_games == 0:
         total_games = 6
     
@@ -596,6 +650,14 @@ def get_area_by_order(request, order_index):
                 else:
                     next_difficulty = 1
                 
+                best_score = max(
+                    progress.difficulty_1_score,
+                    progress.difficulty_2_score,
+                    progress.difficulty_3_score
+                )
+                
+                is_completed = progress.stars_earned >= 1
+                
                 games_data.append({
                     'id': game.id,
                     'name': game.name,
@@ -613,8 +675,8 @@ def get_area_by_order(request, order_index):
                         2: progress.difficulty_2_unlocked,
                         3: progress.difficulty_3_unlocked,
                     },
-                    'best_score': progress.score,
-                    'completed': progress.completed,
+                    'best_score': best_score, 
+                    'completed': is_completed, 
                     'attempts': attempts,
                     'replay_mode': progress.stars_earned == 3,
                 })
@@ -667,6 +729,8 @@ def get_area_by_order(request, order_index):
         print(f"❌ Error in get_area_by_order: {str(e)}")
         traceback.print_exc()
         return Response({'error': str(e)}, status=500)
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -892,5 +956,5 @@ def get_word_association_questions(request, area_id):
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         return Response({'error': str(e)}, status=500)
-    
+
 

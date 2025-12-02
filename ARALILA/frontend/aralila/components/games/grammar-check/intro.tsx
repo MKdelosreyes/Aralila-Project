@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlayCircle, ArrowLeft } from "lucide-react";
+import Leaderboard from "@/components/games/common/Leaderboard";
 
 interface GrammarCheckIntroProps {
   difficulty: number;
@@ -22,7 +23,9 @@ export const GrammarCheckIntro = ({
   onBack,
 }: GrammarCheckIntroProps) => {
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <div className="md:col-span-2">
+        <div className="relative w-full h-screen overflow-hidden">
       {/* Back Button - Top Left Corner */}
       {onBack && (
         <motion.div
@@ -137,6 +140,12 @@ export const GrammarCheckIntro = ({
             </div>
           </motion.button>
         </motion.div>
+        </div>
+      </div>
+      </div>
+
+      <div className="md:col-span-1">
+        <Leaderboard gameId={6} gameType="grammar-check" areaId={4} difficulty={difficulty} limit={10} />
       </div>
     </div>
   );

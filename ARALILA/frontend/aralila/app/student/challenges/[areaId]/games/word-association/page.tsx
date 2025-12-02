@@ -26,7 +26,7 @@ const WordAssociationPage = () => {
   const [finalResults, setFinalResults] = useState<WordAssociationResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  const [resolvedAreaId, setResolvedAreaId] = useState<number>(1);
 
     const areaId = searchParams.get("area") || "1";
   
@@ -208,7 +208,7 @@ const WordAssociationPage = () => {
   // 6. Back Button
   //
   const handleBack = () => {
-    router.push(`/student/challenges/${rawAreaParam}`);
+    router.push(`/student/challenges/`);
   };
 
   //
@@ -285,6 +285,7 @@ const WordAssociationPage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            areaId = {resolvedAreaId}
           />
         );
     }

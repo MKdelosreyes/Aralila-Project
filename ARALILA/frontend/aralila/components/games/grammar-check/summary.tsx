@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { Target, Trophy, XCircle, RotateCcw } from "lucide-react";
+import Leaderboard from "@/components/games/common/Leaderboard";
 
 // --- Interfaces ---
 // interface GrammarError {
@@ -119,11 +120,13 @@ export const GrammarCheckSummary = ({
   return (
     <>
       <motion.div
-        className="relative z-20 bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+        className="relative z-20 bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="md:col-span-2">
         {/* Header */}
         <div className="text-center mb-6">
           <motion.h2
@@ -269,6 +272,11 @@ export const GrammarCheckSummary = ({
             </ul>
           </div>
         )}
+          </div>
+          <div className="md:col-span-1">
+            <Leaderboard gameId={6} gameType="grammar-check" areaId={4} difficulty={difficulty} limit={10} />
+          </div>
+        </div>
       </motion.div>
     </>
   );

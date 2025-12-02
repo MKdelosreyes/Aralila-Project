@@ -56,10 +56,9 @@ export const PartsOfSpeechIntro = ({
               </div>
             </motion.div>
           )}
-        </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-start h-full overflow-hidden">
+        {/* Main Content */}
+        <div className="relative z-10 flex flex-col items-center justify-start h-full overflow-hidden">
         <motion.div
           className="text-center mb-3"
           initial={{ opacity: 0, y: -50 }}
@@ -164,10 +163,11 @@ export const PartsOfSpeechIntro = ({
           </motion.div>
         </motion.div>
         </div>
+        </div>
       </div>
 
       <div className="md:col-span-1">
-        <Leaderboard gameType="parts-of-speech" difficulty={difficulty} limit={10} />
+        <Leaderboard gameId={4} gameType="parts-of-speech" areaId={4} difficulty={difficulty} limit={10} />
       </div>
     </div>
   );

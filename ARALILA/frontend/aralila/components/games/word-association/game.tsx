@@ -329,142 +329,97 @@ export const WordAssociationGame = ({
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-grow w-full flex flex-row items-center justify-center gap-6 py-2">
-          {/* Lila Character with Dialogue */}
-          <motion.div
-            key={animationKey}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center gap-4"
-          >
-            <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md max-w-[280px] text-center">
-              {feedback ? (
-                <div className="flex flex-col items-center gap-2">
-                  {feedback.type === "success" ? (
-                    <>
-                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <span className="text-2xl">✓</span>
-                      </div>
-                      <p className="text-green-600 font-bold text-lg">Tama!</p>
-                      <p className="text-green-700 text-sm">
-                        +{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                        <span className="text-2xl">✗</span>
-                      </div>
-                      <p className="text-red-600 font-bold text-lg">
-                        {feedback.type === "skipped" ? "Nilaktawan!" : "Mali!"}
-                      </p>
-                      <p className="text-red-700 text-sm">
-                        Ang tamang sagot:{" "}
-                        <span className="font-bold">
-                          {currentQuestion.answer}
-                        </span>
-                      </p>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <p className="text-md text-slate-800">{dialogue}</p>
-              )}
-
-              <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-purple-50"></div>
-            </div>
-            <motion.div
-              key={lilaState}
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-            >
-              <Image
-                src={lilaImage}
-                alt="Lila"
-                width={150}
-                height={150}
-                priority
-              />
-            </motion.div>
-          </motion.div>
-
-          <div className="flex flex-col items-center justify-center w-full max-w-lg relative">
-            {/* Assist Animation Overlay */}
-            <AnimatePresence>
-              {showAssistAnimation && (
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-40"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <motion.div
-                    className="text-6xl font-bold text-green-500"
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: [1, 1.5, 1], rotate: 0 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                  >
-                    ✨
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="w-full grid grid-cols-2 gap-2 mb-4 px-15">
-              {currentQuestion.images.map((src, idx) => (
-                <div
-                  key={idx}
-                  className="w-full aspect-square rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm max-w-[200px] mx-auto"
-                >
-                  <Image
-                    src={src}
-                    alt={`Clue ${idx + 1}`}
-                    width={150}
-                    height={150}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-center gap-2 flex-nowrap w-full px-2 py-2 overflow-x-auto">
-              {currentQuestion.answer.split("").map((_, index) => (
-                <motion.input
-                  key={index}
-                  id={`letter-${index}`}
-                  type="text"
-                  maxLength={1}
-                  value={userLetters[index] || ""}
-                  onChange={(e) => updateLetter(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyPress(e, index)}
-                  initial={
-                    showAssistAnimation &&
-                    revealedIndices.has(index) &&
-                    userLetters[index]
-                      ? { scale: 0, backgroundColor: "#10b981" }
-                      : {}
-                  }
-                  animate={
-                    showAssistAnimation &&
-                    revealedIndices.has(index) &&
-                    userLetters[index]
-                      ? {
-                          scale: [1.5, 1],
-                          backgroundColor: ["#10b981", "#f1f5f9"],
-                        }
-                      : {}
-                  }
-                  transition={{ duration: 0.5 }}
-                  className={`${boxSize} font-bold text-center rounded-lg border-2 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0 ${
-                    revealedIndices.has(index)
-                      ? "bg-green-50 border-green-400 text-green-700 cursor-not-allowed"
-                      : "bg-slate-100 border-slate-300 text-slate-800"
-                  }`}
-                  autoFocus={index === 0}
-                  disabled={!!feedback || revealedIndices.has(index)}
-                  readOnly={revealedIndices.has(index)}
+        <div className="flex-grow w-full flex flex-col items-center justify-center gap-6 py-2">
+          {/* Images Row - single horizontal row of 4 images */}
+          <div className="w-full grid grid-cols-4 gap-4 mb-4 px-4">
+            {currentQuestion.images.map((src, idx) => (
+              <div
+                key={idx}
+                className="w-full aspect-square rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm"
+              >
+                <Image
+                  src={src}
+                  alt={`Clue ${idx + 1}`}
+                  width={360}
+                  height={360}
+                  className="w-full h-full object-cover"
                 />
-              ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Second row: Mascot | Dialogue | Answer boxes (single row) */}
+          <div className="w-full flex items-center justify-between gap-6 py-2 flex-nowrap overflow-x-auto">
+            {/* Mascot image (left) */}
+            <div className="flex-shrink-0">
+              <Image src={lilaImage} alt="Lila" width={160} height={160} priority />
+            </div>
+
+            {/* Dialogue box (center) */}
+            <div className="flex-1 min-w-[220px] max-w-[640px]">
+              <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md text-center h-full flex items-center justify-center">
+                {feedback ? (
+                  <div className="flex flex-col items-center gap-2">
+                    {feedback.type === "success" ? (
+                      <>
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-2xl">✓</span>
+                        </div>
+                        <p className="text-green-600 font-bold text-lg">Tama!</p>
+                        <p className="text-green-700 text-sm">+{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                          <span className="text-2xl">✗</span>
+                        </div>
+                        <p className="text-red-600 font-bold text-lg">{feedback.type === "skipped" ? "Nilaktawan!" : "Mali!"}</p>
+                        <p className="text-red-700 text-sm">Ang tamang sagot: <span className="font-bold">{currentQuestion.answer}</span></p>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-md text-slate-800">{dialogue}</p>
+                )}
+
+                <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-purple-50"></div>
+              </div>
+            </div>
+
+            {/* Answer boxes (right) */}
+            <div className="flex-shrink-0 relative">
+              <AnimatePresence>
+                {showAssistAnimation && (
+                  <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <motion.div className="text-6xl font-bold text-green-500" initial={{ scale: 0, rotate: -180 }} animate={{ scale: [1, 1.5, 1], rotate: 0 }} exit={{ scale: 0, opacity: 0 }}>
+                      ✨
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex items-center gap-2 px-2 py-2">
+                {currentQuestion.answer.split("").map((_, index) => (
+                  <motion.input
+                    key={index}
+                    id={`letter-${index}`}
+                    type="text"
+                    maxLength={1}
+                    value={userLetters[index] || ""}
+                    onChange={(e) => updateLetter(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyPress(e, index)}
+                    initial={showAssistAnimation && revealedIndices.has(index) && userLetters[index] ? { scale: 0, backgroundColor: "#10b981" } : {}}
+                    animate={showAssistAnimation && revealedIndices.has(index) && userLetters[index] ? { scale: [1.5, 1], backgroundColor: ["#10b981", "#f1f5f9"] } : {}}
+                    transition={{ duration: 0.5 }}
+                    className={`${boxSize} font-bold text-center rounded-lg border-2 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0 ${
+                      revealedIndices.has(index) ? "bg-green-50 border-green-400 text-green-700 cursor-not-allowed" : "bg-slate-100 border-slate-300 text-slate-800"
+                    }`}
+                    autoFocus={index === 0}
+                    disabled={!!feedback || revealedIndices.has(index)}
+                    readOnly={revealedIndices.has(index)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

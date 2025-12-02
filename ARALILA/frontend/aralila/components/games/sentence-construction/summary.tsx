@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from 'react-confetti';
 import { Target, Trophy, XCircle } from "lucide-react";
+import Leaderboard from "@/components/games/common/Leaderboard";
 
 // --- Interfaces ---
 interface Question {
@@ -77,7 +78,9 @@ export const SentenceConstructionSummary = ({ score, results }: SentenceConstruc
 
   return (
     <>
-      <motion.div className="relative z-10 bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 max-w-2xl w-full text-center shadow-2xl" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+      <motion.div className="relative z-10 bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 max-w-4xl w-full text-center shadow-2xl" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="md:col-span-2">
         {summaryContent.showConfetti && windowSize.width > 0 && (
           <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={400} gravity={0.15} />
         )}
@@ -95,6 +98,11 @@ export const SentenceConstructionSummary = ({ score, results }: SentenceConstruc
           {incorrectResults.length > 0 && (
               <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto inline-block bg-transparent hover:bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-xl border-2 border-slate-300 transition-all duration-300">REVIEW ANSWERS</button>
           )}
+        </div>
+          </div>
+          <div className="md:col-span-1">
+            <Leaderboard gameId={6} gameType="sentence-construction" areaId={4} difficulty={1} limit={10} />
+          </div>
         </div>
       </motion.div>
 

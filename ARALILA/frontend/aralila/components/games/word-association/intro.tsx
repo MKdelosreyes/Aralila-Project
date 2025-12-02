@@ -13,7 +13,7 @@ interface WordAssociationIntroProps {
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
-  areaId?: number;
+  areaId: number;
 }
 
 export const WordAssociationIntro = ({
@@ -44,12 +44,12 @@ export const WordAssociationIntro = ({
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div className="relative group flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-16 h-16 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50 pointer-events-none"></div>
                 </div>
                 <motion.button
-                  onClick={onBack}
-                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-slate-500/40 transition-shadow duration-300"
+                  onClick={() => (onBack ? onBack() : window.history.back())}
+                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-slate-500/40 transition-shadow duration-300 pointer-events-auto"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -153,7 +153,7 @@ export const WordAssociationIntro = ({
       </div>
 
       <div className="md:col-span-1">
-        <Leaderboard gameType="word-association" difficulty={difficulty} limit={10} />
+        <Leaderboard gameId={5} gameType="word-association" areaId={areaId} difficulty={difficulty} limit={10} />
       </div>
     </div>
   );

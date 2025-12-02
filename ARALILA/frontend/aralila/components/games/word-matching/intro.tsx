@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlayCircle } from "lucide-react";
+import Leaderboard from "@/components/games/common/Leaderboard";
 
 interface WordMatchingIntroProps {
   onStartChallenge: () => void;
@@ -14,7 +15,9 @@ export const WordMatchingIntro = ({
   onStartChallenge,
 }: WordMatchingIntroProps) => {
   return (
-    <div className="relative z-10 flex flex-col items-center justify-center h-screen overflow-hidden">
+    <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <div className="md:col-span-2">
+        <div className="relative z-10 flex flex-col items-center justify-center h-screen overflow-hidden">
       {/* Header */}
       <motion.div
         className="text-center mb-8"
@@ -71,6 +74,12 @@ export const WordMatchingIntro = ({
         </motion.button>
       </motion.div>
 
+        </div>
+      </div>
+
+      <div className="md:col-span-1">
+        <Leaderboard gameId={null} gameType="word-matching" areaId={4} difficulty={1} limit={10} />
+      </div>
     </div>
   );
 };

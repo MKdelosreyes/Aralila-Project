@@ -170,6 +170,18 @@ export type ChallengeType = {
   order: number;
   completed: boolean;
   challengeOptions: ChallengeOption[];
+  correctAnswer?: string;
+  imagePrompt?: string;
+  words?: Array<{
+    id: number;
+    text: string;
+    word?: string;
+    index?: number;
+    correctTag?: string;
+    correctPosition?: number;
+  }>;
+  punctuationMarks?: Array<{ id: number; mark: string; positions: number[] }>;
+  posOptions?: Array<{ id: number; text: string; isCorrect: boolean }>;
 };
 
 export type QuizProps = {

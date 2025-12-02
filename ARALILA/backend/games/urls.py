@@ -23,4 +23,6 @@ urlpatterns = [
     path('assessment/submit-challenge/', views.submit_assessment_challenge, name='submit_challenge'),
     path('assessment/reduce-hearts/', views.reduce_hearts, name='reduce_hearts'),
     path('assessment/complete/', views.complete_assessment, name='complete_assessment'),
+    path('assessment/validate-answer/', views.validate_challenge_answer, name='validate_answer'),
+    path('assessment/reset/', views.reset_assessment, name='assessment-reset'),
 ]

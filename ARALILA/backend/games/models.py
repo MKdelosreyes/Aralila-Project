@@ -264,12 +264,20 @@ class AssessmentChallenge(models.Model):
     CHALLENGE_TYPES = [
         ('SELECT', 'Select'),
         ('ASSIST', 'Assist'),
+        ('SPELL', 'Spell'),
+        ('PUNCTUATE', 'Punctuate'),
+        ('ARRANGE', 'Arrange'),
+        ('COMPOSE', 'Compose'),
+        ('TAG_POS', 'Tag Parts of Speech'),
     ]
     
     lesson = models.ForeignKey(AssessmentLesson, on_delete=models.CASCADE, related_name='challenges')
-    type = models.CharField(max_length=10, choices=CHALLENGE_TYPES)
+    type = models.CharField(max_length=15, choices=CHALLENGE_TYPES) 
     question = models.TextField()
     order_index = models.IntegerField()
+    
+    correct_answer = models.TextField(blank=True, null=True)  
+    image_prompt = models.CharField(max_length=500, blank=True, null=True) 
     
     class Meta:
         ordering = ['order_index']
@@ -286,9 +294,12 @@ class AssessmentChallengeOption(models.Model):
     image_src = models.CharField(max_length=500, null=True, blank=True)
     audio_src = models.CharField(max_length=500, null=True, blank=True)
     
+    order_position = models.IntegerField(null=True, blank=True)  
+    word_index = models.IntegerField(null=True, blank=True) 
+    pos_tag = models.CharField(max_length=50, null=True, blank=True)  
+    
     def __str__(self):
         return f"{self.text} ({'✓' if self.correct else '✗'})"
-
 
 class AssessmentProgress(models.Model):
     """Track user progress in assessments"""

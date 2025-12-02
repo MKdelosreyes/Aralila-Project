@@ -9,6 +9,7 @@ type FooterProps = {
   status: "correct" | "wrong" | "none" | "completed";
   disabled?: boolean;
   lessonId?: number;
+  resetAssessment: () => void;
 };
 
 export const Footer = ({
@@ -16,6 +17,7 @@ export const Footer = ({
   status,
   disabled,
   lessonId,
+  resetAssessment,
 }: FooterProps) => {
   useKey("Enter", onCheck, {}, [onCheck]);
   const isMobile = useMedia("(max-width: 1024px)");
@@ -52,6 +54,10 @@ export const Footer = ({
             Practice again
           </Button>
         )}
+
+        <Button variant="secondary" size="sm" onClick={resetAssessment}>
+          Restart
+        </Button>
 
         <Button
           disabled={disabled}

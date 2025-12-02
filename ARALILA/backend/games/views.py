@@ -137,19 +137,34 @@ def get_unlocked_areas(request):
         if total_games == 0:
             total_games = 6
         
-        # Get user's progress for this area
+        # ✅ FIX: Remove 'completed=True' filter - use stars_earned instead
         progress_records = GameProgress.objects.filter(
             user=current_user,
             area=area,
-            completed=True
+            stars_earned__gte=1  # ✅ Changed: Games with at least 1 star
         ).values('game').annotate(
-            best_score=Max('score')
+            best_score=Max('difficulty_3_score')  # ✅ Use highest difficulty score
         )
 
         completed_games = progress_records.count()
         
-        # Calculate average score
-        best_scores = [p['best_score'] for p in progress_records]
+        # Calculate average score from all difficulty levels
+        all_progress = GameProgress.objects.filter(
+            user=current_user,
+            area=area
+        )
+        
+        # Get best score across all difficulties for each game
+        best_scores = []
+        for progress in all_progress:
+            max_score = max(
+                progress.difficulty_1_score,
+                progress.difficulty_2_score,
+                progress.difficulty_3_score
+            )
+            if max_score > 0:
+                best_scores.append(max_score)
+        
         average_score = sum(best_scores) / len(best_scores) if best_scores else 0
         
         is_locked = False
@@ -450,13 +465,7 @@ def submit_game_score(request):
         else:
             next_unlocked_difficulty = 1  # cycle back
 
-        # Overall best score (keep legacy)
-        progress.score = max(
-            progress.difficulty_1_score,
-            progress.difficulty_2_score,
-            progress.difficulty_3_score
-        )
-        progress.completed = progress.difficulty_3_completed
+        # ✅ REMOVED: progress.score and progress.completed fields
         progress.save()
         
         return Response({
@@ -485,6 +494,8 @@ def submit_game_score(request):
         return Response({'error': 'Game not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+
 
 
 @api_view(['GET'])
@@ -519,13 +530,21 @@ def get_area_detail(request, area_id):
         
         if progress:
             if not progress.difficulty_1_completed:
-                    next_difficulty = 1
+                next_difficulty = 1
             elif not progress.difficulty_2_completed:
                 next_difficulty = 2
             elif not progress.difficulty_3_completed:
                 next_difficulty = 3
             else:
                 next_difficulty = 1
+            
+            best_score = max(
+                progress.difficulty_1_score,
+                progress.difficulty_2_score,
+                progress.difficulty_3_score
+            )
+            
+            is_completed = progress.stars_earned >= 1
             
             games_data.append({
                 'id': game.id,
@@ -544,8 +563,8 @@ def get_area_detail(request, area_id):
                     2: progress.difficulty_1_completed,
                     3: progress.difficulty_2_completed,
                 },
-                'best_score': progress.score,
-                'completed': progress.completed,
+                'best_score': best_score, 
+                'completed': is_completed, 
                 'attempts': attempts,
                 'replay_mode': progress.stars_earned == 3,
             })
@@ -568,7 +587,6 @@ def get_area_detail(request, area_id):
     completed_count = sum(1 for g in games_data if g['completed'])
     total_games = len(games_data)
     
-    # ✅ Handle empty games
     if total_games == 0:
         total_games = 6
     
@@ -632,6 +650,14 @@ def get_area_by_order(request, order_index):
                 else:
                     next_difficulty = 1
                 
+                best_score = max(
+                    progress.difficulty_1_score,
+                    progress.difficulty_2_score,
+                    progress.difficulty_3_score
+                )
+                
+                is_completed = progress.stars_earned >= 1
+                
                 games_data.append({
                     'id': game.id,
                     'name': game.name,
@@ -649,8 +675,8 @@ def get_area_by_order(request, order_index):
                         2: progress.difficulty_2_unlocked,
                         3: progress.difficulty_3_unlocked,
                     },
-                    'best_score': progress.score,
-                    'completed': progress.completed,
+                    'best_score': best_score, 
+                    'completed': is_completed, 
                     'attempts': attempts,
                     'replay_mode': progress.stars_earned == 3,
                 })
@@ -703,6 +729,8 @@ def get_area_by_order(request, order_index):
         print(f"❌ Error in get_area_by_order: {str(e)}")
         traceback.print_exc()
         return Response({'error': str(e)}, status=500)
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -964,13 +992,10 @@ def get_assessment_lesson(request, area_id):
         
         # Get or create assessment lesson
         lesson, _ = AssessmentLesson.objects.get_or_create(area=area)
-        
-        # Get challenges with options
         challenges = AssessmentChallenge.objects.filter(
             lesson=lesson
         ).prefetch_related('options')
         
-        # Check which challenges user has completed
         user_completed = set(
             AssessmentProgress.objects.filter(
                 user=request.user,
@@ -981,13 +1006,25 @@ def get_assessment_lesson(request, area_id):
         
         challenges_data = []
         for challenge in challenges:
-            challenges_data.append({
+            challenge_dict = {
                 'id': challenge.id,
                 'type': challenge.type,
                 'question': challenge.question,
                 'order': challenge.order_index,
                 'completed': challenge.id in user_completed,
-                'challengeOptions': [
+            }
+
+            # Add type-specific fields
+            if challenge.type in ['SPELL', 'COMPOSE', 'ARRANGE']:
+                challenge_dict['correctAnswer'] = challenge.correct_answer
+            
+            if challenge.type == 'SPELL':
+                challenge_dict['imagePrompt'] = challenge.image_prompt
+            
+            # Different option handling based on type
+            if challenge.type in ['SELECT', 'ASSIST']:
+                # Standard options
+                challenge_dict['challengeOptions'] = [
                     {
                         'id': opt.id,
                         'text': opt.text,
@@ -996,7 +1033,73 @@ def get_assessment_lesson(request, area_id):
                         'audioSrc': opt.audio_src or None
                     } for opt in challenge.options.all()
                 ]
-            })
+
+            elif challenge.type == 'ARRANGE':
+                # Words to arrange (sorted by correct order)
+                challenge_dict['words'] = [
+                    {
+                        'id': opt.id,
+                        'text': opt.text,
+                        'correctPosition': opt.order_position
+                    } for opt in challenge.options.all().order_by('order_position')
+                ]
+
+            elif challenge.type == 'PUNCTUATE':
+                # ✅ Send word-index positions directly (no conversion needed)
+                mark_groups = {}
+                for opt in challenge.options.all():
+                    mark = opt.text
+                    word_idx = opt.order_position  # ✅ Already a word index from seed
+                    
+                    if mark not in mark_groups:
+                        mark_groups[mark] = []
+                    mark_groups[mark].append(word_idx)
+                
+                challenge_dict['punctuationMarks'] = [
+                    {
+                        'id': idx,
+                        'mark': mark,
+                        'positions': positions  # ✅ List of word indices
+                    }
+                    for idx, (mark, positions) in enumerate(mark_groups.items())
+                ]
+
+
+            elif challenge.type == 'TAG_POS':
+                # ✅ Separate based on word_index presence
+                words = []
+                pos_options = []
+                
+                for opt in challenge.options.all().order_by('order_position'):
+                    # If order_position < 100, it's a word
+                    # If order_position >= 100, it's a POS option
+                    if opt.order_position < 100:
+                        # This is a word
+                        words.append({
+                            'id': opt.id,
+                            'word': opt.text,
+                            'index': opt.order_position,
+                            'correctTag': getattr(opt, 'pos_tag', '')
+                        })
+                    else:
+                        # This is a POS option
+                        pos_options.append({
+                            'id': opt.id,
+                            'text': opt.text,
+                            'isCorrect': opt.correct
+                        })
+                
+                challenge_dict['words'] = words
+                challenge_dict['posOptions'] = pos_options
+                
+                print(f"📤 TAG_POS - Words: {words}, POS: {pos_options}")  # Debug
+
+            
+            elif challenge.type in ['SPELL', 'COMPOSE']:
+                # No options needed - free text input
+                challenge_dict['challengeOptions'] = []
+            
+            challenges_data.append(challenge_dict)
         
         return Response({
             'id': lesson.id,
@@ -1008,6 +1111,92 @@ def get_assessment_lesson(request, area_id):
     except Area.DoesNotExist:
         return Response({'error': 'Area not found'}, status=404)
 
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def validate_challenge_answer(request):
+    """Validate user's answer for different challenge types"""
+    try:
+        challenge_id = request.data.get('challengeId')
+        answer = request.data.get('answer')  # Can be string, array, or dict
+        
+        challenge = AssessmentChallenge.objects.get(id=challenge_id)
+        
+        is_correct = False
+        
+        if challenge.type == 'SPELL':
+            # Case-insensitive exact match
+            is_correct = answer.lower().strip() == challenge.correct_answer.lower().strip()
+        
+        elif challenge.type == 'ARRANGE':
+            # Check if words are in correct order
+            correct_order = list(
+                challenge.options.all()
+                .order_by('order_position')
+                .values_list('text', flat=True)
+            )
+            is_correct = answer == correct_order
+        
+        elif challenge.type == 'PUNCTUATE':
+            # ✅ Build correct answer set from word indices
+            correct_pairs = set()
+            for opt in challenge.options.all():
+                correct_pairs.add((opt.text, opt.order_position))
+            
+            # ✅ Build user answer set
+            user_pairs = set()
+            for item in (answer or []):
+                if item.get('mark') and isinstance(item.get('position'), int):
+                    user_pairs.add((item['mark'], item['position']))
+            
+            is_correct = correct_pairs == user_pairs
+
+        elif challenge.type == 'TAG_POS':
+            # ✅ FIX: Validate matching pairs using order_position < 100 logic
+            # answer format: {word_id: pos_text, ...}
+            # Example: {"123": "Pandiwa", "124": "Pangngalan"}
+            
+            # Build correct answer mapping
+            correct_matches = {}
+            for opt in challenge.options.all():
+                # Only words (order_position < 100) have correct POS tags
+                if opt.order_position < 100:
+                    correct_matches[str(opt.id)] = opt.pos_tag
+            
+            # Validate user answer
+            if not isinstance(answer, dict):
+                is_correct = False
+            else:
+                # Check if all word IDs are present and have correct POS
+                is_correct = (
+                    len(answer) == len(correct_matches) and
+                    all(
+                        answer.get(str(word_id)) == pos_tag
+                        for word_id, pos_tag in correct_matches.items()
+                    )
+                )
+            
+            # ✅ DEBUG logging
+            print(f"📊 TAG_POS Validation:")
+            print(f"   User answer: {answer}")
+            print(f"   Correct matches: {correct_matches}")
+            print(f"   Is correct: {is_correct}")
+        
+        elif challenge.type == 'COMPOSE':
+            # Use AI validation (similar to emoji evaluation)
+            # For now, simple keyword check
+            keywords = challenge.correct_answer.lower().split()
+            user_answer = answer.lower()
+            is_correct = all(kw in user_answer for kw in keywords)
+        
+        return Response({
+            'correct': is_correct,
+            'correctAnswer': challenge.correct_answer if not is_correct else None
+        })
+        
+    except AssessmentChallenge.DoesNotExist:
+        return Response({'error': 'Challenge not found'}, status=404)
 
 
 @api_view(['POST'])
@@ -1135,3 +1324,28 @@ def complete_assessment(request):
         print(f"💥 Error in complete_assessment:")
         print(traceback.format_exc())
         return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reset_assessment(request):
+    """Clear assessment progress for current user (by areaId or lessonId)."""
+    area_id = request.data.get('areaId')
+    lesson_id = request.data.get('lessonId')
+
+    lesson = None
+    if lesson_id:
+        lesson = AssessmentLesson.objects.filter(id=lesson_id).first()
+    elif area_id:
+        lesson = AssessmentLesson.objects.filter(area_id=area_id).first()
+
+    if not lesson:
+        return Response({'error': 'Lesson not found'}, status=404)
+
+    # Remove all recorded completions for this lesson
+    AssessmentProgress.objects.filter(
+        user=request.user,
+        challenge__lesson=lesson,
+    ).delete()
+
+    return Response({'ok': True})

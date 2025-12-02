@@ -19,6 +19,7 @@ import { Header } from "./header";
 import { QuestionBubble } from "./question-bubble";
 import { ResultCard } from "./result-card";
 import { QuizProps, ChallengeOption } from "@/types/games";
+import { Button } from "@/components/ui/button";
 
 const MAX_HEARTS = 5;
 
@@ -29,6 +30,18 @@ type ChallengeType = {
   order: number;
   completed: boolean;
   challengeOptions: ChallengeOption[];
+  correctAnswer?: string;
+  imagePrompt?: string;
+  words?: Array<{
+    id: number;
+    text: string;
+    word?: string;
+    index?: number;
+    correctTag?: string;
+    correctPosition?: number;
+  }>;
+  punctuationMarks?: Array<{ id: number; mark: string; positions: number[] }>;
+  posOptions?: Array<{ id: number; text: string; isCorrect: boolean }>;
 };
 
 export const Quiz = ({
@@ -70,6 +83,12 @@ export const Quiz = ({
 
   const challenge = challenges[activeIndex];
   const options = challenge?.challengeOptions ?? [];
+  const [textAnswer, setTextAnswer] = useState<string>("");
+  const [arrangedWords, setArrangedWords] = useState<string[]>([]);
+  const [selectedPunctuation, setSelectedPunctuation] = useState<
+    Array<{ mark: string; position: number }>
+  >([]);
+  const [taggedWords, setTaggedWords] = useState<Record<number, string>>({});
 
   // Play audio functions using native Audio API
   const playCorrectSound = () => {
@@ -148,69 +167,189 @@ export const Quiz = ({
   };
 
   const onContinue = () => {
-    if (!selectedOption) return;
+    if (challenge.type === "SELECT" || challenge.type === "ASSIST") {
+      if (!selectedOption) return;
 
-    if (status === "wrong") {
-      setStatus("none");
-      setSelectedOption(undefined);
-      return;
-    }
+      if (status === "wrong") {
+        setStatus("none");
+        setSelectedOption(undefined);
+        return;
+      }
 
-    if (status === "correct") {
-      onNext();
-      setStatus("none");
-      setSelectedOption(undefined);
-      return;
-    }
+      if (status === "correct") {
+        onNext();
+        setStatus("none");
+        setSelectedOption(undefined);
+        return;
+      }
 
-    const correctOption = options.find(
-      (option: ChallengeOption) => option.correct
-    );
+      const correctOption = options.find(
+        (option: ChallengeOption) => option.correct
+      );
 
-    if (!correctOption) return;
+      if (!correctOption) return;
 
-    if (correctOption.id === selectedOption) {
-      startTransition(() => {
-        upsertChallengeProgress(challenge.id)
-          .then((response) => {
-            if (response?.error === "hearts") {
-              openHeartsModal();
-              return;
-            }
-
-            playCorrectSound();
-            setStatus("correct");
-            setPercentage((prev) => prev + 100 / challenges.length);
-
-            // This is a practice
-            if (initialPercentage === 100) {
-              setHearts((prev) => Math.min(prev + 1, MAX_HEARTS));
-            }
-          })
-          .catch(() => toast.error("Something went wrong. Please try again."));
-      });
-    } else {
-      // playIncorrectSound();
-      setStatus("wrong");
-
-      if (initialPercentage !== 100) {
+      if (correctOption.id === selectedOption) {
         startTransition(() => {
-          reduceHearts()
+          upsertChallengeProgress(challenge.id)
             .then((response) => {
               if (response?.error === "hearts") {
                 openHeartsModal();
                 return;
               }
 
-              if (!response?.error) {
-                setHearts((prev) => Math.max(prev - 1, 0));
+              playCorrectSound();
+              setStatus("correct");
+              setPercentage((prev) => prev + 100 / challenges.length);
+
+              // This is a practice
+              if (initialPercentage === 100) {
+                setHearts((prev) => Math.min(prev + 1, MAX_HEARTS));
               }
             })
             .catch(() =>
               toast.error("Something went wrong. Please try again.")
             );
         });
+      } else {
+        // playIncorrectSound();
+        setStatus("wrong");
+
+        if (initialPercentage !== 100) {
+          startTransition(() => {
+            reduceHearts()
+              .then((response) => {
+                if (response?.error === "hearts") {
+                  openHeartsModal();
+                  return;
+                }
+
+                if (!response?.error) {
+                  setHearts((prev) => Math.max(prev - 1, 0));
+                }
+              })
+              .catch(() =>
+                toast.error("Something went wrong. Please try again.")
+              );
+          });
+        }
       }
+    } else {
+      if (status === "wrong") {
+        setStatus("none");
+        setTextAnswer("");
+        setArrangedWords([]);
+        setSelectedPunctuation([]);
+        setTaggedWords({});
+        return;
+      }
+
+      if (status === "correct") {
+        onNext();
+        setStatus("none");
+        setTextAnswer("");
+        setArrangedWords([]);
+        setSelectedPunctuation([]);
+        setTaggedWords({});
+        return;
+      }
+      validateAnswer();
+    }
+  };
+
+  const validateAnswer = async () => {
+    // Placeholder for other challenge types
+    let answer;
+
+    switch (challenge.type) {
+      case "SPELL":
+      case "COMPOSE":
+        answer = textAnswer;
+        break;
+      case "ARRANGE":
+        answer = arrangedWords;
+        break;
+      case "PUNCTUATE":
+        answer = selectedPunctuation;
+        break;
+      case "TAG_POS":
+        answer = taggedWords;
+        break;
+    }
+
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const response = await fetch(
+      `${env.backendUrl}/api/games/assessment/validate-answer/`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          challengeId: challenge.id,
+          answer: answer,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.correct) {
+      playCorrectSound();
+      setStatus("correct");
+      // Mark as completed
+      await upsertChallengeProgress(challenge.id);
+      setPercentage((prev) => prev + 100 / challenges.length);
+    } else {
+      setStatus("wrong");
+      if (initialPercentage !== 100) {
+        await reduceHearts();
+        setHearts((prev) => Math.max(prev - 1, 0));
+      }
+    }
+  };
+
+  const resetAssessment = async () => {
+    const ok = window.confirm(
+      "Restart this assessment from the beginning? Your progress for this area will be cleared."
+    );
+    if (!ok) return;
+
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      await fetch(`${env.backendUrl}/api/games/assessment/reset/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ areaId }), // or { lessonId }
+      });
+
+      // Reset local UI state
+      setActiveIndex(0);
+      setPercentage(0);
+      setSelectedOption(undefined);
+      setStatus("none");
+      setTextAnswer("");
+      setArrangedWords([]);
+      setSelectedPunctuation([]);
+      setTaggedWords({});
+
+      // Refresh to fetch challenges with all completed:false
+      router.refresh();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      toast.error("Failed to restart assessment");
     }
   };
 
@@ -313,6 +452,7 @@ export const Quiz = ({
           lessonId={lessonId}
           status="completed"
           onCheck={() => router.push("/student/challenges")}
+          resetAssessment={resetAssessment}
         />
       </>
     );
@@ -321,6 +461,16 @@ export const Quiz = ({
   const title =
     challenge.type === "ASSIST"
       ? "Select the correct meaning"
+      : challenge.type === "SPELL"
+      ? "Spell the word shown"
+      : challenge.type === "ARRANGE"
+      ? "Arrange the words correctly"
+      : challenge.type === "PUNCTUATE"
+      ? "Add the correct punctuation"
+      : challenge.type === "TAG_POS"
+      ? challenge.question
+      : challenge.type === "COMPOSE"
+      ? challenge.question
       : challenge.question;
 
   return (
@@ -334,9 +484,11 @@ export const Quiz = ({
       <div className="flex-1">
         <div className="flex h-full items-center justify-center">
           <div className="flex w-full flex-col gap-y-12 px-6 lg:min-h-[350px] lg:w-[600px] lg:px-0">
-            <h1 className="text-center text-lg font-bold text-neutral-700 lg:text-start lg:text-3xl">
-              {title}
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-center text-lg font-bold text-neutral-700 lg:text-start lg:text-3xl">
+                {title}
+              </h1>
+            </div>
 
             <div>
               {challenge.type === "ASSIST" && (
@@ -344,12 +496,20 @@ export const Quiz = ({
               )}
 
               <Challenge
-                options={options}
+                challenge={challenge}
                 onSelect={onSelect}
                 status={status}
                 selectedOption={selectedOption}
                 disabled={pending}
-                type={challenge.type}
+                // 👇 NEW: Pass additional handlers
+                textAnswer={textAnswer}
+                onTextChange={setTextAnswer}
+                arrangedWords={arrangedWords}
+                onArrange={setArrangedWords}
+                selectedPunctuation={selectedPunctuation}
+                onPunctuate={setSelectedPunctuation}
+                taggedWords={taggedWords}
+                onTag={setTaggedWords}
               />
             </div>
           </div>
@@ -357,9 +517,23 @@ export const Quiz = ({
       </div>
 
       <Footer
-        disabled={pending || !selectedOption}
+        disabled={
+          pending ||
+          (challenge.type === "SELECT" || challenge.type === "ASSIST"
+            ? !selectedOption
+            : challenge.type === "SPELL" || challenge.type === "COMPOSE"
+            ? !textAnswer?.trim()
+            : challenge.type === "ARRANGE"
+            ? arrangedWords.length === 0
+            : challenge.type === "PUNCTUATE"
+            ? selectedPunctuation.length === 0
+            : challenge.type === "TAG_POS"
+            ? Object.keys(taggedWords).length !== (challenge.words?.length || 0) // ✅ Must match all words
+            : true)
+        }
         status={status}
         onCheck={onContinue}
+        resetAssessment={resetAssessment}
       />
     </>
   );

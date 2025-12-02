@@ -24,10 +24,6 @@ class GameProgress(models.Model):
     difficulty_3_completed = models.BooleanField(default=False)
     difficulty_3_unlocked = models.BooleanField(default=False)  # NEW: Track if unlocked
     
-    # Legacy fields
-    score = models.IntegerField(default=0)
-    completed = models.BooleanField(default=False)
-    
     attempts = models.IntegerField(default=0)
     last_played = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)

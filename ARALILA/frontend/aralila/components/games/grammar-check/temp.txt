@@ -1,174 +1,145 @@
-// ...existing code...
+  // 👇 TAG_POS type - Click words and tag them
+  if (challenge.type === "TAG_POS") {
+    const words = challenge.words || [];
+    const posOptions = challenge.posOptions || [];
 
-  // --- Main Guessing Logic ---
-  const handleSubmitAnswer = async () => {
-    if (status !== "playing" || !studentAnswer.trim() || isCheckingAnswer)
-      return;
+    const handleWordClick = (wordId: number) => {
+      if (disabled) return;
 
-    setIsCheckingAnswer(true);
-    setDialogue("Sinusuri ko ang iyong sagot...");
-
-    try {
-      const result = await emojiSentenceAPI.checkAnswer(
-        studentAnswer,
-        currentQuestion.keywords
-      );
-
-      if (result.error) {
-        throw new Error(result.error);
+      // If clicking already matched word, deselect it
+      if (taggedWords?.[wordId]) {
+        removeMatch(wordId);
+        return;
       }
 
-      const pointsEarned = result.points || (result.valid ? 20 : 0);
-      const basePoints = pointsEarned;
-      const streakBonus = streak >= 3 ? Math.floor(basePoints * 0.25) : 0;
-      const totalPoints = basePoints + streakBonus;
+      // If this word is already selected, deselect it
+      if (selectedWord === wordId) {
+        setSelectedWord(null);
+        return;
+      }
 
-      const newResult: GameResult = {
-        questionData: currentQuestion,
-        isCorrect: result.valid,
-        userAnswer: studentAnswer.trim(),
-        pointsEarned: totalPoints,
-      };
+      setSelectedWord(wordId);
 
-      const updatedResults = [...results, newResult];
-
-      if (result.valid) {
-        // Correct
-        setStatus("completed");
-        const newScore = score + totalPoints;
-        setScore(newScore);
-        setStreak((prev) => prev + 1);
-        setTimeLeft((prev) => Math.min(prev + BONUS_TIME, TIME_LIMIT));
-
-        setResults(updatedResults);
-
-        if (pointsEarned === 20) {
-          setLilaState(Math.random() > 0.5 ? "happy" : "thumbsup");
-          const bonusText = streakBonus > 0 ? ` + ${streakBonus} streak bonus` : "";
-          setDialogue(
-            `Perfect! Lahat ay tama! \n\n Nakuha mo: +${totalPoints} points${
-              bonusText ? ` (${pointsEarned} base${bonusText})` : ""
-            }\n⏱️ Bonus time: +${BONUS_TIME} seconds!`
-          );
-        } else if (pointsEarned >= 15) {
-          setLilaState("happy");
-          const bonusText = streakBonus > 0 ? ` + ${streakBonus} streak bonus` : "";
-          setDialogue(
-            `Magaling! May konting English words pero ok na. \n\n Nakuha mo: +${totalPoints} points${
-              bonusText ? ` (${pointsEarned} base${bonusText})` : ""
-            }\n⏱️ Bonus time: +${BONUS_TIME} seconds!`
-          );
-        } else if (pointsEarned >= 10) {
-          setLilaState("normal");
-          const bonusText = streakBonus > 0 ? ` + ${streakBonus} streak bonus` : "";
-          setDialogue(
-            `Pwede na, pero maraming English words. \n\n Nakuha mo: +${totalPoints} points${
-              bonusText ? ` (${pointsEarned} base${bonusText})` : ""
-            }\n⏱️ Bonus time: +${BONUS_TIME} seconds!`
-          );
-        }
-
-        setIsCheckingAnswer(false);
-        setShowNextButton(true);
-      } else {
-        // Incorrect
-        const newMistakes = mistakes + 1;
-        setMistakes(newMistakes);
-        setLilaState("sad");
-        setStreak(0);
-
-        let newScore = score;
-        if (pointsEarned > 0) {
-          newScore = score + pointsEarned;
-          setScore(newScore);
-          setDialogue(
-            `Ay, may mali pero may points ka pa rin.\n\n Nakuha mo: +${pointsEarned} points\n\n${
-              result.explanation || "Subukan mo ulit next time!"
-            }`
-          );
-        } else {
-          setDialogue(
-            `Ay, may mali. Hindi tama ang sagot. \n\n Nakuha mo: 0 points\n\n${
-              result.explanation || "Walang natanggap na points."
-            }`
-          );
-        }
-
-        setResults(updatedResults);
-        setIsCheckingAnswer(false);
-        setShowNextButton(true);
-
-        if (newMistakes >= MAX_MISTAKES) {
-          setStatus("failed");
-          setLilaState("crying");
-          setDialogue("Maraming mali. Subukan muli!");
+      // If a POS is already selected, create the match
+      if (selectedPos !== null) {
+        const posText = posOptions.find((p: any) => p.id === selectedPos)?.text;
+        if (posText) {
+          onTag?.({ ...taggedWords, [wordId]: posText });
+          setSelectedWord(null);
+          setSelectedPos(null);
         }
       }
-    } catch (err: any) {
-      console.error("Error checking answer:", err);
-
-      let errorMessage = "Nagkaroon ng error. Subukan muli.";
-
-      if (err.response?.status === 429) {
-        errorMessage = "Masyadong maraming request. Sandali lang... ";
-        setLilaState("worried");
-      } else if (err.response?.status === 408) {
-        errorMessage = "Timeout. Subukan ulit!";
-        setLilaState("worried");
-      } else if (err.message) {
-        errorMessage = err.message;
-        setLilaState("sad");
-      }
-
-      setDialogue(errorMessage);
-
-      if (err.response?.status === 429) {
-        setTimeout(() => {
-          setDialogue("Subukan mo ulit ngayon!");
-          setLilaState("normal");
-          setIsCheckingAnswer(false);
-        }, 3000);
-      } else {
-        setIsCheckingAnswer(false);
-      }
-    }
-  };
-
-  const handleSkip = () => {
-    if (status !== "playing" || isCheckingAnswer) return;
-
-    setStatus("skipped");
-    setLilaState("sad");
-    setDialogue("Okay lang 'yan. Eto ang susunod. \n\n Nakuha mo: 0 points (skipped)");
-    setStreak(0);
-
-    const skippedResult: GameResult = {
-      questionData: currentQuestion,
-      isCorrect: false,
-      userAnswer: "(skipped)",
-      pointsEarned: 0,
     };
 
-    const updatedResults = [...results, skippedResult];
-    setResults(updatedResults);
-    setShowNextButton(true);
-  };
+    const handlePosClick = (posId: number, posText: string) => {
+      if (disabled) return;
 
-// ...existing code...
+      // Check if this POS is already used in a match
+      const matchedWordId = Object.entries(taggedWords || {}).find(
+        ([_, tag]) => tag === posText
+      )?.[0];
 
-              {/* Dialogue */}
-              <motion.div
-                key={dialogue}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative bg-purple-50 border border-purple-200 rounded-xl shadow-md py-3 flex items-center justify-center"
-              >
-                <p className="text-base text-slate-800 text-center px-4 whitespace-pre-line">
-                  {dialogue}
-                </p>
-                {/* Speech bubble pointer */}
-                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-r-[12px] border-r-purple-200"></div>
-                <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[10px] border-r-purple-50"></div>
-              </motion.div>
+      // If clicking already matched POS, remove that match
+      if (matchedWordId) {
+        removeMatch(Number(matchedWordId));
+        return;
+      }
+
+      // If this POS is already selected, deselect it
+      if (selectedPos === posId) {
+        setSelectedPos(null);
+        return;
+      }
+
+      setSelectedPos(posId);
+
+      // If a word is already selected, create the match
+      if (selectedWord !== null) {
+        onTag?.({ ...taggedWords, [selectedWord]: posText });
+        setSelectedWord(null);
+        setSelectedPos(null);
+      }
+    };
+
+    const removeMatch = (wordId: number) => {
+      const newTagged = { ...taggedWords };
+      delete newTagged[wordId];
+      onTag?.(newTagged);
+      setSelectedWord(null);
+      setSelectedPos(null);
+    };
+
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-2 gap-6">
+          {/* LEFT COLUMN: Words */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-neutral-700 mb-3">Words</p>
+            {words.map((word: any) => {
+              const isMatched = !!taggedWords?.[word.id];
+              const isSelected = selectedWord === word.id;
+
+              return (
+                <button
+                  key={word.id}
+                  onClick={() => handleWordClick(word.id)}
+                  disabled={disabled}
+                  className={cn(
+                    "w-full p-4 rounded-xl border-2 text-left font-medium transition-all",
+                    isMatched
+                      ? "bg-green-50 border-green-500 text-green-700"
+                      : isSelected
+                      ? "bg-purple-100 border-purple-500 text-purple-900 scale-105 shadow-lg"
+                      : "bg-white border-neutral-300 hover:border-purple-300 hover:bg-purple-50",
+                    disabled && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <span className="text-lg">{word.word}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* RIGHT COLUMN: Parts of Speech */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-neutral-700 mb-3">
+              Parts of Speech
+            </p>
+            {posOptions.map((pos: any) => {
+              // Check if this POS is matched to any word
+              const matchedWordId = Object.entries(taggedWords || {}).find(
+                ([_, tag]) => tag === pos.text
+              )?.[0];
+              const isMatched = !!matchedWordId;
+              const isSelected = selectedPos === pos.id;
+
+              return (
+                <button
+                  key={pos.id}
+                  onClick={() => handlePosClick(pos.id, pos.text)}
+                  disabled={disabled}
+                  className={cn(
+                    "w-full p-4 rounded-xl border-2 text-center font-medium transition-all",
+                    isMatched
+                      ? "bg-green-50 border-green-500 text-green-700"
+                      : isSelected
+                      ? "bg-purple-100 border-purple-500 text-purple-900 scale-105 shadow-lg"
+                      : "bg-white border-neutral-300 hover:border-purple-300 hover:bg-purple-50",
+                    disabled && "cursor-not-allowed"
+                  )}
+                >
+                  {pos.text}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="text-sm text-center text-neutral-500">
+          💡 Click a word, then click its part of speech to match them
+        </p>
+      </div>
+    );
+  }
 
 // ...existing code...

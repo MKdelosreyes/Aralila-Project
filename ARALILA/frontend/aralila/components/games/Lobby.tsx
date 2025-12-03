@@ -4,8 +4,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useLobby } from "@/hooks/useLobby";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
+import { Users, Rocket, Star } from "lucide-react";
 
-export default function Lobby() {
+interface LobbyProps {
+  showHeader?: boolean;
+}
+
+export default function Lobby({ showHeader = true }: LobbyProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -92,14 +97,19 @@ export default function Lobby() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
-      <h2 className="text-3xl font-bold text-blue-700">🎮 Story Chain Lobby</h2>
+    <div className="flex flex-col items-center gap-6 px-4">
+      {showHeader && (
+        <h2 className="text-3xl font-bold text-purple-700 flex items-center gap-2">
+          <Users />
+          Story Chain Lobby
+        </h2>
+      )}
 
       {/* Connection Status */}
       <div className="flex items-center gap-2">
         <div
           className={`w-3 h-3 rounded-full transition-all duration-300 ${
-            displayConnected ? "bg-green-500 animate-pulse" : "bg-gray-400"
+            displayConnected ? "bg-purple-500 animate-pulse" : "bg-gray-400"
           }`}
         />
         <span className="text-sm font-medium">
@@ -110,7 +120,7 @@ export default function Lobby() {
       {/* Room Key Display */}
       <div className="text-center">
         <p className="text-sm text-gray-600">Room Code:</p>
-        <p className="text-2xl font-bold text-blue-600">{roomKey}</p>
+        <p className="text-2xl font-bold text-purple-600">{roomKey}</p>
         <p className="text-xs text-gray-500 mt-1">
           Share this code with friends
         </p>
@@ -118,8 +128,9 @@ export default function Lobby() {
 
       {/* Players List */}
       <div className="bg-white border-2 border-gray-200 rounded-lg p-4 w-80 text-center shadow-sm">
-        <h3 className="font-semibold text-lg mb-3">
-          Players ({displayPlayers.length}/3)
+        <h3 className="font-semibold text-lg mb-3 flex items-center justify-center gap-2">
+          <Users className="text-purple-500" /> Players ({displayPlayers.length}
+          /3)
         </h3>
 
         <ul className="space-y-2">
@@ -131,9 +142,9 @@ export default function Lobby() {
                 key={`${p}-${index}`}
                 className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded"
               >
-                <span>{p}</span>
+                <span className="text-sm font-medium">{p}</span>
                 {p === playerName && (
-                  <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">
+                  <span className="text-xs bg-purple-500 text-white px-2 py-1 rounded">
                     You
                   </span>
                 )}
@@ -145,17 +156,18 @@ export default function Lobby() {
 
       {/* Host Info */}
       {isHost && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 max-w-md text-center">
-          <p className="text-sm text-blue-800">
-            ⭐ You are the host. Game starts automatically when 2 players join.
+        <div className="bg-purple-5 border border-purple-200 rounded-lg p-3 max-w-md text-center">
+          <p className="text-sm text-purple-800 flex items-center gap-2 justify-center">
+            <Star className="text-yellow-400" /> You are the host. Game starts
+            automatically when 3 players join.
           </p>
         </div>
       )}
 
       {/* Starting Animation */}
       {isStarting && (
-        <div className="text-green-600 font-bold text-xl mt-4 animate-bounce">
-          🚀 Starting the game...
+        <div className="text-purple-600 font-bold text-xl mt-4 animate-bounce flex items-center gap-2">
+          <Rocket className="text-purple-600" /> Starting the game...
         </div>
       )}
     </div>

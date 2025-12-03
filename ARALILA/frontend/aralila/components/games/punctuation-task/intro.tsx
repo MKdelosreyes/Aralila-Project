@@ -6,7 +6,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlayCircle, ArrowLeft } from "lucide-react";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 interface PunctuationChallengeIntroProps {
   difficulty: number;

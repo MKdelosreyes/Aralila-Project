@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { SpellingResult } from "@/types/games";
 import { Trophy, Star, Zap, RotateCcw } from "lucide-react";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 import Image from "next/image";
 
 interface SummaryProps {

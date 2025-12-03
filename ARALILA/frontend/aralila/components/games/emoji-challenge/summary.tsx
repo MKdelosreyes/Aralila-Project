@@ -6,7 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { Target, Trophy, CheckCircle2, RotateCcw } from "lucide-react";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 // Interfaces
 interface Question {

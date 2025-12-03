@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlayCircle, ArrowLeft } from "lucide-react";
 import { PartsOfSpeechDifficulty } from "@/types/games";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 interface PartsOfSpeechIntroProps {
   difficulty: PartsOfSpeechDifficulty;

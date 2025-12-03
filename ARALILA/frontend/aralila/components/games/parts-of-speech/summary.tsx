@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { Target, Trophy, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { PartsOfSpeechResult } from "@/types/games";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 interface ReviewModalProps {
   isOpen: boolean;

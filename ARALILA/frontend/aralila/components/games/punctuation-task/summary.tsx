@@ -7,7 +7,7 @@ import Confetti from "react-confetti";
 import { Target, Trophy, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { PunctuationResult } from "@/types/games";
 import { splitIntoWords } from "@/data/games/punctuation-task";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 interface ReviewModalProps {
   isOpen: boolean;

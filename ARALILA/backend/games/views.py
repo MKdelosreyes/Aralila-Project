@@ -496,8 +496,6 @@ def submit_game_score(request):
         return Response({'error': str(e)}, status=500)
 
 
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_area_detail(request, area_id):
@@ -605,6 +603,7 @@ def get_area_detail(request, area_id):
         },
         'games': games_data
     })
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -729,7 +728,6 @@ def get_area_by_order(request, order_index):
         print(f"❌ Error in get_area_by_order: {str(e)}")
         traceback.print_exc()
         return Response({'error': str(e)}, status=500)
-
 
 
 @api_view(['GET'])
@@ -1110,7 +1108,6 @@ def get_assessment_lesson(request, area_id):
         
     except Area.DoesNotExist:
         return Response({'error': 'Area not found'}, status=404)
-
 
 
 @api_view(['POST'])

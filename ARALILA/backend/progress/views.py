@@ -3,8 +3,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+
 from .models import GameProgress
 from .serializers import LeaderboardEntrySerializer, progress_to_entry
+from django.db.models import Q
 
 
 @api_view(["GET"])
@@ -35,14 +37,17 @@ def leaderboard_view(request):
 
 	score_field = f"difficulty_{difficulty}_score"
 
-	# Filter by area / game and order by the requested difficulty score desc
+	# Build a combined filter so provided parameters are all respected
+	base_q = Q()
 	if area_id:
-		qs = GameProgress.objects.filter(area_id=area_id).order_by(f"-{score_field}")
-	elif game_id:
-		qs = GameProgress.objects.filter(game_id=game_id).order_by(f"-{score_field}")
-	else:
-		# try filtering by game name/slug using game__name or game__slug
-		qs = GameProgress.objects.filter(game__name__iexact=game_type).order_by(f"-{score_field}")
+		base_q &= Q(area_id=area_id)
+	if game_id:
+		base_q &= Q(game_id=game_id)
+	elif game_type:
+		# match either game name or slug case-insensitively
+		base_q &= (Q(game__name__iexact=game_type) | Q(game__slug__iexact=game_type))
+
+	qs = GameProgress.objects.filter(base_q).order_by(f"-{score_field}")
 
 	# exclude zeros so leaderboard shows actual scores first
 	qs_nonzero = qs.exclude(**{f"{score_field}": 0})
@@ -52,9 +57,9 @@ def leaderboard_view(request):
 		entries.append(progress_to_entry(prog, difficulty))
 
 	# If not enough nonzero results, pad with zero-score entries (optional)
-	if len(entries) < limit:
-		for prog in qs.filter(**{f"{score_field}": 0})[: (limit - len(entries))]:
-			entries.append(progress_to_entry(prog, difficulty))
+	# if len(entries) < limit:
+	# 	for prog in qs.filter(**{f"{score_field}": 0})[: (limit - len(entries))]:
+	# 		entries.append(progress_to_entry(prog, difficulty))
 
 	serializer = LeaderboardEntrySerializer(entries, many=True)
 	return Response({"results": serializer.data})

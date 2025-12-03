@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
@@ -9,7 +9,7 @@ import Header from "@/components/student/header";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
 import { createClient } from "@/lib/supabase/client";
 
-export default function ReviewPage() {
+function ReviewPageContent() {
   const { user, isLoading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -262,10 +262,6 @@ export default function ReviewPage() {
             Next
           </button>
         </div>
-
-        {/* <p className="text-gray-400 text-center text-sm sm:text-base">
-    Question {currentIndex + 1} of {questions.length}
-  </p> */}
       </main>
 
       <style jsx>{`
@@ -283,5 +279,19 @@ export default function ReviewPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function ReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative min-h-screen w-full flex items-center justify-center bg-black text-white">
+          <div className="animate-spin h-12 w-12 border-b-2 border-purple-500 rounded-full"></div>
+        </div>
+      }
+    >
+      <ReviewPageContent />
+    </Suspense>
   );
 }

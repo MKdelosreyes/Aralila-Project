@@ -96,7 +96,11 @@ export const WordAssociationGame = ({
         isCorrect: false,
       });
     }
-    onGameComplete({ score, results: finalResults });
+    onGameComplete({
+      score,
+      rawPoints: score,
+      results: finalResults,
+    });
   }, [score, results, currentIndex, shuffledQuestions, onGameComplete]);
 
   useEffect(() => {
@@ -169,6 +173,7 @@ export const WordAssociationGame = ({
             : score;
           onGameComplete({
             score: finalScore,
+            rawPoints: finalScore,
             results: updatedResults,
           });
         }, 50); // small delay ensures it runs after render

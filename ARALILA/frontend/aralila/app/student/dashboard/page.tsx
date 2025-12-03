@@ -1,8 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Lock, CheckCircle, TrendingUp, BookOpen, Trophy } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Lock,
+  CheckCircle,
+  TrendingUp,
+  BookOpen,
+  Trophy,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
@@ -30,12 +37,31 @@ interface UserData {
   email?: string;
 }
 
+const badgeList = [
+  { id: "1", name: "3 Days Login streak", icon: "/images/badges/3days.png" },
+  { id: "2", name: "5 Days Login streak", icon: "/images/badges/5days.png" },
+  { id: "3", name: "30 Days Login Streak", icon: "/images/badges/30days.png" },
+  {
+    id: "4",
+    name: "100 Days Login Streak",
+    icon: "/images/badges/100days.png",
+  },
+  {
+    id: "5",
+    name: "200 Days Login Streak",
+    icon: "/images/badges/200days.png",
+  },
+];
+
 export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [areas, setAreas] = useState<Area[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
   const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [recentBadge, setRecentBadge] = useState<any | null>(null);
+  const [showBadgePopup, setShowBadgePopup] = useState(false);
   const router = useRouter();
 
   const {
@@ -145,6 +171,67 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // -------------------------
+  // FETCH USER BADGES
+  // -------------------------
+
+  const fetchBadges = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+      const res = await fetch(`${env.backendUrl}/api/users/me/badges/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch badges");
+      const data = await res.json();
+      const unclaimed = data.badges.filter(
+        (b: any) => b.status === "unclaimed"
+      );
+
+      setUserBadges(unclaimed);
+
+      if (unclaimed.length > 0) {
+        setRecentBadge(unclaimed[0]);
+
+        setShowBadgePopup(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // -------------------------
+  // CLAIM BADGE
+  // -------------------------
+
+  const claimBadge = async (badgeId: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(
+        `${env.backendUrl}/api/users/me/badges/${badgeId}/claim/`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to claim badge");
+
+      // Update frontend
+      setUserBadges((prev) => prev.filter((b) => b.id !== badgeId));
+      setRecentBadge(null);
+      setShowBadgePopup(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const closeBadgePopup = () => {
+    setRecentBadge(null);
+    setShowBadgePopup(false);
   };
 
   const getReadinessColor = (readiness: string) => {
@@ -420,6 +507,67 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* ---------------------------- */}
+
+      {/* RECENT BADGE POPUP */}
+
+      {/* ---------------------------- */}
+
+      <AnimatePresence>
+        {showBadgePopup && recentBadge && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
+          >
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center  backdrop-blur-sm p-4">
+              <div className="relative w-full h-full flex flex-col items-center justify-center">
+                {/* Close Button */}
+
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                  onClick={closeBadgePopup}
+                >
+                  <X size={48} />
+                </button>
+
+                {/* Title */}
+
+                <h1 className="text-6xl font-extrabold mb-8 text-white text-center">
+                  New Badge!
+                </h1>
+
+                {/* Badge Image */}
+
+                <img
+                  src={
+                    badgeList.find((b) => b.id === recentBadge.id.toString())
+                      ?.icon
+                  }
+                  alt={recentBadge.name}
+                  className="w-96 h-96 md:w-[500px] md:h-[500px] mb-8 object-contain"
+                />
+
+                <p className="text-4xl font-bold text-white mb-8 text-center">
+                  {badgeList.find((b) => b.id === recentBadge.id.toString())
+                    ?.name || recentBadge.name}
+                </p>
+
+                {/* Claim Button */}
+
+                <button
+                  onClick={() => claimBadge(recentBadge.id)}
+                  className="cursor-pointer bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-10 rounded-xl text-2xl"
+                >
+                  Claim
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

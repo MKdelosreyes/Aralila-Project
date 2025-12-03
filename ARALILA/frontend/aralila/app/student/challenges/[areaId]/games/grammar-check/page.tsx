@@ -12,10 +12,30 @@ import {
 import { grammarAccuracyQuestions } from "@/data/GrammarAccuracyData";
 import { buildRuntimeQuestions, RuntimeGrammarQuestion } from "@/lib/utils";
 import { env } from "@/lib/env";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
 
 type Difficulty = 1 | 2 | 3;
+
+/* -------------------------------------------
+   Tutorial steps for Grammar Check
+--------------------------------------------*/
+const tutorialSteps = [
+  {
+    videoSrc: "/videos/GRAMATIKA_GALORE/1.mp4",
+    description: "Basahin ang bawat salita nang mabuti.",
+  },
+  {
+    videoSrc: "/videos/GRAMATIKA_GALORE/2.mp4",
+    description: "Tiyakin kung ano ang bawat salita.",
+  },
+  {
+    videoSrc: "/videos/GRAMATIKA_GALORE/3.mp4",
+    description:
+      "Hilahin ang mga salita sa tamang puwesto hanggang mabuo ang pangungusap.",
+  },
+];
 
 const GrammarCheckPage = () => {
   const router = useRouter();
@@ -37,6 +57,10 @@ const GrammarCheckPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  /* -------------------------------------------
+     Tutorial state
+  --------------------------------------------*/
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const toDifficulty = (n: number): Difficulty => {
     if (n === 2) return 2;
@@ -359,6 +383,16 @@ const GrammarCheckPage = () => {
       <div className="w-full flex items-center justify-center">
         {renderGameState()}
       </div>
+
+      {/* -----------------------------
+           Tutorial Modal
+      ------------------------------ */}
+      {showTutorial && (
+        <TutorialModal
+          steps={tutorialSteps}
+          onClose={() => setShowTutorial(false)}
+        />
+      )}
     </div>
   );
 };

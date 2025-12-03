@@ -9,10 +9,27 @@ import { SpellingChallengeGame } from "@/components/games/spelling-challenge/gam
 import { SpellingChallengeSummary } from "@/components/games/spelling-challenge/summary";
 import { SpellingResult } from "@/types/games";
 import { spellingChallengeData } from "@/data/games/spelling-challenge";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
-
 type Difficulty = 1 | 2 | 3;
+
+const tutorialSteps = [
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/1.mp4",
+    description: "Basahin ang hinihingi sa pangungusap.",
+  },
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/2.mp4",
+    description:
+      "Suriin at tiyaking tugma ang iyong sagot sa blankong nasa gilid.",
+  },
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/3.mp4",
+    description:
+      "Sa pagpili ng sagot, gamitin ang left and right arrow sa keyboard.",
+  },
+];
 
 const SpellingChallengePage = () => {
   const router = useRouter();
@@ -34,6 +51,7 @@ const SpellingChallengePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const toDifficulty = (n: number): Difficulty => {
     if (n === 2) return 2;
@@ -359,6 +377,14 @@ const SpellingChallengePage = () => {
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>
+
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <TutorialModal
+          steps={tutorialSteps}
+          onClose={() => setShowTutorial(false)}
+        />
+      )}
     </div>
   );
 };

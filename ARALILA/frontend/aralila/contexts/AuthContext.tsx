@@ -14,6 +14,12 @@ interface User {
   full_name: string;
   school_name?: string;
   profile_pic?: string;
+  ls_points?: number;
+  collected_badges?: Array<{
+    id: string;
+    status: string;
+    claimed_at?: string;
+  }>;
 }
 
 interface AuthContextType {
@@ -62,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         full_name: `${data.first_name} ${data.last_name}`.trim(),
         school_name: data.school_name,
         profile_pic: data.profile_pic,
+        ls_points: data.ls_points || 0,
+        collected_badges: data.collected_badges || [],
       };
     } catch (error) {
       console.error("Error fetching user profile:", error);

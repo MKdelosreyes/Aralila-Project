@@ -10,12 +10,28 @@ import { punctuationChallengeData } from "@/data/games/punctuation-task";
 import { PunctuationResult } from "@/types/games";
 import { PunctuationData } from "@/types/games";
 import AnimatedBackground from "@/components/bg/animatedforest-bg";
-import { parse } from "path";
-import { da } from "date-fns/locale";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
-
 type Difficulty = 1 | 2 | 3;
+
+/* -------------------------------------------
+   Tutorial steps for Punctuation Challenge
+--------------------------------------------*/
+const tutorialSteps = [
+  {
+    videoSrc: "/videos/PUNTUHANG_PUNTOS/1.mp4",
+    description: "Basahin ang pangungusap.",
+  },
+  {
+    videoSrc: "/videos/PUNTUHANG_PUNTOS/2.mp4",
+    description: "Suriin kung anong bantas ang nararapat.",
+  },
+  {
+    videoSrc: "/videos/PUNTUHANG_PUNTOS/3.mp4",
+    description: "Pindutin ang tamang bantas bilang iyong sagot.",
+  },
+];
 
 const PunctuationChallengePage = () => {
   const router = useRouter();
@@ -37,6 +53,10 @@ const PunctuationChallengePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  /* -------------------------------------------
+      Tutorial state
+  --------------------------------------------*/
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const toDifficulty = (n: number): Difficulty => {
     if (n === 2) return 2;
@@ -389,6 +409,16 @@ const PunctuationChallengePage = () => {
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>
+
+      {/* -----------------------------  
+           Tutorial Modal 
+      ------------------------------ */}
+      {showTutorial && (
+        <TutorialModal
+          steps={tutorialSteps}
+          onClose={() => setShowTutorial(false)}
+        />
+      )}
     </div>
   );
 };

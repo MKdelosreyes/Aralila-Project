@@ -10,6 +10,7 @@ import {
   SentenceResult,
 } from "@/components/games/sentence-construction/summary";
 import { sentenceArrangementChallenges } from "@/data/SentenceConstructionData";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
 

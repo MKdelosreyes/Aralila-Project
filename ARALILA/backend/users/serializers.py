@@ -14,12 +14,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'full_name',
             'school_name',
             'profile_pic',
+            'ls_points',           
+            'collected_badges',    
             'is_active',
             'date_joined',
         ]
         read_only_fields = [
             'supabase_user_id',
             'email',
+            'ls_points',           
+            'collected_badges',     
             'is_active',
             'date_joined',
         ]

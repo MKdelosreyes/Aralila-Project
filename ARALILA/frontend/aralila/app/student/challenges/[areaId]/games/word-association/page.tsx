@@ -8,6 +8,7 @@ import { WordAssociationIntro } from "@/components/games/word-association/intro"
 import { WordAssociationGame } from "@/components/games/word-association/game";
 import { WordAssociationSummary } from "@/components/games/word-association/summary";
 import { WordAssociationResult } from "@/components/games/word-association/game";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
 

@@ -13,9 +13,9 @@ interface LobbyProps {
 export default function Lobby({ showHeader = true }: LobbyProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
-  // ✅ FIX: Use player name from URL, not from user profile
+  // Use player name from URL or fallback to Guest
   const playerName = searchParams.get("player") || "Guest";
   const roomKey = searchParams.get("room") || "";
   const isHost = searchParams.get("isHost") === "true";
@@ -25,7 +25,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
 
   const { players, isStarting, isConnected, connectionError } = useLobby({
     roomCode: roomKey,
-    playerName, // ✅ This is now the custom name from input
+    playerName,
     onGameStart: (turnOrder) => {
       console.log("🚀 Game starting with turn order:", turnOrder);
       setTimeout(() => {
@@ -38,16 +38,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     },
   });
 
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // Debounce state updates to prevent flickering
+  // ✅ MOVED UP: Effects must be before any return statements
   useEffect(() => {
     const timer = setTimeout(() => {
       setDisplayPlayers(players);
@@ -63,6 +54,15 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
 
     return () => clearTimeout(timer);
   }, [isConnected]);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   // Error state
   if (connectionError) {
@@ -96,6 +96,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     );
   }
 
+  // Main Render
   return (
     <div className="flex flex-col items-center gap-6 px-4">
       {showHeader && (
@@ -121,16 +122,13 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
       <div className="text-center">
         <p className="text-sm text-gray-600">Room Code:</p>
         <p className="text-2xl font-bold text-purple-600">{roomKey}</p>
-        <p className="text-xs text-gray-500 mt-1">
-          Share this code with friends
-        </p>
+        <p className="text-xs text-gray-500 mt-1">Share this code with friends</p>
       </div>
 
       {/* Players List */}
       <div className="bg-white border-2 border-gray-200 rounded-lg p-4 w-80 text-center shadow-sm">
         <h3 className="font-semibold text-lg mb-3 flex items-center justify-center gap-2">
-          <Users className="text-purple-500" /> Players ({displayPlayers.length}
-          /3)
+          <Users className="text-purple-500" /> Players ({displayPlayers.length}/3)
         </h3>
 
         <ul className="space-y-2">
@@ -144,9 +142,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
               >
                 <span className="text-sm font-medium">{p}</span>
                 {p === playerName && (
-                  <span className="text-xs bg-purple-500 text-white px-2 py-1 rounded">
-                    You
-                  </span>
+                  <span className="text-xs bg-purple-500 text-white px-2 py-1 rounded">You</span>
                 )}
               </li>
             ))
@@ -157,10 +153,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
       {/* Host Info */}
       {isHost && (
         <div className="bg-purple-5 border border-purple-200 rounded-lg p-3 max-w-md text-center">
-          <p className="text-sm text-purple-800 flex items-center gap-2 justify-center">
-            <Star className="text-yellow-400" /> You are the host. Game starts
-            automatically when 3 players join.
-          </p>
+          <p className="text-sm text-purple-800 flex items-center gap-2 justify-center"><Star className="text-yellow-400"/> You are the host. Game starts automatically when 3 players join.</p>
         </div>
       )}
 

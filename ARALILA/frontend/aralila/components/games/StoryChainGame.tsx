@@ -3,17 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStoryChain } from "@/hooks/useStoryChain";
 import { useState, useMemo, useEffect, useRef } from "react";
-import Image from "next/image";
-import {
-  BookOpen,
-  Clock,
-  Image as ImageIcon,
-  FileText,
-  Zap,
-  Trophy,
-  Star,
-  Edit3,
-} from "lucide-react";
+import Image from 'next/image';
+import { BookOpen, Clock, Image as ImageIcon, FileText, Zap, Trophy, Star, Edit3 } from "lucide-react";
 
 export default function StoryChainGame() {
   const searchParams = useSearchParams();
@@ -94,9 +85,7 @@ export default function StoryChainGame() {
     return (
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="max-w-md w-full bg-white/95 text-black rounded-xl p-6 shadow-md text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">
-            Connection Lost
-          </h2>
+          <h2 className="text-xl font-bold text-red-600 mb-2">Connection Lost</h2>
           <p className="text-sm text-gray-600 mb-4">{connectionError}</p>
           <button
             onClick={() => router.push("/student/playground")}
@@ -158,9 +147,7 @@ export default function StoryChainGame() {
 
         {/* Full Story */}
         <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 mb-6">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <FileText className="text-purple-500" /> Complete Story
-          </h3>
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText className="text-purple-500"/> Complete Story</h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {gameState.story.map((line, i) => (
               <p key={i} className="text-gray-700">
@@ -204,8 +191,7 @@ export default function StoryChainGame() {
         {/* Game Stats */}
         <div className="flex flex-wrap justify-center gap-3 text-sm">
           <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full inline-flex items-center gap-2">
-            <ImageIcon size={14} /> Image {gameState.imageIndex + 1}/
-            {gameState.totalImages}
+            <ImageIcon size={14} /> Image {gameState.imageIndex + 1}/{gameState.totalImages}
           </span>
 
           <span
@@ -215,8 +201,7 @@ export default function StoryChainGame() {
                 : "bg-gray-200"
             }`}
           >
-            <Zap className="inline-block mr-1" size={14} />{" "}
-            {isMyTurn ? "Your Turn" : `Turn: ${gameState.currentTurn}`}
+            <Zap className="inline-block mr-1" size={14} /> {isMyTurn ? "Your Turn" : `Turn: ${gameState.currentTurn}`}
           </span>
 
           <span
@@ -226,8 +211,7 @@ export default function StoryChainGame() {
                 : "bg-orange-100"
             }`}
           >
-            <Clock className="inline-block mr-1" size={14} />{" "}
-            {gameState.timeLeft}s
+            <Clock className="inline-block mr-1" size={14} /> {gameState.timeLeft}s
           </span>
         </div>
 
@@ -275,7 +259,7 @@ export default function StoryChainGame() {
               )}
             </div>
           ) : (
-            <div className="bg-gray-100 rounded-lg p-12 text-center">
+              <div className="bg-gray-100 rounded-lg p-12 text-center">
               <p className="text-gray-400 text-lg">Loading image...</p>
             </div>
           )}
@@ -339,8 +323,7 @@ export default function StoryChainGame() {
           )}
           {isMyTurn && currentSentenceParts.length < turnOrder.length && (
             <span className="px-3 py-1 rounded-lg bg-purple-200 border-2 border-purple-400 animate-pulse">
-              <Edit3 className="inline-block mr-1" size={14} /> Your word
-              here...
+              <Edit3 className="inline-block mr-1" size={14} /> Your word here...
             </span>
           )}
         </div>
@@ -351,8 +334,7 @@ export default function StoryChainGame() {
         {isMyTurn ? (
           <>
             <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <Edit3 className="text-purple-600" /> Add your word/phrase to the
-              sentence:
+              <Edit3 className="text-purple-600" /> Add your word/phrase to the sentence:
             </label>
             <input
               type="text"
@@ -388,11 +370,7 @@ export default function StoryChainGame() {
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500 text-lg mb-2 flex items-center justify-center gap-2">
-              <Clock /> Waiting for{" "}
-              <strong className="text-purple-600">
-                {gameState.currentTurn}
-              </strong>
-              {"'s turn..."}
+              <Clock /> Waiting for <strong className="text-purple-600">{gameState.currentTurn}</strong>{"'s turn..."}
             </p>
             <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
           </div>

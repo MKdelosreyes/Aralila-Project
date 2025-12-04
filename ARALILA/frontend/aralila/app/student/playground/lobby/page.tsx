@@ -11,7 +11,7 @@ const Lobby = dynamic(() => import("@/components/games/Lobby"), { ssr: false });
 export default function PlaygroundLobbyPage() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
-      <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />
+      <AnimatedBackground />
 
       <main className="relative z-10 flex items-start justify-center min-h-screen p-6 pt-24">
         {/* Big header (no white container) - title, description, and character on the background */}
@@ -22,19 +22,11 @@ export default function PlaygroundLobbyPage() {
           transition={{ duration: 0.7, delay: 0.3 }}
         >
           <div className="w-28 h-28 relative flex-shrink-0">
-            <Image
-              src="/images/character/lila-normal.png"
-              alt="Lila ready to play"
-              width={300}
-              height={300}
-              className="mx-auto"
-            />
+            <Image src="/images/character/lila-normal.png" alt="Lila ready to play" width={300} height={300} className="mx-auto" />
           </div>
 
           <div className="pointer-events-auto">
-            <h1 className="text-7xl font-bold text-white mb-4 text-center">
-              Story Chain Lobby
-            </h1>
+            <h1 className="text-7xl font-bold text-white mb-4 text-center">Story Chain Lobby</h1>
 
             <div className="flex items-center justify-center">
               <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
@@ -42,10 +34,7 @@ export default function PlaygroundLobbyPage() {
               </div>
             </div>
 
-            <p className="text-lg text-white/90 mt-2 max-w-2xl text-center">
-              Join a room with friends and build stories together — turn-based,
-              timed, and fun!
-            </p>
+            <p className="text-lg text-white/90 mt-2 max-w-2xl text-center">Join a room with friends and build stories together — turn-based, timed, and fun!</p>
           </div>
         </motion.div>
 

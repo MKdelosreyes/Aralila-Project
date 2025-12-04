@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
 import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { createClient } from "@/lib/supabase/client";
 
 function ReviewPageContent() {

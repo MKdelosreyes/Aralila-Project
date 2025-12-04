@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 import CardCarousel from "@/components/student/challenges/cardcarousel";
 import Header from "@/components/student/header";
 import FullMenuScreen from "@/components/student/fullscreen-menu";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import ChallengesBackground from "@/components/bg/challenges-bg";
 import Image from "next/image";
 

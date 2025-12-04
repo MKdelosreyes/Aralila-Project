@@ -9,7 +9,7 @@ import { PunctuationChallengeSummary } from "@/components/games/punctuation-task
 import { punctuationChallengeData } from "@/data/games/punctuation-task";
 import { PunctuationResult } from "@/types/games";
 import { PunctuationData } from "@/types/games";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";

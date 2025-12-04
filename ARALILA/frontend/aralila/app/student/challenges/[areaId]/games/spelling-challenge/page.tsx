@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { SpellingChallengeIntro } from "@/components/games/spelling-challenge/intro";
 import { SpellingChallengeGame } from "@/components/games/spelling-challenge/game";
 import { SpellingChallengeSummary } from "@/components/games/spelling-challenge/summary";

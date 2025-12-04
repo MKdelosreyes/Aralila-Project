@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { WordAssociationIntro } from "@/components/games/word-association/intro";
 import { WordAssociationGame } from "@/components/games/word-association/game";
 import { WordAssociationSummary } from "@/components/games/word-association/summary";

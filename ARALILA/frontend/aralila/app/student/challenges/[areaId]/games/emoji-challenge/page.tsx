@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { EmojiChallengeIntro } from "@/components/games/emoji-challenge/intro";
 import { EmojiHulaSalitaGame } from "@/components/games/emoji-challenge/game";
 import {

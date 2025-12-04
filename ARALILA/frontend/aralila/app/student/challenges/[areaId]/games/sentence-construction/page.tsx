@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-import AnimatedBackground from "@/components/bg/animatedforest-bg"; // Assuming path
+import AnimatedBackground from "@/components/bg/animated-bg"; // Assuming path
 import { SentenceConstructionIntro } from "@/components/games/sentence-construction/intro";
 import { SentenceConstructionGame } from "@/components/games/sentence-construction/game";
 import {

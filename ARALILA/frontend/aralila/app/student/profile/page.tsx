@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
 import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 
 export default function ProfilePage() {
   const { user, isLoading } = useAuth();

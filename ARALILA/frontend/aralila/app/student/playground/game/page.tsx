@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 
 const StoryChainGame = dynamic(() => import("@/components/games/StoryChainGame"), { ssr: false });
 

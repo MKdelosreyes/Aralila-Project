@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 
 export default function StoryChainLanding() {
   const searchParams = useSearchParams();

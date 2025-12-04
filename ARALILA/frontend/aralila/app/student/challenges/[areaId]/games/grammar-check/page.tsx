@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { GrammarCheckIntro } from "@/components/games/grammar-check/intro";
 import { GrammarCheckGame } from "@/components/games/grammar-check/game";
 import {

@@ -3,7 +3,19 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-const AnimatedBackground = () => {
+interface AnimatedBackgroundProps {
+  imagePath: string;
+}
+
+const AnimatedBackground = ({ imagePath }: AnimatedBackgroundProps) => {
+  if (!imagePath || imagePath.trim() === "") {
+    return (
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="min-h-screen absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+      </div>
+    );
+  }
+
   return (
     <div className="absolute inset-0 z-0 pointer-events-none">
       <motion.div
@@ -17,7 +29,7 @@ const AnimatedBackground = () => {
         }}
       >
         <Image
-          src="/images/bg/forestbg-learn.jpg"
+          src={imagePath}
           alt="Forest Background"
           fill
           priority

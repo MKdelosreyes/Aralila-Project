@@ -9,10 +9,27 @@ import { SpellingChallengeGame } from "@/components/games/spelling-challenge/gam
 import { SpellingChallengeSummary } from "@/components/games/spelling-challenge/summary";
 import { SpellingResult } from "@/types/games";
 import { spellingChallengeData } from "@/data/games/spelling-challenge";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
-
 type Difficulty = 1 | 2 | 3;
+
+const tutorialSteps = [
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/1.mp4",
+    description: "Basahin ang hinihingi sa pangungusap.",
+  },
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/2.mp4",
+    description:
+      "Suriin at tiyaking tugma ang iyong sagot sa blankong nasa gilid.",
+  },
+  {
+    videoSrc: "/videos/SPELL_MO_YAN/3.mp4",
+    description:
+      "Sa pagpili ng sagot, gamitin ang left and right arrow sa keyboard.",
+  },
+];
 
 const SpellingChallengePage = () => {
   const router = useRouter();
@@ -34,6 +51,7 @@ const SpellingChallengePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const toDifficulty = (n: number): Difficulty => {
     if (n === 2) return 2;
@@ -262,10 +280,23 @@ const SpellingChallengePage = () => {
     router.push(`/student/challenges?area=${areaId}`);
   };
 
+  const getAreaBGImage = () => {
+    if (resolvedAreaId === null) {
+      return "/images/bg/forestbg-learn.jpg";
+    }
+
+    if (resolvedAreaId === 4) return "/images/bg/Playground.png";
+    else if (resolvedAreaId === 5) return "/images/bg/Classroom.png";
+    else if (resolvedAreaId === 6) return "/images/bg/Home.png";
+    else if (resolvedAreaId === 7) return "/images/bg/Town.png";
+    else if (resolvedAreaId === 8) return "/images/bg/Mountainside.png";
+    else return "/images/bg/Playground.png";
+  };
+
   if (loading) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
+        <AnimatedBackground imagePath={getAreaBGImage()} />
         <div className="relative z-20 rounded-3xl p-8 max-w-md w-full">
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
@@ -279,7 +310,7 @@ const SpellingChallengePage = () => {
   if (error) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
+        <AnimatedBackground imagePath={getAreaBGImage()} />
         <div className="relative z-20 bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <div className="text-6xl">😕</div>
@@ -342,10 +373,18 @@ const SpellingChallengePage = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-      <AnimatedBackground />
+      <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}
       </div>
+
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <TutorialModal
+          steps={tutorialSteps}
+          onClose={() => setShowTutorial(false)}
+        />
+      )}
     </div>
   );
 };

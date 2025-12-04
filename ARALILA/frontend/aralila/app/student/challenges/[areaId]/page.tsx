@@ -86,7 +86,7 @@ export default function AreaChallengesPage() {
       case 5:
         return <ChallengesBackground img_path="/images/bg/Mountainside.png" />;
       default:
-        return <AnimatedBackground />;
+        return <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />;
     }
   };
 

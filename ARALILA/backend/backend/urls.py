@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/users/auth', include('rest_framework.urls')),
     path('api/games/', include("games.urls")),
     path('api/users/', include('users.urls')),
+    path('api/progress/', include('progress.urls')),
 ]
 
 if settings.DEBUG:

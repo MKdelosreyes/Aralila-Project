@@ -152,3 +152,45 @@ export interface GameState {
   timeLeft: number;
   gameOver: boolean;
 }
+
+// Assessment props
+
+export type ChallengeOption = {
+  id: number;
+  text: string;
+  correct: boolean;
+  imageSrc: string | null;
+  audioSrc: string | null;
+};
+
+export type ChallengeType = {
+  id: number;
+  type: string;
+  question: string;
+  order: number;
+  completed: boolean;
+  challengeOptions: ChallengeOption[];
+  correctAnswer?: string;
+  imagePrompt?: string;
+  words?: Array<{
+    id: number;
+    text: string;
+    word?: string;
+    index?: number;
+    correctTag?: string;
+    correctPosition?: number;
+  }>;
+  punctuationMarks?: Array<{ id: number; mark: string; positions: number[] }>;
+  posOptions?: Array<{ id: number; text: string; isCorrect: boolean }>;
+};
+
+export type QuizProps = {
+  initialPercentage: number;
+  initialHearts: number;
+  initialLessonId: number;
+  initialAreaId: number;
+  initialLessonChallenges: ChallengeType[];
+  userSubscription: {
+    isActive: boolean;
+  } | null;
+};

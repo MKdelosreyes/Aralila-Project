@@ -7,7 +7,6 @@ import { env } from "@/lib/env";
 import Header from "@/components/student/header";
 import FullMenuScreen from "@/components/student/fullscreen-menu";
 import AnimatedBackground from "@/components/bg/animated-bg";
-import ChallengesBackground from "@/components/bg/challenges-bg";
 import CardCarousel from "@/components/student/challenges/cardcarousel";
 import Image from "next/image";
 import { Lock, TrendingUp } from "lucide-react";
@@ -295,7 +294,7 @@ function ChallengesPageInner() {
       (a) => a.order_index === selectedAreaOrder
     );
     if (selectedArea?.bgPath) {
-      return <ChallengesBackground img_path={selectedArea.bgPath} />;
+      return <AnimatedBackground imagePath={selectedArea.bgPath} />;
     }
     return <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />;
   };

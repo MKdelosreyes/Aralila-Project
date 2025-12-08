@@ -7,7 +7,6 @@ import CardCarousel from "@/components/student/challenges/cardcarousel";
 import Header from "@/components/student/header";
 import FullMenuScreen from "@/components/student/fullscreen-menu";
 import AnimatedBackground from "@/components/bg/animated-bg";
-import ChallengesBackground from "@/components/bg/challenges-bg";
 import Image from "next/image";
 
 interface Area {
@@ -76,15 +75,15 @@ export default function AreaChallengesPage() {
   const getBackgroundComponent = () => {
     switch (parseInt(areaId)) {
       case 1:
-        return <ChallengesBackground img_path="/images/bg/Playground.png" />;
+        return <AnimatedBackground imagePath="/images/bg/Playground.png" />;
       case 2:
-        return <ChallengesBackground img_path="/images/bg/Classroom.png" />;
+        return <AnimatedBackground imagePath="/images/bg/Classroom.png" />;
       case 3:
-        return <ChallengesBackground img_path="/images/bg/Home.png" />;
+        return <AnimatedBackground imagePath="/images/bg/Home.png" />;
       case 4:
-        return <ChallengesBackground img_path="/images/bg/Town.png" />;
+        return <AnimatedBackground imagePath="/images/bg/Town.png" />;
       case 5:
-        return <ChallengesBackground img_path="/images/bg/Mountainside.png" />;
+        return <AnimatedBackground imagePath="/images/bg/Mountainside.png" />;
       default:
         return <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />;
     }

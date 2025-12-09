@@ -12,6 +12,7 @@ import {
   PointerSensor,
   DragStartEvent,
   DragEndEvent,
+  closestCenter,
 } from "@dnd-kit/core";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { ConfirmationModal } from "../confirmation-modal";
@@ -33,7 +34,7 @@ interface GrammarCheckGameProps {
   onExit: () => void;
 }
 
-const TIME_LIMIT = 300; //120
+const TIME_LIMIT = 300;
 const BASE_POINTS = 20;
 const MAX_ASSISTS = 3;
 type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thinking";
@@ -42,9 +43,9 @@ type WordItem = {
   id: string;
   text: string;
   color: string;
+  sourceSlot?: number | null; // Track where the word came from
 };
 
-// Word bank colors
 const WORD_COLORS = [
   "bg-blue-200 border-blue-400",
   "bg-green-200 border-green-400",
@@ -56,19 +57,25 @@ const WORD_COLORS = [
   "bg-indigo-200 border-indigo-400",
 ];
 
-// Draggable word from word bank
-const DraggableWord = ({ word }: { word: WordItem }) => {
+// Draggable word
+const DraggableWord = ({
+  word,
+  fromSlot,
+}: {
+  word: WordItem;
+  fromSlot?: number | null;
+}) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: word.id,
-      data: word,
+      data: { ...word, sourceSlot: fromSlot },
     });
 
   const style = {
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
-    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? "grabbing" : "grab",
   };
 
   return (
@@ -77,22 +84,24 @@ const DraggableWord = ({ word }: { word: WordItem }) => {
       style={style}
       {...attributes}
       {...listeners}
-      className={`${word.color} px-6 py-3 rounded-xl border-2 font-semibold text-lg cursor-grab active:cursor-grabbing transition-all hover:scale-105 shadow-md`}
+      className={`${
+        word.color
+      } px-6 py-3 rounded-xl border-2 font-semibold text-lg select-none transition-all hover:scale-105 shadow-md ${
+        isDragging ? "opacity-50 scale-95" : "opacity-100"
+      }`}
     >
       {word.text}
     </div>
   );
 };
 
-// Drop slot for sentence area
+// Drop slot
 const DropSlot = ({
   index,
   word,
-  onRemove,
 }: {
   index: number;
   word: WordItem | null;
-  onRemove: () => void;
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: `slot-${index}`,
@@ -111,12 +120,7 @@ const DropSlot = ({
       }`}
     >
       {word ? (
-        <div
-          onClick={onRemove}
-          className={`${word.color} px-6 py-3 rounded-xl border-2 font-semibold text-lg cursor-pointer hover:opacity-80 transition-opacity shadow-md`}
-        >
-          {word.text}
-        </div>
+        <DraggableWord word={word} fromSlot={index} />
       ) : (
         <span className="text-slate-400 text-sm">Drop here</span>
       )}
@@ -143,32 +147,36 @@ export const GrammarCheckGame = ({
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [isFinished, setIsFinished] = useState(false);
 
-  // Assists system
   const [assists, setAssists] = useState(MAX_ASSISTS);
   const [showAssistAnimation, setShowAssistAnimation] = useState(false);
 
-  // Word bank (available words)
   const [wordBank, setWordBank] = useState<WordItem[]>([]);
-  // Sentence slots (dropped words)
   const [sentenceSlots, setSentenceSlots] = useState<(WordItem | null)[]>([]);
-  // Active dragging word
   const [activeWord, setActiveWord] = useState<WordItem | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before dragging starts
+      },
+    })
+  );
+
   const currentQ = questions[currentQIndex];
 
   // Initialize word bank and slots
   useEffect(() => {
     if (currentQ?.jumbledTokens) {
       const words = currentQ.jumbledTokens.map((text, i) => ({
-        id: `word-${i}-${text}`,
+        id: `word-${currentQIndex}-${i}-${text}-${Date.now()}`,
         text,
         color: WORD_COLORS[i % WORD_COLORS.length],
+        sourceSlot: null,
       }));
       setWordBank(words);
       setSentenceSlots(new Array(currentQ.correctTokens.length).fill(null));
     }
-  }, [currentQ]);
+  }, [currentQ, currentQIndex]);
 
   const calculatePercent = (res: GrammarResult[]) => {
     const correct = res.filter((r) => r.isCorrect).length;
@@ -255,7 +263,9 @@ export const GrammarCheckGame = ({
   }
 
   const handleDragStart = (event: DragStartEvent) => {
-    const word = event.active.data.current as WordItem;
+    const word = event.active.data.current as WordItem & {
+      sourceSlot?: number | null;
+    };
     setActiveWord(word);
   };
 
@@ -265,45 +275,49 @@ export const GrammarCheckGame = ({
 
     if (!over) return;
 
-    const word = active.data.current as WordItem;
+    const draggedWord = active.data.current as WordItem & {
+      sourceSlot?: number | null;
+    };
     const targetId = over.id as string;
 
     // Dropping into a slot
     if (targetId.startsWith("slot-")) {
-      const slotIndex = parseInt(targetId.split("-")[1]);
+      const targetSlotIndex = parseInt(targetId.split("-")[1]);
+      const sourceSlot = draggedWord.sourceSlot;
 
-      // Remove word from word bank if it exists there
-      setWordBank((prev) => prev.filter((w) => w.id !== word.id));
+      setSentenceSlots((prevSlots) => {
+        const newSlots = [...prevSlots];
+        const wordInTargetSlot = newSlots[targetSlotIndex];
 
-      // Remove word from its previous slot if it was already placed
-      setSentenceSlots((prev) =>
-        prev.map((w) => (w?.id === word.id ? null : w))
-      );
+        // If dragging from word bank (sourceSlot is null/undefined)
+        if (sourceSlot === null || sourceSlot === undefined) {
+          // Remove from word bank
+          setWordBank((prev) => prev.filter((w) => w.id !== draggedWord.id));
 
-      // Place word in the new slot
-      setSentenceSlots((prev) => {
-        const newSlots = [...prev];
-        // If slot is occupied, return that word to word bank
-        if (newSlots[slotIndex]) {
-          setWordBank((bank) => [...bank, newSlots[slotIndex]!]);
+          // If target slot has a word, return it to word bank
+          if (wordInTargetSlot) {
+            setWordBank((prev) => [...prev, wordInTargetSlot]);
+          }
+
+          // Place dragged word in target slot
+          newSlots[targetSlotIndex] = { ...draggedWord, sourceSlot: null };
+        } else {
+          // Dragging from one slot to another
+          // Clear the source slot
+          newSlots[sourceSlot] = null;
+
+          // If target slot has a word, move it to source slot
+          if (wordInTargetSlot) {
+            newSlots[sourceSlot] = wordInTargetSlot;
+          }
+
+          // Place dragged word in target slot
+          newSlots[targetSlotIndex] = { ...draggedWord, sourceSlot: null };
         }
-        newSlots[slotIndex] = word;
+
         return newSlots;
       });
     }
-  };
-
-  const removeWordFromSlot = (index: number) => {
-    const word = sentenceSlots[index];
-    if (!word) return;
-
-    setSentenceSlots((prev) => {
-      const newSlots = [...prev];
-      newSlots[index] = null;
-      return newSlots;
-    });
-
-    setWordBank((prev) => [...prev, word]);
   };
 
   const handleUseAssist = () => {
@@ -315,27 +329,37 @@ export const GrammarCheckGame = ({
       const currentWord = sentenceSlots[i];
 
       if (currentWord?.text !== correctWord) {
-        // Find the correct word in word bank or other slots
-        const wordToPlace =
-          wordBank.find((w) => w.text === correctWord) ||
-          sentenceSlots.find((w) => w?.text === correctWord);
+        // Find the correct word in word bank
+        let wordToPlace = wordBank.find((w) => w.text === correctWord);
+
+        // If not in word bank, find it in slots
+        if (!wordToPlace) {
+          const slotIndex = sentenceSlots.findIndex(
+            (w) => w?.text === correctWord
+          );
+          if (slotIndex !== -1) {
+            wordToPlace = sentenceSlots[slotIndex]!;
+
+            // Remove from its current slot
+            setSentenceSlots((prev) => {
+              const newSlots = [...prev];
+              newSlots[slotIndex] = null;
+              return newSlots;
+            });
+          }
+        } else {
+          // Remove from word bank
+          setWordBank((prev) => prev.filter((w) => w.id !== wordToPlace!.id));
+        }
 
         if (wordToPlace) {
-          // Remove from word bank
-          setWordBank((prev) => prev.filter((w) => w.id !== wordToPlace.id));
-
-          // Remove from previous slot
-          setSentenceSlots((prev) =>
-            prev.map((w) => (w?.id === wordToPlace.id ? null : w))
-          );
-
-          // Place in correct slot
+          // If target slot has a word, return it to word bank
           setSentenceSlots((prev) => {
             const newSlots = [...prev];
             if (newSlots[i]) {
               setWordBank((bank) => [...bank, newSlots[i]!]);
             }
-            newSlots[i] = wordToPlace;
+            newSlots[i] = { ...wordToPlace!, sourceSlot: null };
             return newSlots;
           });
 
@@ -412,7 +436,6 @@ export const GrammarCheckGame = ({
         description="Sigurado ka ba na gusto mong umalis? Hindi mase-save ang iyong score."
       />
 
-      {/* Game container */}
       <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[75vh] w-full">
         {/* Timer and Score Header */}
         <div className="w-full flex items-center gap-4 mb-8">
@@ -466,10 +489,10 @@ export const GrammarCheckGame = ({
             sensors={sensors}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            collisionDetection={closestCenter}
           >
-            {/* Top Section: Lila + Instructions + Word Bank */}
+            {/* Top Section */}
             <div className="w-full flex flex-row items-center justify-center gap-6 mb-6">
-              {/* Left: Lila and Instructions */}
               <div className="flex flex-col flex-1/4 items-center justify-center gap-1">
                 <motion.div
                   className="relative"
@@ -488,14 +511,14 @@ export const GrammarCheckGame = ({
                 </motion.div>
               </div>
 
-              {/* Right: Word Bank */}
+              {/* Word Bank */}
               <div className="bg-slate-50 p-6 rounded-2xl border-4 border-dashed border-purple-500 flex flex-col flex-3/4">
                 <h3 className="text-center text-sm font-semibold text-slate-700 mb-4">
                   Mga Salita (Word Bank)
                 </h3>
                 <div className="flex flex-wrap justify-center gap-3 min-h-[120px] flex-grow items-center">
                   {wordBank.map((word) => (
-                    <DraggableWord key={word.id} word={word} />
+                    <DraggableWord key={word.id} word={word} fromSlot={null} />
                   ))}
                   {wordBank.length === 0 && (
                     <p className="text-slate-400 italic">
@@ -506,16 +529,11 @@ export const GrammarCheckGame = ({
               </div>
             </div>
 
-            {/* Bottom Section: Sentence Drop Area */}
+            {/* Sentence Drop Area */}
             <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-300 mb-6 p-6">
               <div className="flex flex-wrap justify-center gap-3 min-h-[100px]">
                 {sentenceSlots.map((word, index) => (
-                  <DropSlot
-                    key={`slot-${index}`}
-                    index={index}
-                    word={word}
-                    onRemove={() => removeWordFromSlot(index)}
-                  />
+                  <DropSlot key={`slot-${index}`} index={index} word={word} />
                 ))}
               </div>
             </div>
@@ -523,7 +541,7 @@ export const GrammarCheckGame = ({
             <DragOverlay>
               {activeWord && (
                 <div
-                  className={`${activeWord.color} px-6 py-3 rounded-xl border-2 font-semibold text-lg shadow-2xl opacity-90`}
+                  className={`${activeWord.color} px-6 py-3 rounded-xl border-2 font-semibold text-lg shadow-2xl scale-110`}
                 >
                   {activeWord.text}
                 </div>
@@ -546,7 +564,7 @@ export const GrammarCheckGame = ({
             <button
               onClick={handleUseAssist}
               disabled={assists <= 0 || !!feedback}
-              className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+              className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:bg-purple-400 disabled:bg-slate-300 disabled:border-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
             >
               <HandHelping className="w-5 h-5" />
               <span>Gamitin ang Assist</span>

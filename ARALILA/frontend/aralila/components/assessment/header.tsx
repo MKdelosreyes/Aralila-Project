@@ -17,6 +17,8 @@ export const Header = ({
 }: HeaderProps) => {
   const { open } = useExitModal();
 
+  const closeModal = () => {};
+
   return (
     <header className="mx-auto flex w-full max-w-[1140px] items-center justify-between gap-x-7 px-10 pt-[20px] lg:pt-[50px]">
       <X

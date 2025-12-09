@@ -428,7 +428,7 @@ export default function DashboardPage() {
                               </div> */}
 
                               {/* Practice Button */}
-                              <button
+                              {/* <button
                                 onClick={() =>
                                   router.push(
                                     `/student/challenges?area=${area.order_index}`
@@ -438,7 +438,7 @@ export default function DashboardPage() {
                               >
                                 <BookOpen size={10} />
                                 Practice Games
-                              </button>
+                              </button> */}
 
                               {/* NEW: Assessment Button */}
                               {/* {canAssess && !progress.assessmentPassed && (

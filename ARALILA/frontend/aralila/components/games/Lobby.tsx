@@ -34,7 +34,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
         console.log("🚀 Game starting with turn order:", turnOrder);
         setTimeout(() => {
           router.push(
-            `/student/playground/game?player=${encodeURIComponent(
+            `/student/playground/modes/story-chain/game?player=${encodeURIComponent(
               playerName
             )}&room=${roomKey}&turnOrder=${turnOrder.join(",")}`
           );

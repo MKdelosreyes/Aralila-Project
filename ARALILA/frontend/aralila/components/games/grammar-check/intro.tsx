@@ -23,13 +23,13 @@ export const GrammarCheckIntro = ({
   onBack,
 }: GrammarCheckIntroProps) => {
   return (
-    <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+    <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-center py-12">
       <div className="md:col-span-2">
-        <div className="relative w-full h-screen overflow-hidden">
+        <div className="relative w-full min-h-[60vh] overflow-visible flex items-center">
           {/* Back Button - Top Left Corner */}
           {onBack && (
             <motion.div
-              className="absolute top-10 left-8 z-20"
+              className="absolute top-6 left-6 z-40"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -57,7 +57,7 @@ export const GrammarCheckIntro = ({
           )}
 
           {/* Main Content */}
-          <div className="relative z-10 flex flex-col items-center justify-start h-full overflow-hidden">
+          <div className="relative z-10 flex flex-col items-center justify-center w-full overflow-visible">
             <motion.div
               className="text-center mb-3"
               initial={{ opacity: 0, y: -50 }}

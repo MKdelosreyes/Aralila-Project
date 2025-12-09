@@ -108,7 +108,7 @@ export const SpellingChallengeGame = ({
       <div className="z-10 max-w-[950px] w-full mx-auto p-4">
         <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-2xl font-bold text-orange-600 mb-4">
+            <p className="text-2xl font-bold text-red-600 mb-4">
               Error Loading Question
             </p>
             <p className="text-gray-600 mb-6">
@@ -511,7 +511,7 @@ export const SpellingChallengeGame = ({
             </div>
             {streak > 1 && (
               <motion.div
-                className="flex items-center gap-1 text-orange-500"
+                className="flex items-center gap-1 text-purple-600"
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
               >
@@ -560,7 +560,7 @@ export const SpellingChallengeGame = ({
             </div>
 
             <div className="relative">
-              <div className="text-4xl text-orange-500 tracking-widest font-game">
+              <div className="text-4xl text-purple-800 tracking-widest font-bold">
                 {currentWordData.word
                   .split("")
                   .map((char, idx) =>
@@ -622,10 +622,10 @@ export const SpellingChallengeGame = ({
             className="relative w-full h-[400px] bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-400"
           >
             <AnimatePresence>
-              {fallingLetters.map(({ id, letter, x, y }) => (
+                  {fallingLetters.map(({ id, letter, x, y }) => (
                 <motion.div
                   key={id}
-                  className="absolute border-3 border-purple-400 text-purple-950 font-bold rounded-full shadow-lg flex items-center justify-center text-2xl"
+                  className="absolute border-2 border-purple-400 bg-white text-purple-800 font-bold rounded-full shadow-lg flex items-center justify-center text-2xl"
                   style={{
                     width: LETTER_SIZE,
                     height: LETTER_SIZE,
@@ -685,12 +685,12 @@ export const SpellingChallengeGame = ({
                         {/* <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">✓</span>
                         </div> */}
-                        <div className="text-green-900 font-game text-7xl">
+                        <div className="text-green-600 font-bold text-6xl">
                           Tama!
                         </div>
-                        {/* <div className="text-green-700 text-lg">
+                        <div className="text-green-700 text-lg">
                           +{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos
-                        </div> */}
+                        </div>
                       </div>
                     )}
                     {feedback.type === "error" && (
@@ -698,7 +698,7 @@ export const SpellingChallengeGame = ({
                         {/* <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">✗</span>
                         </div> */}
-                        <div className="text-red-600 font-game text-7xl">
+                        <div className="text-red-600 font-bold text-6xl">
                           Mali!
                         </div>
                         <div className="text-red-700 text-lg">
@@ -714,10 +714,10 @@ export const SpellingChallengeGame = ({
                         {/* <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">⊘</span>
                         </div> */}
-                        <div className="text-red-950 font-game text-7xl">
+                        <div className="text-purple-800 text-6xl font-bold">
                           Nilaktawan!
                         </div>
-                        <div className="text-orange-700 text-lg">
+                        <div className="text-purple-700 text-lg">
                           Ang sagot:{" "}
                           <span className="font-bold">
                             {currentWordData.word}
@@ -746,7 +746,7 @@ export const SpellingChallengeGame = ({
         </div>
         {/* Buttons */}
         <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
-          <div className="flex gap-3">
+          <div>
             <button
               onClick={handleSkip}
               disabled={!!feedback}
@@ -754,29 +754,31 @@ export const SpellingChallengeGame = ({
             >
               SKIP
             </button>
+          </div>
 
+          <div className="flex gap-3">
             <button
               onClick={handleUndo}
               disabled={builtWord.length === 0 || !!feedback}
-              className="flex items-center gap-2 px-6 py-2 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 disabled:opacity-40 disabled:cursor-not-allowed text-orange-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+              className="flex items-center gap-2 px-6 py-2 bg-slate-200 border-2 border-slate-300 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
             >
               <Undo2 className="w-5 h-5" />
               <span>I-undo</span>
             </button>
-          </div>
 
-          <button
-            onClick={handleUseAssist}
-            disabled={
-              assists <= 0 ||
-              !!feedback ||
-              builtWord.length >= currentWordData.word.length
-            }
-            className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
-          >
-            <HandHelping className="w-5 h-5" />
-            <span>Gamitin ang Assist</span>
-          </button>
+            <button
+              onClick={handleUseAssist}
+              disabled={
+                assists <= 0 ||
+                !!feedback ||
+                builtWord.length >= currentWordData.word.length
+              }
+              className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+            >
+              <HandHelping className="w-5 h-5" />
+              <span>Gamitin ang Assist</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -20,6 +20,8 @@ const CATCHER_HEIGHT = 96;
 const MAX_ACTIVE_LETTERS = 3;
 const CORRECT_LETTER_PROBABILITY = 0.85;
 const MAX_ASSISTS = 3;
+const SOFT_DROP_EXTRA = 4; // added ni para madali
+const SOFT_NUDGE = 30; // kani too
 
 // Move these outside component to prevent recreation on every render
 const HAPPY_STATES: LilaState[] = ["happy", "thumbsup"];
@@ -72,6 +74,7 @@ export const SpellingChallengeGame = ({
   const [assists, setAssists] = useState(MAX_ASSISTS);
   const [showAssistAnimation, setShowAssistAnimation] = useState(false);
   const [showUndoAnimation, setShowUndoAnimation] = useState(false);
+  const [softDropActive, setSoftDropActive] = useState(false);
 
   const nextId = useRef<number>(0);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -237,17 +240,48 @@ export const SpellingChallengeGame = ({
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent page scroll on space
+      if (e.code === "Space") e.preventDefault();
+
       if (e.key === "ArrowLeft") {
         setCatcherPosition((prev) => Math.max(CATCHER_WIDTH / 2, prev - 20));
       } else if (e.key === "ArrowRight") {
         setCatcherPosition((prev) =>
           Math.min(gameWidth - CATCHER_WIDTH / 2, prev + 20)
         );
+      } else if (e.key === "ArrowDown") {
+        // single-press nudge
+        if (!e.repeat) {
+          setFallingLetters((prev) =>
+            prev.map((l) => ({
+              ...l,
+              y: Math.min(l.y + SOFT_NUDGE, GAME_AREA_HEIGHT - LETTER_SIZE),
+            }))
+          );
+        }
+        // start soft drop while held
+        setSoftDropActive(true);
+      } else if (e.code === "Space") {
+        // Hard drop: send all falling letters to catcher area so they get caught quickly
+        const catcherTop = GAME_AREA_HEIGHT - CATCHER_HEIGHT;
+        setFallingLetters((prev) =>
+          prev.map((l) => ({ ...l, y: catcherTop }))
+        );
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        setSoftDropActive(false);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [gameWidth]);
 
   // Timer logic
@@ -406,7 +440,8 @@ export const SpellingChallengeGame = ({
           const catcherLeft = catcherPosition - CATCHER_WIDTH / 2;
           const catcherRight = catcherLeft + CATCHER_WIDTH;
 
-          const moved = prev.map((l) => ({ ...l, y: l.y + l.speed }));
+          const extra = softDropActive ? SOFT_DROP_EXTRA : 0;
+          const moved = prev.map((l) => ({ ...l, y: l.y + l.speed + extra }));
           const kept: FallingLetter[] = [];
           let caughtLetter: string | null = null;
 
@@ -440,7 +475,7 @@ export const SpellingChallengeGame = ({
 
     animationId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationId);
-  }, [feedback, timeLeft, catcherPosition, handleCatch]);
+  }, [feedback, timeLeft, catcherPosition, handleCatch, softDropActive]);
 
   // Skip word
   const handleSkip = () => {

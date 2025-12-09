@@ -15,30 +15,33 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
-  // ✅ FIX: Use player name from URL, not from user profile
   const playerName = searchParams.get("player") || "Guest";
   const roomKey = searchParams.get("room") || "";
   const isHost = searchParams.get("isHost") === "true";
+  const maxPlayersParam = searchParams.get("maxPlayers");
 
   const [displayPlayers, setDisplayPlayers] = useState<string[]>([]);
   const [displayConnected, setDisplayConnected] = useState(false);
+  const [displayMaxPlayers, setDisplayMaxPlayers] = useState(3); // Default to 3
 
-  const { players, isStarting, isConnected, connectionError } = useLobby({
-    roomCode: roomKey,
-    playerName, // ✅ This is now the custom name from input
-    onGameStart: (turnOrder) => {
-      console.log("🚀 Game starting with turn order:", turnOrder);
-      setTimeout(() => {
-        router.push(
-          `/student/playground/game?player=${encodeURIComponent(
-            playerName
-          )}&room=${roomKey}&turnOrder=${turnOrder.join(",")}`
-        );
-      }, 2000);
-    },
-  });
+  // NEW: Only pass maxPlayers if it exists (host creating room)
+  const { players, maxPlayers, isStarting, isConnected, connectionError } =
+    useLobby({
+      roomCode: roomKey,
+      playerName,
+      maxPlayers: maxPlayersParam ? parseInt(maxPlayersParam) : undefined,
+      onGameStart: (turnOrder) => {
+        console.log("🚀 Game starting with turn order:", turnOrder);
+        setTimeout(() => {
+          router.push(
+            `/student/playground/game?player=${encodeURIComponent(
+              playerName
+            )}&room=${roomKey}&turnOrder=${turnOrder.join(",")}`
+          );
+        }, 2000);
+      },
+    });
 
-  // Show loading while checking auth
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -47,7 +50,6 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     );
   }
 
-  // Debounce state updates to prevent flickering
   useEffect(() => {
     const timer = setTimeout(() => {
       setDisplayPlayers(players);
@@ -64,7 +66,14 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     return () => clearTimeout(timer);
   }, [isConnected]);
 
-  // Error state
+  // Update displayed max players from server
+  useEffect(() => {
+    if (maxPlayers) {
+      setDisplayMaxPlayers(maxPlayers);
+      console.log("🎯 Display max players updated to:", maxPlayers);
+    }
+  }, [maxPlayers]);
+
   if (connectionError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
@@ -80,7 +89,6 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     );
   }
 
-  // Missing params
   if (!roomKey || !playerName) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
@@ -105,7 +113,6 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
         </h2>
       )}
 
-      {/* Connection Status */}
       <div className="flex items-center gap-2">
         <div
           className={`w-3 h-3 rounded-full transition-all duration-300 ${
@@ -117,20 +124,21 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
         </span>
       </div>
 
-      {/* Room Key Display */}
       <div className="text-center">
         <p className="text-sm text-gray-600">Room Code:</p>
         <p className="text-2xl font-bold text-purple-600">{roomKey}</p>
         <p className="text-xs text-gray-500 mt-1">
           Share this code with friends
         </p>
+        <p className="text-sm text-purple-600 font-semibold mt-2">
+          {displayMaxPlayers} Player Game
+        </p>
       </div>
 
-      {/* Players List */}
       <div className="bg-white border-2 border-gray-200 rounded-lg p-4 w-80 text-center shadow-sm">
         <h3 className="font-semibold text-lg mb-3 flex items-center justify-center gap-2">
           <Users className="text-purple-500" /> Players ({displayPlayers.length}
-          /3)
+          /{displayMaxPlayers})
         </h3>
 
         <ul className="space-y-2">
@@ -154,17 +162,15 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
         </ul>
       </div>
 
-      {/* Host Info */}
       {isHost && (
-        <div className="bg-purple-5 border border-purple-200 rounded-lg p-3 max-w-md text-center">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 max-w-md text-center">
           <p className="text-sm text-purple-800 flex items-center gap-2 justify-center">
             <Star className="text-yellow-400" /> You are the host. Game starts
-            automatically when 3 players join.
+            automatically when {displayMaxPlayers} players join.
           </p>
         </div>
       )}
 
-      {/* Starting Animation */}
       {isStarting && (
         <div className="text-purple-600 font-bold text-xl mt-4 animate-bounce flex items-center gap-2">
           <Rocket className="text-purple-600" /> Starting the game...

@@ -10,6 +10,7 @@ export default function PlaygroundHome() {
   const [playerName, setPlayerName] = useState("");
   const [roomKey, setRoomKey] = useState("");
   const [useRealName, setUseRealName] = useState(false);
+  const [maxPlayers, setMaxPlayers] = useState(3);
   const router = useRouter();
   const { user } = useAuth();
 
@@ -34,10 +35,11 @@ export default function PlaygroundHome() {
     }
 
     const newKey = generateRoomKey();
+    // Pass maxPlayers when creating
     router.push(
       `/student/playground/lobby?player=${encodeURIComponent(
         playerName
-      )}&room=${newKey}&isHost=true`
+      )}&room=${newKey}&isHost=true&maxPlayers=${maxPlayers}`
     );
   };
 
@@ -47,6 +49,7 @@ export default function PlaygroundHome() {
       return;
     }
 
+    // NEW: Don't pass maxPlayers when joining - backend will use stored value
     router.push(
       `/student/playground/lobby?player=${encodeURIComponent(
         playerName
@@ -58,7 +61,7 @@ export default function PlaygroundHome() {
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />
 
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
         <div className="w-full max-w-2xl bg-white/95 text-black rounded-xl shadow-2xl p-6">
           <h1 className="text-2xl font-bold text-purple-700 mb-3">
             Story Chain Playground
@@ -91,6 +94,35 @@ export default function PlaygroundHome() {
                 Create a Game Room
               </h3>
 
+              {/* Player count selector */}
+              <div className="w-full max-w-xs">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Players:
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setMaxPlayers(2)}
+                    className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
+                      maxPlayers === 2
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    2 Players
+                  </button>
+                  <button
+                    onClick={() => setMaxPlayers(3)}
+                    className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
+                      maxPlayers === 3
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    3 Players
+                  </button>
+                </div>
+              </div>
+
               {user && (
                 <label className="flex items-center gap-2 text-sm text-gray-600">
                   <input
@@ -122,6 +154,7 @@ export default function PlaygroundHome() {
                     setMode(null);
                     setPlayerName("");
                     setUseRealName(false);
+                    setMaxPlayers(3);
                   }}
                   className="text-gray-500 underline text-sm"
                 >

@@ -184,51 +184,55 @@ export default function StoryChainGame() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-center mb-2 flex items-center justify-center gap-2">
-          <BookOpen className="text-purple-600" />
-          Story Chain: {room}
-        </h2>
+        <div className="flex flex-row items-center justify-between ">
+          <div className="flex flex-row gap-5 items-center justify-center">
+            <h2 className="text-3xl font-bold text-center mb-2 flex items-center justify-center gap-2">
+              <BookOpen className="text-purple-600" />
+              Story Chain: {room}
+            </h2>
 
-        {/* Connection Status */}
-        <div className="flex justify-center items-center gap-2 mb-4">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
-            }`}
-          />
-          <span className="text-sm text-gray-600">
-            {isConnected ? "Connected" : "Reconnecting..."}
-          </span>
-        </div>
+            {/* Connection Status */}
+            <div className="flex justify-center items-center gap-2 mb-4">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+                }`}
+              />
+              <span className="text-sm text-gray-600">
+                {isConnected ? "Connected" : "Reconnecting..."}
+              </span>
+            </div>
+          </div>
 
-        {/* Game Stats */}
-        <div className="flex flex-wrap justify-center gap-3 text-sm">
-          <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full inline-flex items-center gap-2">
-            <ImageIcon size={14} /> Image {gameState.imageIndex + 1}/
-            {gameState.totalImages}
-          </span>
+          {/* Game Stats */}
+          <div className="flex flex-wrap justify-center gap-3 text-sm">
+            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full inline-flex items-center gap-2">
+              <ImageIcon size={14} /> Image {gameState.imageIndex + 1}/
+              {gameState.totalImages}
+            </span>
 
-          <span
-            className={`px-3 py-1 rounded-full font-bold ${
-              isMyTurn
-                ? "bg-purple-200 text-purple-800 animate-pulse"
-                : "bg-gray-200"
-            }`}
-          >
-            <Zap className="inline-block mr-1" size={14} />{" "}
-            {isMyTurn ? "Your Turn" : `Turn: ${gameState.currentTurn}`}
-          </span>
+            <span
+              className={`px-3 py-1 rounded-full font-bold ${
+                isMyTurn
+                  ? "bg-purple-200 text-purple-800 animate-pulse"
+                  : "bg-gray-200"
+              }`}
+            >
+              <Zap className="inline-block mr-1" size={14} />{" "}
+              {isMyTurn ? "Your Turn" : `Turn: ${gameState.currentTurn}`}
+            </span>
 
-          <span
-            className={`px-3 py-1 rounded-full font-bold ${
-              gameState.timeLeft <= 5
-                ? "bg-red-200 text-red-700 animate-pulse"
-                : "bg-orange-100"
-            }`}
-          >
-            <Clock className="inline-block mr-1" size={14} />{" "}
-            {gameState.timeLeft}s
-          </span>
+            <span
+              className={`px-3 py-1 rounded-full font-bold ${
+                gameState.timeLeft <= 5
+                  ? "bg-red-200 text-red-700 animate-pulse"
+                  : "bg-orange-100"
+              }`}
+            >
+              <Clock className="inline-block mr-1" size={14} />{" "}
+              {gameState.timeLeft}s
+            </span>
+          </div>
         </div>
 
         {/* Player Order */}
@@ -260,19 +264,21 @@ export default function StoryChainGame() {
                 <Image
                   src={gameState.imageUrl}
                   alt="Story scene"
-                  className="rounded-lg w-full shadow-xl object-cover border-4 border-purple-200"
-                  style={{ maxHeight: "500px" }}
+                  width={150}
+                  height={150}
+                  className="rounded-lg w-full shadow-xl object-contain border-4 border-purple-200"
+                  style={{ maxHeight: "350px" }}
                 />
                 <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
                   Image {gameState.imageIndex + 1}
                 </div>
               </div>
-              {gameState.imageDescription && (
+              {/* {gameState.imageDescription && (
                 <p className="mt-3 text-sm text-gray-600 text-center italic bg-gray-50 p-3 rounded-lg flex items-start gap-2">
                   <ImageIcon size={16} className="text-purple-500" />
                   <span>{gameState.imageDescription}</span>
                 </p>
-              )}
+              )} */}
             </div>
           ) : (
             <div className="bg-gray-100 rounded-lg p-12 text-center">

@@ -13,7 +13,7 @@ interface LobbyProps {
 export default function Lobby({ showHeader = true }: LobbyProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   const playerName = searchParams.get("player") || "Guest";
   const roomKey = searchParams.get("room") || "";
@@ -66,15 +66,6 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     return () => clearTimeout(timer);
   }, [isConnected]);
 
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
   // Update displayed max players from server
   useEffect(() => {
     if (maxPlayers) {
@@ -113,7 +104,6 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
     );
   }
 
-  // Main Render
   return (
     <div className="flex flex-col items-center gap-6 px-4">
       {showHeader && (

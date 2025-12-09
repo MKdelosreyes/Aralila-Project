@@ -30,7 +30,7 @@
     "framer-motion": "^12.18.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.511.0",
-    "next": "15.3.2",
+    "next": "15.3.6",
     "phaser": "^3.90.0",
     "react": "^19.0.0",
     "react-confetti": "^6.4.0",

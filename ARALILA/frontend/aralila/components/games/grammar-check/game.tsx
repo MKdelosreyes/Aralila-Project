@@ -111,7 +111,7 @@ const DropSlot = ({
   return (
     <div
       ref={setNodeRef}
-      className={`min-w-[120px] min-h-[60px] px-4 py-3 rounded-xl border-2 border-dashed flex items-center justify-center transition-all ${
+      className={`min-w-[120px] min-h-[60px] p-2 rounded-xl border-2 border-dashed flex items-center justify-center transition-all ${
         isOver
           ? "border-purple-500 bg-purple-100 scale-105"
           : word
@@ -530,7 +530,7 @@ export const GrammarCheckGame = ({
             </div>
 
             {/* Sentence Drop Area */}
-            <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-300 mb-6 p-6">
+            <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-300 mb-6 p-4">
               <div className="flex flex-wrap justify-center gap-3 min-h-[100px]">
                 {sentenceSlots.map((word, index) => (
                   <DropSlot key={`slot-${index}`} index={index} word={word} />

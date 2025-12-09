@@ -58,6 +58,8 @@ export const Quiz = ({
   const [pending, startTransition] = useTransition();
   const { open: openHeartsModal } = useHeartsModal();
   const { open: openPracticeModal } = usePracticeModal();
+  const [aiFeedback, setAiFeedback] = useState<string>("");
+  const [aiScore, setAiScore] = useState<number>(0);
 
   useMount(() => {
     if (initialPercentage === 100) openPracticeModal();
@@ -302,11 +304,25 @@ export const Quiz = ({
     if (result.correct) {
       playCorrectSound();
       setStatus("correct");
+
+      // ✅ Store AI feedback for COMPOSE challenges
+      if (challenge.type === "COMPOSE" && result.ai_feedback) {
+        setAiFeedback(result.ai_feedback);
+        setAiScore(result.score || 100);
+      }
+
       // Mark as completed
       await upsertChallengeProgress(challenge.id);
       setPercentage((prev) => prev + 100 / challenges.length);
     } else {
       setStatus("wrong");
+
+      // ✅ Show AI feedback even for wrong answers
+      if (challenge.type === "COMPOSE" && result.ai_feedback) {
+        setAiFeedback(result.ai_feedback);
+        setAiScore(result.score || 0);
+      }
+
       if (initialPercentage !== 100) {
         await reduceHearts();
         setHearts((prev) => Math.max(prev - 1, 0));
@@ -462,7 +478,7 @@ export const Quiz = ({
     challenge.type === "ASSIST"
       ? "Select the correct meaning"
       : challenge.type === "SPELL"
-      ? "Spell the word shown"
+      ? "Spell the word depicted by the image shown"
       : challenge.type === "ARRANGE"
       ? "Arrange the words correctly"
       : challenge.type === "PUNCTUATE"
@@ -474,7 +490,7 @@ export const Quiz = ({
       : challenge.question;
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       <Header
         hearts={hearts}
         percentage={percentage}
@@ -528,13 +544,13 @@ export const Quiz = ({
             : challenge.type === "PUNCTUATE"
             ? selectedPunctuation.length === 0
             : challenge.type === "TAG_POS"
-            ? Object.keys(taggedWords).length !== (challenge.words?.length || 0) // ✅ Must match all words
+            ? Object.keys(taggedWords).length !== (challenge.words?.length || 0)
             : true)
         }
         status={status}
         onCheck={onContinue}
         resetAssessment={resetAssessment}
       />
-    </>
+    </div>
   );
 };

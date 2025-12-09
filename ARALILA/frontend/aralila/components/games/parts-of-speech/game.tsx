@@ -231,7 +231,9 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
       const points = streak >= 2 ? bonus * 2 : bonus;
       setScore((prev) => prev + points);
       setStreak((prev) => prev + 1);
-      setTimeLeft((prev) => prev + bonus);
+      setTimeLeft((prev) =>
+        Math.min(prev + bonus, currentSettings.initialTime)
+      );
       setLilaState("happy");
 
       setResults((prev) => [

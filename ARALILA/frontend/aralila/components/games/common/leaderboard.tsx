@@ -19,6 +19,7 @@ interface LeaderboardProps {
   areaId: number | string | null;
   difficulty: number;
   limit?: number;
+  variant?: "glass" | "light";
 }
 
 const Leaderboard = ({
@@ -27,6 +28,7 @@ const Leaderboard = ({
   areaId = null,
   difficulty = 1,
   limit = 10,
+  variant = "glass",
 }: LeaderboardProps) => {
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -65,9 +67,10 @@ const Leaderboard = ({
 
         const data = await res.json();
         setEntries(data.results || []);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("Leaderboard fetch error", e);
-        setError(e.message || "Failed to load leaderboard");
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg || "Failed to load leaderboard");
       } finally {
         setLoading(false);
       }
@@ -76,9 +79,19 @@ const Leaderboard = ({
     fetchLeaderboard();
   }, [gameId, gameType, areaId, difficulty, limit]);
 
+  const isLight = variant === "light";
+
   return (
-    <div className="w-full max-w-[320px] bg-white/5 backdrop-blur-sm rounded-2xl p-3 border border-white/8 relative">
-      <h3 className="text-white font-bold text-lg mb-3">Leaderboard</h3>
+    <div
+      className={
+        isLight
+          ? "w-full max-w-[320px] bg-white rounded-2xl p-3 border border-slate-200 relative"
+          : "w-full max-w-[320px] bg-white/5 backdrop-blur-sm rounded-2xl p-3 border border-white/8 relative"
+      }
+    >
+      <h3 className={isLight ? "text-slate-800 font-bold text-lg mb-3" : "text-white font-bold text-lg mb-3"}>
+        Leaderboard
+      </h3>
 
       {/* Overlay for loading or error */}
       {(loading || error) && (
@@ -98,7 +111,11 @@ const Leaderboard = ({
             return (
               <li
                 key={`leaderboard-slot-${idx}`}
-                className="flex items-center justify-between gap-3 bg-white/5 p-2 rounded-lg"
+                className={
+                  isLight
+                    ? "flex items-center justify-between gap-3 bg-gray-50 p-2 rounded-lg border border-gray-100"
+                    : "flex items-center justify-between gap-3 bg-white/5 p-2 rounded-lg"
+                }
               >
                 <div className="flex items-center gap-3 truncate">
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
@@ -124,27 +141,27 @@ const Leaderboard = ({
                   </div>
 
                   <div className="flex items-center truncate">
-                    {e ? (
-                      <div className="text-sm text-white font-semibold truncate">
-                        {e.name}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-400">No entry</div>
-                    )}
+                      {e ? (
+                        <div className={isLight ? "text-sm text-slate-800 font-semibold truncate" : "text-sm text-white font-semibold truncate"}>
+                          {e.name}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-400">No entry</div>
+                      )}
                   </div>
                 </div>
 
                 <div className="ml-2 flex items-center gap-2 whitespace-nowrap">
-                  {e ? (
-                    <div className="text-xs text-gray-300">
-                      Score: {e.score}
+                    {e ? (
+                      <div className={isLight ? "text-xs text-slate-700" : "text-xs text-gray-300"}>
+                        Score: {e.score}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400">—</div>
+                    )}
+                    <div className={isLight ? "text-xs text-yellow-500 font-semibold" : "text-xs text-yellow-300 font-semibold"}>
+                      #{idx + 1}
                     </div>
-                  ) : (
-                    <div className="text-xs text-gray-400">—</div>
-                  )}
-                  <div className="text-xs text-yellow-300 font-semibold">
-                    #{idx + 1}
-                  </div>
                 </div>
               </li>
             );

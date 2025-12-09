@@ -5,24 +5,25 @@ import { env } from '@/lib/env';
 interface UseLobbyProps {
   roomCode: string;
   playerName: string;
+  maxPlayers?: number; // Optional - only passed by host
   onGameStart?: (turnOrder: string[]) => void;
 }
 
-export function useLobby({ roomCode, playerName, onGameStart }: UseLobbyProps) {
+export function useLobby({ roomCode, playerName, maxPlayers, onGameStart }: UseLobbyProps) {
   const [players, setPlayers] = useState<string[]>([]);
+  const [currentMaxPlayers, setCurrentMaxPlayers] = useState<number>(maxPlayers || 3);
   const [isStarting, setIsStarting] = useState(false);
   
-  // NEW: Use ref to track last known state and prevent glitches
   const lastPlayersRef = useRef<string[]>([]);
   const processingMessageRef = useRef(false);
 
-  const wsUrl = useMemo(() => 
-    `${env.wsUrl}/ws/lobby/${roomCode}/?player=${encodeURIComponent(playerName)}`,
-    [roomCode, playerName]
-  );
+  // NEW: Only include maxPlayers in URL if it's defined (host creating room)
+  const wsUrl = useMemo(() => {
+    const baseUrl = `${env.wsUrl}/ws/lobby/${roomCode}/?player=${encodeURIComponent(playerName)}`;
+    return maxPlayers ? `${baseUrl}&maxPlayers=${maxPlayers}` : baseUrl;
+  }, [roomCode, playerName, maxPlayers]);
 
   const handleMessage = useCallback((data: any) => {
-    // Prevent processing duplicate messages simultaneously
     if (processingMessageRef.current) {
       console.log('⏸️ Already processing message, queuing...');
       setTimeout(() => handleMessage(data), 50);
@@ -38,7 +39,6 @@ export function useLobby({ roomCode, playerName, onGameStart }: UseLobbyProps) {
         case 'player_list':
         case 'player_joined':
         case 'player_left':
-          // Only update if players actually changed
           const newPlayers = data.players || [];
           const playersChanged = JSON.stringify(newPlayers) !== JSON.stringify(lastPlayersRef.current);
           
@@ -48,6 +48,12 @@ export function useLobby({ roomCode, playerName, onGameStart }: UseLobbyProps) {
             setPlayers(newPlayers);
           } else {
             console.log('👥 Players unchanged, skipping update');
+          }
+
+          // Update maxPlayers from server
+          if (data.max_players !== undefined) {
+            setCurrentMaxPlayers(data.max_players);
+            console.log('🎯 Max players from server:', data.max_players);
           }
           break;
 
@@ -83,6 +89,7 @@ export function useLobby({ roomCode, playerName, onGameStart }: UseLobbyProps) {
 
   return { 
     players, 
+    maxPlayers: currentMaxPlayers,
     isStarting, 
     isConnected, 
     connectionError,

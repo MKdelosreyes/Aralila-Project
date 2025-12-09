@@ -281,7 +281,7 @@ export default function DashboardPage() {
       <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />
       <Sidebar />
 
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4 pt-28 pb-10 md:p-8 md:pl-24 md:pt-32 md:pb-12">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-full p-4 pt-28 pb-10 md:p-8 md:pl-24 md:pt-32 md:pb-12">
         <div className="w-full max-w-6xl">
           <h1 className="text-4xl font-bold mb-4 text-center">
             Your Learning Journey

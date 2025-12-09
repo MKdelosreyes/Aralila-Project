@@ -39,7 +39,7 @@ export default function PlaygroundLobbyPage() {
         </motion.div>
 
         {/* smaller centered card for lobby controls */}
-        <div className="w-full max-w-md mt-44 bg-white/95 text-black rounded-xl shadow-xl p-6">
+        <div className="w-full max-w-md bg-white/95 text-black rounded-xl shadow-xl p-6">
           <Lobby showHeader={false} />
         </div>
       </main>

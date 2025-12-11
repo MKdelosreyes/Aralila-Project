@@ -1,184 +1,157 @@
-const handleDragEnd = (event: any) => {
-    if (!event.over) return;
+import { cn } from "@/lib/utils";
+import { Card } from "./card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
-    const droppedOn = event.over.id;
-    const word = event.active.id; // dragged word (highlighted one)
-    const correct = droppedOn === currentQ.correctAnswer;
+// ...existing type definitions...
 
-    setSelectedAnswer(droppedOn);
-    setIsCorrect(correct);
-    setShowFeedback(true);
+export const Challenge = ({
+  challenge,
+  onSelect,
+  status,
+  selectedOption,
+  disabled,
+  textAnswer,
+  onTextChange,
+  arrangedWords,
+  onArrange,
+  selectedPunctuation,
+  onPunctuate,
+  taggedWords,
+  onTag,
+}: ChallengeProps) => {
+  // ...existing SPELL code...
 
-    let newScore = score;
-    let newStreak = streak;
-    let newTimeLeft = timeLeft;
+  // ...existing ARRANGE code...
 
-    if (correct) {
-      const bonus = currentSettings.correctBonus;
-      const points = newStreak >= 2 ? bonus * 2 : bonus;
-      newScore += points;
-      newStreak += 1;
-      newTimeLeft += bonus;
-      setLilaState(happyStates[Math.floor(Math.random() * happyStates.length)]);
-    } else {
-      newStreak = 0;
-      const penalty = currentSettings.wrongPenalty;
-      newTimeLeft = Math.max(0, newTimeLeft - penalty);
-      setLilaState(sadStates[Math.floor(Math.random() * sadStates.length)]);
-    }
+  // 👇 PUNCTUATE type - Click-based like the Punctuation Task game
+  if (challenge.type === "PUNCTUATE") {
+    const sentence = challenge.question;
 
-    setScore(newScore);
-    setStreak(newStreak);
-    setTimeLeft(newTimeLeft);
-    setResults((prev) => [
-      ...prev,
-      {
-        question: currentQ,
-        userAnswer: droppedOn,
-        isCorrect: correct,
-        skipped: false,
-        hintUsed: false,
-      },
-    ]);
+    // Get all unique punctuation marks
+    const availableMarks: string[] = Array.from(
+      new Set(challenge.punctuationMarks?.map((pm: any) => pm.mark) || [])
+    );
 
-    setTimeout(() => {
-      nextQuestion();
-    }, 2000);
-  };
+    // Get correct positions where punctuation should be placed
+    const correctPositions = new Set(
+      challenge.punctuationMarks?.flatMap((pm: any) => pm.positions) || []
+    );
 
-  const renderSentenceWithHighlight = (sentence: string, word: string) => {
-    const parts = sentence.split(new RegExp(`(\\b${word}\\b)`, "gi"));
-    return parts.map((part, index) => (
-      <span
-        key={index}
-        className={
-          part.toLowerCase() === word.toLowerCase()
-            ? "bg-purple-200 px-2 py-1 rounded-lg font-bold text-purple-800"
-            : ""
-        }
-      >
-        {part}
-      </span>
-    ));
-  };
+    // Split sentence into characters
+    const characters: string[] = sentence.split("");
 
-  const lilaImage = `/images/character/lila-${lilaState}.png`;
+    // Find the next empty gap
+    const nextGapPosition = Array.from(correctPositions).find(
+      (pos) => !selectedPunctuation?.some((p) => p.position === pos)
+    );
 
-  return (
-    <div className="relative z-10 max-w-4xl w-full mx-auto">
-      <ConfirmationModal
-        isOpen={isExitModalOpen}
-        onClose={() => setIsExitModalOpen(false)}
-        onConfirm={onExit}
-      />
+    const handlePunctuationClick = (mark: string) => {
+      if (nextGapPosition === undefined || disabled) return;
 
-      <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[70vh] w-full">
-        {/* ======== HEADER: Corrected Layout ======== */}
-        <div className="w-full flex items-center gap-4 mb-8">
-          <button
-            onClick={() => setIsExitModalOpen(true)}
-            className="text-slate-400 hover:text-purple-600 transition-colors p-2 rounded-full hover:bg-purple-100 flex-shrink-0"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          {/* Use flex-grow to allow the progress bar to fill available space */}
-          <div className="flex-grow bg-slate-200 rounded-full h-4">
-            <motion.div
-              className={`h-4 rounded-full transition-colors duration-500 ${
-                progress > 50
-                  ? "bg-gradient-to-r from-purple-500 to-fuchsia-500"
-                  : progress > 25
-                  ? "bg-gradient-to-r from-yellow-500 to-orange-500"
-                  : "bg-gradient-to-r from-red-500 to-red-600"
-              }`}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 1, ease: "linear" }}
-            />
-          </div>
-          {/* Group score, streak, and count into a single non-shrinking flex item */}
-          <div className="flex items-center gap-6 text-slate-700 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Star className="w-6 h-6 text-yellow-400" />
-              <span className="text-xl font-bold">{score}</span>
-            </div>
-            {streak > 1 && (
-              <motion.div
-                className="flex items-center gap-1 text-orange-500"
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-              >
-                <Zap className="w-5 h-5" />
-                <span className="text-lg font-bold">{streak}x</span>
-              </motion.div>
-            )}
-            <div className="text-slate-500 text-lg font-mono whitespace-nowrap">
-              {currentQuestionIndex + 1} / {questions.length}
-            </div>
-          </div>
-        </div>
+      // Add punctuation to the next gap
+      const newPunctuation = [
+        ...(selectedPunctuation || []),
+        { mark, position: nextGapPosition },
+      ];
 
-        {/* Main Game Content */}
-        <DndContext onDragEnd={handleDragEnd}>
-          <div className="flex-grow w-full flex flex-col items-center justify-center">
-            {/* Character + Question */}
-            <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
-              {/* Lila */}
-              <motion.div
-                className="relative"
-                key={lilaState}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-              >
-                <Image
-                  src={`/images/character/lila-${lilaState}.png`}
-                  alt="Lila"
-                  width={150}
-                  height={150}
-                />
-              </motion.div>
+      onPunctuate?.(newPunctuation);
+    };
 
-              {/* Sentence with draggable word */}
-              <div className="text-2xl text-slate-800 font-medium leading-relaxed bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm w-full flex items-center justify-between gap-4">
-                <div className="flex gap-4 flex-wrap justify-center">
-                  {currentQ.sentence.split(" ").map((part, i) =>
-                    part.toLowerCase() === currentQ.word.toLowerCase() ? (
-                      <DraggableWord key={i} word={part} />
-                    ) : (
-                      <span key={i} className="mx-1">
-                        {part}
-                      </span>
-                    )
+    const removePunctuation = (position: number) => {
+      const newPunctuation =
+        selectedPunctuation?.filter((p) => p.position !== position) || [];
+      onPunctuate?.(newPunctuation);
+    };
+
+    return (
+      <div className="flex flex-col gap-6">
+        {/* Sentence with gaps */}
+        <div className="text-xl flex flex-wrap items-center p-6 bg-neutral-50 rounded-lg border-2 border-dashed min-h-[100px]">
+          {characters.map((char: string, index: number) => (
+            <span key={index} className="inline-flex items-center">
+              <span className="px-0.5">{char}</span>
+
+              {/* Show gap at positions where punctuation belongs */}
+              {correctPositions.has(index) && (
+                <span
+                  className={cn(
+                    "inline-flex items-center justify-center min-w-[40px] h-[40px] mx-1",
+                    "border-2 border-dashed rounded-lg",
+                    selectedPunctuation?.some((p) => p.position === index)
+                      ? "border-green-500 bg-green-50"
+                      : nextGapPosition === index
+                      ? "border-purple-500 bg-purple-50 animate-pulse"
+                      : "border-neutral-300 bg-white",
+                    "transition-all"
                   )}
-                </div>
-                <button
-                  onClick={handleListen}
-                  className="p-2 bg-purple-100 hover:bg-purple-200 border border-purple-200 rounded-full text-purple-700"
                 >
-                  <Volume2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Drop Zones */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-2xl">
-              {currentQ.options.map((option) => (
-                <DropZone key={option} option={option} />
-              ))}
-            </div>
-          </div>
-        </DndContext>
-
-        {/* Bottom Action Buttons */}
-        <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
-          <button
-            onClick={skipQuestion}
-            disabled={showFeedback}
-            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
-          >
-            SKIP
-          </button>
+                  {selectedPunctuation?.find((p) => p.position === index) ? (
+                    <button
+                      onClick={() => removePunctuation(index)}
+                      className="text-2xl font-bold text-green-600 hover:text-red-500 px-2 transition-colors"
+                      disabled={disabled}
+                      title="Click to remove"
+                    >
+                      {
+                        selectedPunctuation.find((p) => p.position === index)
+                          ?.mark
+                      }
+                    </button>
+                  ) : nextGapPosition === index ? (
+                    <span className="text-lg text-purple-400 animate-pulse">
+                      ?
+                    </span>
+                  ) : (
+                    <span className="text-sm text-neutral-300">_</span>
+                  )}
+                </span>
+              )}
+            </span>
+          ))}
         </div>
+
+        {/* Punctuation mark buttons */}
+        <div className="space-y-3">
+          <p className="text-sm text-neutral-600 font-medium text-center">
+            Click a punctuation mark to fill the highlighted gap:
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            {availableMarks.map((mark: string, index: number) => (
+              <button
+                key={index}
+                onClick={() => handlePunctuationClick(mark)}
+                disabled={disabled || nextGapPosition === undefined}
+                className={cn(
+                  "flex items-center justify-center",
+                  "w-16 h-16 text-3xl font-bold rounded-xl border-4",
+                  "transition-all transform",
+                  nextGapPosition !== undefined && !disabled
+                    ? "bg-white border-purple-500 text-purple-600 hover:bg-purple-50 hover:scale-110 active:scale-95 shadow-lg cursor-pointer"
+                    : "bg-neutral-100 border-neutral-300 text-neutral-400 cursor-not-allowed",
+                  disabled && "opacity-50"
+                )}
+              >
+                {mark}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Helper text */}
+        {selectedPunctuation && selectedPunctuation.length > 0 && (
+          <p className="text-sm text-neutral-500 text-center">
+            💡 Click on placed punctuation to remove it
+          </p>
+        )}
       </div>
-    </div>
-  );
+    );
+  }
+
+  // ...existing TAG_POS code...
+
+  // ...existing COMPOSE code...
+
+  // ...existing SELECT/ASSIST code...
 };

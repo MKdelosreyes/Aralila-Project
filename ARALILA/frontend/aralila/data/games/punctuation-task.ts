@@ -8,12 +8,20 @@ export const PUNCTUATION_MARKS = [".", ",", "?", "!", ";", ":", "'", '"'];
 
 export const splitIntoWords = (sentence: string): string[] =>
   sentence.trim().split(/\s+/).filter(Boolean);
-/**
- * Position semantics:
- * - position = n (0-based) means: after word at index n (i.e., between words[n] and words[n+1]).
- * - position = -1 means: end of sentence (after the last word).
- * These positions are the “gaps” Lila must fill to cross to the next platform.
- */
+
+//  Position semantics:
+//  - position = n (0-based) means: after word at index n (i.e., between words[n] and words[n+1]).
+//  - position = -1 means: end of sentence (after the last word).
+//  These positions are the “gaps” Lila must fill to cross to the next platform.
+//   {
+//     sentence: "Hala May nakalimutan pala ako",
+//     // Hala ! May nakalimutan pala ako .
+//     correctPunctuation: [
+//       { position: 0, mark: "!" },  // after "Hala"
+//       { position: -1, mark: "." }, // end of sentence
+//     ]
+//   },
+ 
 export const punctuationChallengeData: PunctuationData[] = [
   {
     id: 1,

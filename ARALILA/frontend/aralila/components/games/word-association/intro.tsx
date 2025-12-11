@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlayCircle, ArrowLeft } from "lucide-react";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 interface WordAssociationIntroProps {
   difficulty: number;
@@ -32,13 +32,13 @@ export const WordAssociationIntro = ({
   }[difficulty];
 
   return (
-    <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+    <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-center py-12">
       <div className="md:col-span-2">
-        <div className="relative w-full h-screen overflow-hidden">
+        <div className="relative w-full min-h-[60vh] overflow-visible flex items-center">
           {/* Back Button */}
           {onBack && (
             <motion.div
-              className="absolute top-10 left-8 z-40"
+              className="absolute top-6 left-6 z-40"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -66,7 +66,7 @@ export const WordAssociationIntro = ({
           )}
 
           {/* Main Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center h-full">
+          <div className="relative z-10 flex flex-col items-center justify-center w-full">
             <motion.div
               className="text-center mb-8 max-w-[680px]"
               initial={{ opacity: 0, y: -50 }}
@@ -80,7 +80,9 @@ export const WordAssociationIntro = ({
                 height={300}
                 className="mx-auto"
               />
-              <h1 className="text-6xl font-bold text-white mb-4">Apat na Larawan, Isang Salita</h1>
+              <h1 className="text-6xl font-bold text-white mb-4">
+                Apat na Larawan, Isang Salita
+              </h1>
               <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
                 WORD ASSOCIATION
               </div>
@@ -100,7 +102,9 @@ export const WordAssociationIntro = ({
                   <button
                     key={d}
                     disabled={!isUnlocked}
-                    onClick={() => onSelectDifficulty && isUnlocked && onSelectDifficulty(d)}
+                    onClick={() =>
+                      onSelectDifficulty && isUnlocked && onSelectDifficulty(d)
+                    }
                     className={`px-5 py-2 rounded-full font-bold text-sm transition-all ${
                       isActive
                         ? "bg-purple-600 text-white"
@@ -153,7 +157,13 @@ export const WordAssociationIntro = ({
       </div>
 
       <div className="md:col-span-1">
-        <Leaderboard gameId={5} gameType="word-association" areaId={areaId} difficulty={difficulty} limit={10} />
+        <Leaderboard
+          gameId={5}
+          gameType="word-association"
+          areaId={areaId}
+          difficulty={difficulty}
+          limit={10}
+        />
       </div>
     </div>
   );

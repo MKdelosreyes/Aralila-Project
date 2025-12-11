@@ -245,3 +245,72 @@ class SentenceEvaluation(models.Model):
     coherence_score = models.FloatField(default=0)
     overall_score = models.FloatField(default=0)
     feedback = models.TextField(blank=True, null=True)
+
+
+# --------------- ASSESSMENT MODELS ----------------- #
+
+class AssessmentLesson(models.Model):
+    """Main assessment lesson for an area"""
+    area = models.OneToOneField(Area, on_delete=models.CASCADE, related_name='assessment')
+    title = models.CharField(max_length=255, default="Area Assessment")
+    order_index = models.IntegerField(default=999)  # Always last
+    
+    def __str__(self):
+        return f"{self.area.name} - Assessment"
+
+
+class AssessmentChallenge(models.Model):
+    """Individual challenges in the assessment"""
+    CHALLENGE_TYPES = [
+        ('SELECT', 'Select'),
+        ('ASSIST', 'Assist'),
+        ('SPELL', 'Spell'),
+        ('PUNCTUATE', 'Punctuate'),
+        ('ARRANGE', 'Arrange'),
+        ('COMPOSE', 'Compose'),
+        ('TAG_POS', 'Tag Parts of Speech'),
+    ]
+    
+    lesson = models.ForeignKey(AssessmentLesson, on_delete=models.CASCADE, related_name='challenges')
+    type = models.CharField(max_length=15, choices=CHALLENGE_TYPES) 
+    question = models.TextField()
+    order_index = models.IntegerField()
+    
+    correct_answer = models.TextField(blank=True, null=True)  
+    image_prompt = models.CharField(max_length=500, blank=True, null=True) 
+    
+    class Meta:
+        ordering = ['order_index']
+    
+    def __str__(self):
+        return f"{self.lesson.area.name} - Challenge {self.order_index}"
+
+
+class AssessmentChallengeOption(models.Model):
+    """Answer options for challenges"""
+    challenge = models.ForeignKey(AssessmentChallenge, on_delete=models.CASCADE, related_name='options')
+    text = models.TextField()
+    correct = models.BooleanField(default=False)
+    image_src = models.CharField(max_length=500, null=True, blank=True)
+    audio_src = models.CharField(max_length=500, null=True, blank=True)
+    
+    order_position = models.IntegerField(null=True, blank=True)  
+    word_index = models.IntegerField(null=True, blank=True) 
+    pos_tag = models.CharField(max_length=50, null=True, blank=True)  
+    
+    def __str__(self):
+        return f"{self.text} ({'✓' if self.correct else '✗'})"
+
+class AssessmentProgress(models.Model):
+    """Track user progress in assessments"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    challenge = models.ForeignKey(AssessmentChallenge, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    passed = models.BooleanField(default=False)
+    score = models.IntegerField(default=0) 
+    
+    class Meta:
+        unique_together = ('user', 'challenge')

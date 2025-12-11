@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Avg, Max, Count, Q
-from .models import Area, Game, GameItem
+from .models import Area, Game, GameItem, AssessmentLesson, AssessmentChallenge, AssessmentProgress
 from progress.models import GameProgress
 import os
 from dotenv import load_dotenv
@@ -606,6 +606,7 @@ def get_area_detail(request, area_id):
         'games': games_data
     })
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_area_by_order(request, order_index):
@@ -729,7 +730,6 @@ def get_area_by_order(request, order_index):
         print(f"❌ Error in get_area_by_order: {str(e)}")
         traceback.print_exc()
         return Response({'error': str(e)}, status=500)
-
 
 
 @api_view(['GET'])
@@ -956,5 +956,519 @@ def get_word_association_questions(request, area_id):
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_assessment_lesson(request, area_id):
+    """Get assessment lesson for an area"""
+    try:
+        area = Area.objects.get(id=area_id)
+        
+        # Get all practice games for this area
+        game_ids = GameItem.objects.filter(area=area).values_list('game_id', flat=True).distinct()
+        total_practice_games = Game.objects.filter(id__in=game_ids).count()
+        
+        if total_practice_games == 0:
+            total_practice_games = 6  # Expected number of games per area
+        
+        # Check if user has at least 1 star in ALL practice games
+        practice_progress = GameProgress.objects.filter(
+            user=request.user,
+            area=area
+        )
+        
+        # Count games with at least 1 star
+        games_with_stars = practice_progress.filter(stars_earned__gte=1).count()
+        
+        # Check if all games have at least 1 star
+        if games_with_stars < total_practice_games:
+            return Response({
+                'error': 'You must earn at least 1 star in all practice games before taking the assessment',
+                'games_with_stars': games_with_stars,
+                'total_games': total_practice_games,
+                'missing_stars': total_practice_games - games_with_stars
+            }, status=403)
+        
+        # Get or create assessment lesson
+        lesson, _ = AssessmentLesson.objects.get_or_create(area=area)
+        challenges = AssessmentChallenge.objects.filter(
+            lesson=lesson
+        ).prefetch_related('options')
+        
+        user_completed = set(
+            AssessmentProgress.objects.filter(
+                user=request.user,
+                area=area,
+                completed=True
+            ).values_list('challenge_id', flat=True)
+        )
+        
+        challenges_data = []
+        for challenge in challenges:
+            challenge_dict = {
+                'id': challenge.id,
+                'type': challenge.type,
+                'question': challenge.question,
+                'order': challenge.order_index,
+                'completed': challenge.id in user_completed,
+            }
+
+            # Add type-specific fields
+            if challenge.type in ['SPELL', 'COMPOSE', 'ARRANGE']:
+                challenge_dict['correctAnswer'] = challenge.correct_answer
+            
+            if challenge.type == 'SPELL':
+                challenge_dict['imagePrompt'] = challenge.image_prompt
+            
+            # Different option handling based on type
+            if challenge.type in ['SELECT', 'ASSIST']:
+                # Standard options
+                challenge_dict['challengeOptions'] = [
+                    {
+                        'id': opt.id,
+                        'text': opt.text,
+                        'correct': opt.correct,
+                        'imageSrc': opt.image_src or None,
+                        'audioSrc': opt.audio_src or None
+                    } for opt in challenge.options.all()
+                ]
+
+            elif challenge.type == 'ARRANGE':
+                # Words to arrange (sorted by correct order)
+                challenge_dict['words'] = [
+                    {
+                        'id': opt.id,
+                        'text': opt.text,
+                        'correctPosition': opt.order_position
+                    } for opt in challenge.options.all().order_by('order_position')
+                ]
+
+            elif challenge.type == 'PUNCTUATE':
+                # ✅ Send word-index positions directly (no conversion needed)
+                mark_groups = {}
+                for opt in challenge.options.all():
+                    mark = opt.text
+                    word_idx = opt.order_position  # ✅ Already a word index from seed
+                    
+                    if mark not in mark_groups:
+                        mark_groups[mark] = []
+                    mark_groups[mark].append(word_idx)
+                
+                challenge_dict['punctuationMarks'] = [
+                    {
+                        'id': idx,
+                        'mark': mark,
+                        'positions': positions  # ✅ List of word indices
+                    }
+                    for idx, (mark, positions) in enumerate(mark_groups.items())
+                ]
+
+
+            elif challenge.type == 'TAG_POS':
+                # ✅ Separate based on word_index presence
+                words = []
+                pos_options = []
+                
+                for opt in challenge.options.all().order_by('order_position'):
+                    # If order_position < 100, it's a word
+                    # If order_position >= 100, it's a POS option
+                    if opt.order_position < 100:
+                        # This is a word
+                        words.append({
+                            'id': opt.id,
+                            'word': opt.text,
+                            'index': opt.order_position,
+                            'correctTag': getattr(opt, 'pos_tag', '')
+                        })
+                    else:
+                        # This is a POS option
+                        pos_options.append({
+                            'id': opt.id,
+                            'text': opt.text,
+                            'isCorrect': opt.correct
+                        })
+                
+                challenge_dict['words'] = words
+                challenge_dict['posOptions'] = pos_options
+                
+                print(f"📤 TAG_POS - Words: {words}, POS: {pos_options}")  # Debug
+
+            
+            elif challenge.type in ['SPELL', 'COMPOSE']:
+                # No options needed - free text input
+                challenge_dict['challengeOptions'] = []
+            
+            challenges_data.append(challenge_dict)
+        
+        return Response({
+            'id': lesson.id,
+            'areaId': area.id,
+            'title': lesson.title,
+            'challenges': challenges_data
+        })
+        
+    except Area.DoesNotExist:
+        return Response({'error': 'Area not found'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def validate_challenge_answer(request):
+    """Validate user's answer for different challenge types"""
+    try:
+        challenge_id = request.data.get('challengeId')
+        answer = request.data.get('answer')  # Can be string, array, or dict
+        
+        challenge = AssessmentChallenge.objects.get(id=challenge_id)
+        
+        is_correct = False
+        
+        if challenge.type == 'SPELL':
+            # Case-insensitive exact match
+            is_correct = answer.lower().strip() == challenge.correct_answer.lower().strip()
+        
+        elif challenge.type == 'ARRANGE':
+            # Check if words are in correct order
+            correct_order = list(
+                challenge.options.all()
+                .order_by('order_position')
+                .values_list('text', flat=True)
+            )
+            is_correct = answer == correct_order
+        
+        elif challenge.type == 'PUNCTUATE':
+            # ✅ Build correct answer set from word indices
+            correct_pairs = set()
+            for opt in challenge.options.all():
+                correct_pairs.add((opt.text, opt.order_position))
+            
+            # ✅ Build user answer set
+            user_pairs = set()
+            for item in (answer or []):
+                if item.get('mark') and isinstance(item.get('position'), int):
+                    user_pairs.add((item['mark'], item['position']))
+            
+            is_correct = correct_pairs == user_pairs
+
+        elif challenge.type == 'TAG_POS':
+            # ✅ FIX: Validate matching pairs using order_position < 100 logic
+            # answer format: {word_id: pos_text, ...}
+            # Example: {"123": "Pandiwa", "124": "Pangngalan"}
+            
+            # Build correct answer mapping
+            correct_matches = {}
+            for opt in challenge.options.all():
+                # Only words (order_position < 100) have correct POS tags
+                if opt.order_position < 100:
+                    correct_matches[str(opt.id)] = opt.pos_tag
+            
+            # Validate user answer
+            if not isinstance(answer, dict):
+                is_correct = False
+            else:
+                # Check if all word IDs are present and have correct POS
+                is_correct = (
+                    len(answer) == len(correct_matches) and
+                    all(
+                        answer.get(str(word_id)) == pos_tag
+                        for word_id, pos_tag in correct_matches.items()
+                    )
+                )
+            
+            # ✅ DEBUG logging
+            print(f"📊 TAG_POS Validation:")
+            print(f"   User answer: {answer}")
+            print(f"   Correct matches: {correct_matches}")
+            print(f"   Is correct: {is_correct}")
+        
+        elif challenge.type == 'COMPOSE':
+            # ✅ Use AI validation instead of keyword matching
+            try:
+                # Extract emojis from question (e.g., "Write a sentence using: 🌧️ 📚 ☕")
+                import re
+                emoji_pattern = re.compile("[\U0001F300-\U0001F9FF]+")
+                emojis_in_question = emoji_pattern.findall(challenge.question)
+                
+                # Call AI evaluation
+                from django.test import RequestFactory
+                factory = RequestFactory()
+                ai_request = factory.post(
+                    '/evaluate-compose/',
+                    data=json.dumps({
+                        'answer': answer,
+                        'emojis': emojis_in_question
+                    }),
+                    content_type='application/json'
+                )
+                
+                ai_response = evaluate_compose_answer(ai_request)
+                ai_result = json.loads(ai_response.content)
+                
+                # Consider valid if score >= 70%
+                is_correct = ai_result.get('valid', False) and ai_result.get('score', 0) >= 70
+                
+                return Response({
+                    'correct': is_correct,
+                    'correctAnswer': None,  # No single correct answer for COMPOSE
+                    'ai_feedback': ai_result.get('explanation'),
+                    'score': ai_result.get('score'),
+                    'suggestions': ai_result.get('filipino_equivalents', {})
+                })
+        
+            except Exception as e:
+                print(f"AI validation error: {e}")
+                # Fallback to keyword check
+                keywords = challenge.correct_answer.lower().split()
+                user_answer = answer.lower()
+                is_correct = all(kw in user_answer for kw in keywords)
+        
+        return Response({
+            'correct': is_correct,
+            'correctAnswer': challenge.correct_answer if not is_correct else None
+        })
+        
+    except AssessmentChallenge.DoesNotExist:
+        return Response({'error': 'Challenge not found'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_assessment_challenge(request):
+    """Mark challenge as completed and award points"""
+    try:
+        challenge_id = request.data.get('challengeId')
+        
+        challenge = AssessmentChallenge.objects.get(id=challenge_id)
+        
+        # Mark as completed
+        progress, created = AssessmentProgress.objects.update_or_create(
+            user=request.user,
+            area=challenge.lesson.area,
+            challenge=challenge,
+            defaults={'completed': True}
+        )
+        
+        return Response({
+            'success': True,
+            'points': 10
+        })
+        
+    except AssessmentChallenge.DoesNotExist:
+        return Response({'error': 'Challenge not found'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reduce_hearts(request):
+    """Reduce user hearts (placeholder - implement based on your user model)"""
+    try:
+        # TODO: Implement heart reduction based on your user model
+        # For now, just return success
+        return Response({'success': True})
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_assessment(request):
+    """Complete assessment and unlock next area"""
+    try:
+        # ✅ ADD: Debug logging
+        print(f"📥 Received assessment completion request")
+        print(f"📦 Request data: {request.data}")
+        
+        area_id = request.data.get('areaId')
+        percentage = request.data.get('percentage')
+        
+        # ✅ ADD: Validate and convert area_id
+        if not area_id:
+            return Response({'error': 'Missing areaId'}, status=400)
+        
+        try:
+            area_id = int(area_id)
+        except (ValueError, TypeError):
+            return Response({'error': f'Invalid areaId: {area_id}'}, status=400)
+        
+        print(f"🔍 Looking for area with ID: {area_id} (type: {type(area_id)})")
+        
+        try:
+            area = Area.objects.get(id=area_id)
+            print(f"✅ Found area: {area.name}")
+        except Area.DoesNotExist:
+            print(f"❌ Area with ID {area_id} does not exist")
+            all_areas = Area.objects.all().values_list('id', 'name')
+            print(f"📋 Available areas: {list(all_areas)}")
+            return Response({'error': f'Area with ID {area_id} not found'}, status=404)
+        
+        # Check if passed assessment (80% required)
+        passed = percentage >= 80
+        
+        print(f"📊 Score: {percentage}% - {'PASSED' if passed else 'FAILED'}")
+        
+        if passed:
+            # ✅ Mark assessment as passed
+            lesson = AssessmentLesson.objects.get(area=area)
+            challenges = AssessmentChallenge.objects.filter(lesson=lesson)
+            
+            print(f"📝 Marking {challenges.count()} challenges as passed")
+            
+            for challenge in challenges:
+                AssessmentProgress.objects.update_or_create(
+                    user=request.user,
+                    area=area,
+                    challenge=challenge,
+                    defaults={
+                        'completed': True,
+                        'passed': True,
+                        'score': percentage
+                    }
+                )
+            
+            # ✅ Unlock next area
+            next_area = Area.objects.filter(
+                order_index=area.order_index + 1,
+                is_active=True
+            ).first()
+            
+            print(f"🎉 Assessment completed! Next area: {next_area.name if next_area else 'None'}")
+            
+            return Response({
+                'success': True,
+                'passed': True,
+                'percentage': percentage,
+                'next_area_unlocked': next_area is not None,
+                'next_area': next_area.name if next_area else None,
+                'message': 'Congratulations! You passed the assessment!'
+            })
+        else:
+            print(f"❌ Assessment failed. Need 80%+")
+            return Response({
+                'success': True,
+                'passed': False,
+                'percentage': percentage,
+                'message': 'You need at least 80% to pass. Try again!'
+            })
+            
+    except Exception as e:
+        import traceback
+        print(f"💥 Error in complete_assessment:")
+        print(traceback.format_exc())
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reset_assessment(request):
+    """Clear assessment progress for current user (by areaId or lessonId)."""
+    area_id = request.data.get('areaId')
+    lesson_id = request.data.get('lessonId')
+
+    lesson = None
+    if lesson_id:
+        lesson = AssessmentLesson.objects.filter(id=lesson_id).first()
+    elif area_id:
+        lesson = AssessmentLesson.objects.filter(area_id=area_id).first()
+
+    if not lesson:
+        return Response({'error': 'Lesson not found'}, status=404)
+
+    # Remove all recorded completions for this lesson
+    AssessmentProgress.objects.filter(
+        user=request.user,
+        challenge__lesson=lesson,
+    ).delete()
+
+    return Response({'ok': True})
+
+
+
+@csrf_exempt
+def evaluate_compose_answer(request):
+    try:
+        data = json.loads(request.body)
+        student_answer = data.get("answer", "")
+        emojis = data.get("emojis", [])  # Get emojis from question
+        
+        prompt = f"""You are a Filipino language teacher. Evaluate this student's composed sentence.
+
+Emojis to use: {emojis}
+Student's sentence: "{student_answer}"
+
+Evaluation criteria:
+1. Check if the sentence uses ALL Filipino (Tagalog) words. Note any English words.
+2. Check grammar correctness in Filipino.
+3. Check if the sentence relates to ALL the given emojis.
+4. Check sentence structure and coherence.
+
+Scoring rules:
+- All Filipino + correct grammar + uses all emojis + coherent = 100% (valid: true)
+- 1-2 English words but otherwise good = 80% (valid: true)
+- Missing 1 emoji or minor grammar issues = 70% (valid: true)
+- 3+ English words or major grammar issues = 50% (valid: false)
+- Nonsensical or unrelated to emojis = 0% (valid: false)
+
+Respond ONLY in valid JSON:
+{{
+  "valid": true/false,
+  "score": 0-100,
+  "explanation": "Filipino text explaining what's good/wrong. If English words found, give Filipino equivalents.",
+  "english_words_found": ["word1", "word2"] or [],
+  "filipino_equivalents": {{"english_word": "Filipino_word"}} or {{}},
+  "missing_emojis": ["emoji1", "emoji2"] or []
+}}
+
+Example response:
+{{
+  "valid": true,
+  "score": 80,
+  "explanation": "Maganda ang pangungusap mo! Pero may English word: 'play' (dapat 'maglaro'). Ginamit mo nang tama ang lahat ng emoji. Subukan: 'Masayang naglalaro ang pamilya sa bahay.'",
+  "english_words_found": ["play"],
+  "filipino_equivalents": {{"play": "maglaro"}},
+  "missing_emojis": []
+}}
+
+Use Filipino only in explanations.
+"""
+
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=[
+                {"role": "system", "content": "Respond ONLY in valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            max_output_tokens=150,
+        )
+
+        ai_msg = response.output_text.strip()
+        cleaned = ai_msg.replace("```json", "").replace("```", "").strip()
+        result = json.loads(cleaned)
+        
+        # Ensure all fields exist
+        if "score" not in result:
+            result["score"] = 100 if result.get("valid") else 0
+        if "english_words_found" not in result:
+            result["english_words_found"] = []
+        if "filipino_equivalents" not in result:
+            result["filipino_equivalents"] = {}
+        if "missing_emojis" not in result:
+            result["missing_emojis"] = []
+            
+        return JsonResponse(result)
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON returned by AI."},
+            status=500
+        )
+    except Exception as e:
+        if "429" in str(e):
+            return JsonResponse(
+                {"error": "Rate limit exceeded. Please try again."},
+                status=429
+            )
+        return JsonResponse({"error": str(e)}, status=500)
 
 

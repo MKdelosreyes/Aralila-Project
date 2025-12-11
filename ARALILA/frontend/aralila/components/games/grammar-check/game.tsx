@@ -6,15 +6,17 @@ import Image from "next/image";
 import { X, Star, Zap, CheckCircle2, XCircle, HandHelping } from "lucide-react";
 import {
   DndContext,
-  closestCenter,
-  PointerSensor,
+  DragOverlay,
   useSensor,
   useSensors,
+  PointerSensor,
+  DragStartEvent,
+  DragEndEvent,
+  closestCenter,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { ConfirmationModal } from "../confirmation-modal";
-import { buildRuntimeQuestions, RuntimeGrammarQuestion } from "@/lib/utils";
+import { RuntimeGrammarQuestion } from "@/lib/utils";
 
 interface GrammarResult {
   question: RuntimeGrammarQuestion;
@@ -32,51 +34,96 @@ interface GrammarCheckGameProps {
   onExit: () => void;
 }
 
-const TIME_LIMIT = 120;
+const TIME_LIMIT = 300;
 const BASE_POINTS = 20;
 const MAX_ASSISTS = 3;
-type LilaState = "normal" | "happy" | "sad" | "worried" | "crying";
+type LilaState = "normal" | "happy" | "sad" | "worried" | "crying" | "thinking";
 
 type WordItem = {
   id: string;
   text: string;
-  isLocked?: boolean;
+  color: string;
+  sourceSlot?: number | null; // Track where the word came from
 };
 
-// Sortable Item for drag-and-drop
-const SortableWord = ({
-  id,
+const WORD_COLORS = [
+  "bg-blue-200 border-blue-400",
+  "bg-green-200 border-green-400",
+  "bg-yellow-200 border-yellow-400",
+  "bg-pink-200 border-pink-400",
+  "bg-purple-200 border-purple-400",
+  "bg-orange-200 border-orange-400",
+  "bg-teal-200 border-teal-400",
+  "bg-indigo-200 border-indigo-400",
+];
+
+// Draggable word
+const DraggableWord = ({
   word,
-  isLocked,
+  fromSlot,
 }: {
-  id: string;
-  word: string;
-  isLocked?: boolean;
+  word: WordItem;
+  fromSlot?: number | null;
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, disabled: isLocked });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: word.id,
+      data: { ...word, sourceSlot: fromSlot },
+    });
+
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    padding: "8px 12px",
-    margin: "4px",
-    background: isLocked ? "#dcfce7" : "#fff",
-    border: isLocked ? "2px solid #4ade80" : "1px solid #ddd",
-    borderRadius: "8px",
-    cursor: isLocked ? "not-allowed" : "grab",
-    fontSize: "1.25rem",
-    fontWeight: 500,
-    opacity: isDragging ? 0.5 : 1,
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
+    cursor: isDragging ? "grabbing" : "grab",
   };
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {word} {isLocked}
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`${
+        word.color
+      } px-6 py-3 rounded-xl border-2 font-semibold text-lg select-none transition-all hover:scale-105 shadow-md ${
+        isDragging ? "opacity-50 scale-95" : "opacity-100"
+      }`}
+    >
+      {word.text}
+    </div>
+  );
+};
+
+// Drop slot
+const DropSlot = ({
+  index,
+  word,
+}: {
+  index: number;
+  word: WordItem | null;
+}) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `slot-${index}`,
+    data: { index },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-w-[120px] min-h-[60px] p-2 rounded-xl border-2 border-dashed flex items-center justify-center transition-all ${
+        isOver
+          ? "border-purple-500 bg-purple-100 scale-105"
+          : word
+          ? "border-slate-400 bg-white"
+          : "border-slate-300 bg-slate-50"
+      }`}
+    >
+      {word ? (
+        <DraggableWord word={word} fromSlot={index} />
+      ) : (
+        <span className="text-slate-400 text-sm">Drop here</span>
+      )}
     </div>
   );
 };
@@ -100,39 +147,47 @@ export const GrammarCheckGame = ({
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [isFinished, setIsFinished] = useState(false);
 
-  // Assists system
   const [assists, setAssists] = useState(MAX_ASSISTS);
   const [showAssistAnimation, setShowAssistAnimation] = useState(false);
-  const [animatedWordId, setAnimatedWordId] = useState<string | null>(null);
 
-  const [words, setWords] = useState<WordItem[]>([]);
-  const sensors = useSensors(useSensor(PointerSensor));
+  const [wordBank, setWordBank] = useState<WordItem[]>([]);
+  const [sentenceSlots, setSentenceSlots] = useState<(WordItem | null)[]>([]);
+  const [activeWord, setActiveWord] = useState<WordItem | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before dragging starts
+      },
+    })
+  );
 
   const currentQ = questions[currentQIndex];
 
+  // Initialize word bank and slots
   useEffect(() => {
     if (currentQ?.jumbledTokens) {
-      setWords(
-        currentQ.jumbledTokens.map((w, i) => ({
-          id: `${i}-${w}`,
-          text: w,
-          isLocked: false,
-        }))
-      );
+      const words = currentQ.jumbledTokens.map((text, i) => ({
+        id: `word-${currentQIndex}-${i}-${text}-${Date.now()}`,
+        text,
+        color: WORD_COLORS[i % WORD_COLORS.length],
+        sourceSlot: null,
+      }));
+      setWordBank(words);
+      setSentenceSlots(new Array(currentQ.correctTokens.length).fill(null));
     }
-  }, [currentQ]);
+  }, [currentQ, currentQIndex]);
 
   const calculatePercent = (res: GrammarResult[]) => {
     const correct = res.filter((r) => r.isCorrect).length;
-    return Math.round((correct / words.length) * 100);
+    return Math.round((correct / questions.length) * 100);
   };
 
   const advanceToNext = useCallback(() => {
     if (currentQIndex < questions.length - 1) {
-      const nextIndex = currentQIndex + 1;
-      setCurrentQIndex(nextIndex);
+      setCurrentQIndex((prev) => prev + 1);
       setFeedback(null);
-      setLilaState("normal");
+      setLilaState("thinking");
       setAnimationKey((prev) => prev + 1);
     } else {
       setIsFinished(true);
@@ -143,11 +198,10 @@ export const GrammarCheckGame = ({
     if (isFinished) {
       const correctCount = results.filter((r) => r.isCorrect).length;
       const percentScore = Math.round((correctCount / results.length) * 100);
-      const rawPoints = score;
 
       onGameComplete({
         percentScore,
-        rawPoints,
+        rawPoints: score,
         results,
       });
     }
@@ -160,7 +214,7 @@ export const GrammarCheckGame = ({
     if (timeLeft > 0 && !feedback) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && results.length > 0) {
+    } else if (timeLeft === 0) {
       const finalResults = [...results];
       for (let i = currentQIndex; i < questions.length; i++) {
         finalResults.push({
@@ -170,11 +224,7 @@ export const GrammarCheckGame = ({
         });
       }
       onGameComplete({
-        percentScore: Math.round(
-          (finalResults.filter((r) => r.isCorrect).length /
-            finalResults.length) *
-            100
-        ),
+        percentScore: calculatePercent(finalResults),
         rawPoints,
         results: finalResults,
       });
@@ -182,16 +232,15 @@ export const GrammarCheckGame = ({
   }, [
     timeLeft,
     feedback,
-    onGameComplete,
-    score,
-    results,
     currentQIndex,
     questions,
     lilaState,
+    results,
     rawPoints,
+    onGameComplete,
   ]);
 
-  if (!currentQ || !words || words.length === 0) {
+  if (!currentQ) {
     return (
       <div className="relative z-10 max-w-[950px] w-full mx-auto p-4">
         <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[70vh]">
@@ -213,69 +262,120 @@ export const GrammarCheckGame = ({
     );
   }
 
-  // Handle assist usage
+  const handleDragStart = (event: DragStartEvent) => {
+    const word = event.active.data.current as WordItem & {
+      sourceSlot?: number | null;
+    };
+    setActiveWord(word);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveWord(null);
+
+    if (!over) return;
+
+    const draggedWord = active.data.current as WordItem & {
+      sourceSlot?: number | null;
+    };
+    const targetId = over.id as string;
+
+    // Dropping into a slot
+    if (targetId.startsWith("slot-")) {
+      const targetSlotIndex = parseInt(targetId.split("-")[1]);
+      const sourceSlot = draggedWord.sourceSlot;
+
+      setSentenceSlots((prevSlots) => {
+        const newSlots = [...prevSlots];
+        const wordInTargetSlot = newSlots[targetSlotIndex];
+
+        // If dragging from word bank (sourceSlot is null/undefined)
+        if (sourceSlot === null || sourceSlot === undefined) {
+          // Remove from word bank
+          setWordBank((prev) => prev.filter((w) => w.id !== draggedWord.id));
+
+          // If target slot has a word, return it to word bank
+          if (wordInTargetSlot) {
+            setWordBank((prev) => [...prev, wordInTargetSlot]);
+          }
+
+          // Place dragged word in target slot
+          newSlots[targetSlotIndex] = { ...draggedWord, sourceSlot: null };
+        } else {
+          // Dragging from one slot to another
+          // Clear the source slot
+          newSlots[sourceSlot] = null;
+
+          // If target slot has a word, move it to source slot
+          if (wordInTargetSlot) {
+            newSlots[sourceSlot] = wordInTargetSlot;
+          }
+
+          // Place dragged word in target slot
+          newSlots[targetSlotIndex] = { ...draggedWord, sourceSlot: null };
+        }
+
+        return newSlots;
+      });
+    }
+  };
+
   const handleUseAssist = () => {
     if (assists <= 0 || feedback) return;
 
-    let targetWord: WordItem | null = null;
-    let targetCorrectIndex = -1;
-
+    // Find the first incorrect slot
     for (let i = 0; i < currentQ.correctTokens.length; i++) {
       const correctWord = currentQ.correctTokens[i];
-      const currentWord = words[i];
+      const currentWord = sentenceSlots[i];
 
-      if (currentWord.text !== correctWord && !currentWord.isLocked) {
-        const wordToMove = words.find(
-          (w) => w.text === correctWord && !w.isLocked
-        );
-        if (wordToMove) {
-          targetWord = wordToMove;
-          targetCorrectIndex = i;
+      if (currentWord?.text !== correctWord) {
+        // Find the correct word in word bank
+        let wordToPlace = wordBank.find((w) => w.text === correctWord);
+
+        // If not in word bank, find it in slots
+        if (!wordToPlace) {
+          const slotIndex = sentenceSlots.findIndex(
+            (w) => w?.text === correctWord
+          );
+          if (slotIndex !== -1) {
+            wordToPlace = sentenceSlots[slotIndex]!;
+
+            // Remove from its current slot
+            setSentenceSlots((prev) => {
+              const newSlots = [...prev];
+              newSlots[slotIndex] = null;
+              return newSlots;
+            });
+          }
+        } else {
+          // Remove from word bank
+          setWordBank((prev) => prev.filter((w) => w.id !== wordToPlace!.id));
+        }
+
+        if (wordToPlace) {
+          // If target slot has a word, return it to word bank
+          setSentenceSlots((prev) => {
+            const newSlots = [...prev];
+            if (newSlots[i]) {
+              setWordBank((bank) => [...bank, newSlots[i]!]);
+            }
+            newSlots[i] = { ...wordToPlace!, sourceSlot: null };
+            return newSlots;
+          });
+
+          setAssists((prev) => prev - 1);
+          setShowAssistAnimation(true);
+          setTimeout(() => setShowAssistAnimation(false), 1000);
           break;
         }
       }
-    }
-
-    if (!targetWord || targetCorrectIndex === -1) return;
-
-    const currentIndex = words.findIndex((w) => w.id === targetWord!.id);
-    const newWords = arrayMove(words, currentIndex, targetCorrectIndex);
-
-    const updatedWords = newWords.map((w, idx) =>
-      idx === targetCorrectIndex ? { ...w, isLocked: true } : w
-    );
-
-    setWords(updatedWords);
-    setAssists((prev) => prev - 1);
-
-    setAnimatedWordId(targetWord.id);
-    setShowAssistAnimation(true);
-    setTimeout(() => {
-      setShowAssistAnimation(false);
-      setAnimatedWordId(null);
-    }, 1000);
-  };
-
-  // Drag-and-drop end handler
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setWords((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-
-        // Prevent moving locked items
-        if (items[oldIndex].isLocked) return items;
-
-        return arrayMove(items, oldIndex, newIndex);
-      });
     }
   };
 
   const checkAnswer = () => {
     if (feedback) return;
 
-    const userSentence = words.map((w) => w.text);
+    const userSentence = sentenceSlots.map((w) => w?.text || "");
     const isCorrect =
       JSON.stringify(userSentence) === JSON.stringify(currentQ.correctTokens);
 
@@ -326,13 +426,8 @@ export const GrammarCheckGame = ({
 
   const lilaImage = `/images/character/lila-${lilaState}.png`;
 
-  // Check if there are any words that can be assisted
-  const canUseAssist = words.some(
-    (w, idx) => w.text !== currentQ.correctTokens[idx] && !w.isLocked
-  );
-
   return (
-    <div className="relative z-10 max-w-[950px] w-full mx-auto p-4">
+    <div className="relative z-10 max-w-[1100px] w-full mx-auto p-4">
       <ConfirmationModal
         isOpen={isExitModalOpen}
         onClose={() => setIsExitModalOpen(false)}
@@ -341,8 +436,7 @@ export const GrammarCheckGame = ({
         description="Sigurado ka ba na gusto mong umalis? Hindi mase-save ang iyong score."
       />
 
-      {/* Game container */}
-      <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[70vh] w-full">
+      <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col min-h-[75vh] w-full">
         {/* Timer and Score Header */}
         <div className="w-full flex items-center gap-4 mb-8">
           <button
@@ -377,7 +471,6 @@ export const GrammarCheckGame = ({
                 <span className="text-lg font-bold">{streak}x</span>
               </motion.div>
             )}
-            {/* Assists counter */}
             <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
               <HandHelping className="w-5 h-5 text-purple-600" />
               <span className="text-lg font-bold text-purple-600">
@@ -391,172 +484,97 @@ export const GrammarCheckGame = ({
         </div>
 
         {/* Game body */}
-        <div className="flex-grow w-full flex flex-col items-center justify-center">
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 mb-8">
-            <motion.div
-              className="relative"
-              key={lilaState}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            >
-              <Image
-                src={lilaImage}
-                alt="Lila"
-                width={150}
-                height={150}
-                priority
-              />
-            </motion.div>
-            <motion.div
-              key={animationKey}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="flex flex-col items-center md:items-start gap-4"
-            >
-              <div className="relative bg-purple-50 border border-purple-200 p-4 rounded-xl shadow-md max-w-sm text-center md:text-left">
-                <p className="text-lg text-slate-800">
-                  Ayusin ang pangungusap sa tamang pagkakasunod-sunod.
-                </p>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Draggable Sentence */}
-          <div className="bg-slate-50 p-4 rounded-2xl w-full text-center relative">
-            {/* Assist Animation Overlay */}
-            <AnimatePresence>
-              {showAssistAnimation && (
+        <div className="flex-grow w-full flex flex-col px-15">
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            collisionDetection={closestCenter}
+          >
+            {/* Top Section */}
+            <div className="w-full flex flex-row items-center justify-center gap-6 mb-6">
+              <div className="flex flex-col flex-1/4 items-center justify-center gap-1">
                 <motion.div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-40 bg-white/50 rounded-2xl"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+                  className="relative"
+                  key={lilaState}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
                 >
-                  <motion.div
-                    className="text-6xl font-bold text-green-500"
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: [1, 1.5, 1], rotate: 0 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                  >
-                    ✨
-                  </motion.div>
+                  <Image
+                    src={lilaImage}
+                    alt="Lila"
+                    width={160}
+                    height={160}
+                    priority
+                  />
                 </motion.div>
-              )}
-            </AnimatePresence>
+              </div>
 
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={words.map((w) => w.id)}>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {words.map((word) => (
-                    <motion.div
-                      key={word.id}
-                      initial={
-                        showAssistAnimation && animatedWordId === word.id
-                          ? { scale: 0, backgroundColor: "#10b981" }
-                          : {}
-                      }
-                      animate={
-                        showAssistAnimation && animatedWordId === word.id
-                          ? {
-                              scale: [1.5, 1],
-                              backgroundColor: ["#10b981", "#dcfce7"],
-                            }
-                          : {}
-                      }
-                      transition={{ duration: 0.5 }}
-                    >
-                      <SortableWord
-                        id={word.id}
-                        word={word.text}
-                        isLocked={word.isLocked}
-                      />
-                    </motion.div>
+              {/* Word Bank */}
+              <div className="bg-slate-50 p-6 rounded-2xl border-4 border-dashed border-purple-500 flex flex-col flex-3/4">
+                <h3 className="text-center text-sm font-semibold text-slate-700 mb-4">
+                  Mga Salita (Word Bank)
+                </h3>
+                <div className="flex flex-wrap justify-center gap-3 min-h-[120px] flex-grow items-center">
+                  {wordBank.map((word) => (
+                    <DraggableWord key={word.id} word={word} fromSlot={null} />
                   ))}
+                  {wordBank.length === 0 && (
+                    <p className="text-slate-400 italic">
+                      Lahat ng salita ay nailagay na
+                    </p>
+                  )}
                 </div>
-              </SortableContext>
-            </DndContext>
-          </div>
-        </div>
+              </div>
+            </div>
 
-        {/* Feedback */}
-        <div className="flex items-center justify-center h-24 my-4">
-          <AnimatePresence mode="wait">
-            {feedback && (
-              <motion.div
-                key={feedback.type + currentQIndex}
-                className="text-center"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                {feedback.type === "success" && (
-                  <div className="flex flex-col items-center gap-1">
-                    <CheckCircle2 className="w-12 h-12 text-green-500" />
-                    <p className="text-xl font-bold text-green-600">Tama!</p>
-                  </div>
-                )}
-                {feedback.type === "error" && (
-                  <div className="flex flex-col items-center gap-1">
-                    <XCircle className="w-12 h-12 text-red-500" />
-                    <p className="text-lg text-slate-600">
-                      Ang tamang sagot:{" "}
-                      <span className="font-bold text-purple-700">
-                        {currentQ.correctTokens.join(" ")}
-                      </span>
-                    </p>
-                  </div>
-                )}
-                {feedback.type === "skipped" && (
-                  <div className="flex flex-col items-center gap-1">
-                    <XCircle className="w-12 h-12 text-orange-500" />
-                    <p className="text-lg text-slate-600">
-                      Na-skip. Tamang sagot:{" "}
-                      <span className="font-bold text-purple-700">
-                        {currentQ.correctTokens.join(" ")}
-                      </span>
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {/* Sentence Drop Area */}
+            <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-300 mb-6 p-4">
+              <div className="flex flex-wrap justify-center gap-3 min-h-[100px]">
+                {sentenceSlots.map((word, index) => (
+                  <DropSlot key={`slot-${index}`} index={index} word={word} />
+                ))}
+              </div>
+            </div>
+
+            <DragOverlay>
+              {activeWord && (
+                <div
+                  className={`${activeWord.color} px-6 py-3 rounded-xl border-2 font-semibold text-lg shadow-2xl scale-110`}
+                >
+                  {activeWord.text}
+                </div>
+              )}
+            </DragOverlay>
+          </DndContext>
         </div>
 
         {/* Controls */}
-        <div className="w-full flex justify-between items-center pt-6 border-t border-slate-200">
-          <button
-            onClick={handleSkip}
-            disabled={!!feedback}
-            className="px-10 py-4 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-lg"
-          >
-            SKIP
-          </button>
+        <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
+          <div className="flex gap-3">
+            <button
+              onClick={handleSkip}
+              disabled={!!feedback}
+              className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
+            >
+              SKIP
+            </button>
 
-          <button
-            onClick={handleUseAssist}
-            disabled={assists <= 0 || !!feedback || !canUseAssist}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
-          >
-            <HandHelping className="w-5 h-5" />
-            <span>Gamitin Assist</span>
-          </button>
+            <button
+              onClick={handleUseAssist}
+              disabled={assists <= 0 || !!feedback}
+              className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:bg-purple-400 disabled:bg-slate-300 disabled:border-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+            >
+              <HandHelping className="w-5 h-5" />
+              <span>Gamitin ang Assist</span>
+            </button>
+          </div>
 
           <button
             onClick={checkAnswer}
             disabled={!!feedback}
-            className={`px-10 py-4 text-white font-bold rounded-2xl transition-all duration-300 transform text-lg shadow-lg
-              ${
-                !!feedback
-                  ? "bg-gray-400 cursor-not-allowed shadow-none"
-                  : "bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 hover:scale-105"
-              }`}
+            className="px-7 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-base transition disabled:opacity-50 flex items-center gap-2 min-w-[180px] justify-center"
           >
             CHECK
           </button>

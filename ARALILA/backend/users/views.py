@@ -1,49 +1,62 @@
-from django.shortcuts import render
-from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.contrib.auth.tokens import default_token_generator
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from .models import CustomUser
 from .serializers import CustomUserSerializer
-from rest_framework import generics, permissions, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
-import traceback
 
-# Create your views here.
+# -----------------------------
+# Existing profile endpoints
+# -----------------------------
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
     """Get current user profile"""
     user = request.user  
-    
     serializer = CustomUserSerializer(user)
     return Response(serializer.data)
-
 
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile_view(request):
-    """
-    Update user profile.
-    Only updates Django-specific fields (school_name, profile_pic).
-    Name/email updates should be done via Supabase SDK in frontend.
-    """
+    """Update user profile (school_name, profile_pic)"""
     user = request.user
-    
-    # Only allow updating these fields
     allowed_fields = ['school_name', 'profile_pic']
-    
     for field in allowed_fields:
         if field in request.data:
             setattr(user, field, request.data[field])
-    
     user.save()
-    
     serializer = CustomUserSerializer(user)
     return Response(serializer.data)
+
+# -----------------------------
+# Badges endpoints
+# -----------------------------
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_badges_view(request):
+    """Return all badges for the current user"""
+    user: CustomUser = request.user
+    badges = user.collected_badges or []
+    return Response({"badges": badges})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def claim_badge_view(request, badge_id: str):
+    """Mark a badge as claimed"""
+    user: CustomUser = request.user
+    updated = False
+
+    if not user.collected_badges:
+        return Response({"success": False, "message": "No badges found"}, status=400)
+
+    for badge in user.collected_badges:
+        if badge.get("id") == badge_id and badge.get("status") != "claimed":
+            badge["status"] = "claimed"
+            updated = True
+            break
+
+    if updated:
+        user.save()
+        return Response({"success": True, "badge_id": badge_id})
+    else:
+        return Response({"success": False, "message": "Badge not found or already claimed"}, status=400)

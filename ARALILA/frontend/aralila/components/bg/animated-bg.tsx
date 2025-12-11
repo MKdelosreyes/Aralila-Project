@@ -4,10 +4,22 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 interface AnimatedBackgroundProps {
-  img_path: string;
+  imagePath?: string;
 }
 
-const ChallengesBackground = ({ img_path }: AnimatedBackgroundProps) => {
+//DEFAULT bg. 
+const AnimatedBackground = ({ 
+  imagePath = "/images/bg/forestbg-learn.jpg" 
+}: AnimatedBackgroundProps) => {
+
+  if (!imagePath || imagePath.trim() === "") {
+    return (
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="min-h-screen absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+      </div>
+    );
+  }
+
   return (
     <div className="absolute inset-0 z-0 pointer-events-none">
       <motion.div
@@ -21,8 +33,8 @@ const ChallengesBackground = ({ img_path }: AnimatedBackgroundProps) => {
         }}
       >
         <Image
-          src={img_path}
-          alt="Forest Background"
+          src={imagePath}
+          alt="Animated Background"
           fill
           priority
           sizes="100vw"
@@ -35,4 +47,4 @@ const ChallengesBackground = ({ img_path }: AnimatedBackgroundProps) => {
   );
 };
 
-export default ChallengesBackground;
+export default AnimatedBackground;

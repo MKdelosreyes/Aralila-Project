@@ -6,7 +6,7 @@ import Image from "next/image";
 import { RotateCcw } from "lucide-react";
 import { Trophy, CheckCircle2, XCircle } from "lucide-react";
 import { WordAssociationResult } from "./game";
-import Leaderboard from "@/components/games/common/Leaderboard";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 interface SummaryProps {
   score: number;
@@ -31,7 +31,8 @@ export const WordAssociationSummary = ({
 }: SummaryProps) => {
   const correct = results.filter((r) => r.isCorrect).length;
   const wrong = results.length - correct;
-  const percent = results.length > 0 ? Math.round((correct / results.length) * 100) : 0;
+  const percent =
+    results.length > 0 ? Math.round((correct / results.length) * 100) : 0;
 
   const perfect = percent === 100 && wrong === 0;
   const passed = percent >= 80;
@@ -46,7 +47,9 @@ export const WordAssociationSummary = ({
   };
 
   // determine max stars allowed by difficulty (easy=1, medium=2, hard=3)
-  const maxStars = difficulty ? Math.min(3, Math.max(1, Math.floor(difficulty))) : 3;
+  const maxStars = difficulty
+    ? Math.min(3, Math.max(1, Math.floor(difficulty)))
+    : 3;
 
   const calculateStars = (pct: number, max: number) => {
     if (max === 3) {
@@ -64,7 +67,10 @@ export const WordAssociationSummary = ({
     return pct >= 50 ? 1 : 0;
   };
 
-  const earnedStars = typeof starsEarned === "number" ? starsEarned : calculateStars(percent, maxStars);
+  const earnedStars =
+    typeof starsEarned === "number"
+      ? starsEarned
+      : calculateStars(percent, maxStars);
 
   // Persisting stars is handled by the page (submit-score) — no client-side POST here to avoid duplicates.
 
@@ -89,7 +95,9 @@ export const WordAssociationSummary = ({
             <div className="flex items-center justify-center gap-2 text-gray-600 mb-4">
               <span className="text-sm font-medium">Word Association</span>
               <span className="text-2xl">•</span>
-              <span className="text-3xl font-bold text-purple-600">{percent}%</span>
+              <span className="text-3xl font-bold text-purple-600">
+                {percent}%
+              </span>
             </div>
 
             {/* Stars */}
@@ -103,12 +111,16 @@ export const WordAssociationSummary = ({
                 >
                   <Image
                     src={
-                      s <= earnedStars ? "/images/art/Active-Star.png" : "/images/art/Inactive-Star.png"
+                      s <= earnedStars
+                        ? "/images/art/Active-Star.png"
+                        : "/images/art/Inactive-Star.png"
                     }
                     alt={`star-${s}`}
                     width={60}
                     height={60}
-                    className={s <= earnedStars ? "animate-pulse" : "opacity-50"}
+                    className={
+                      s <= earnedStars ? "animate-pulse" : "opacity-50"
+                    }
                   />
                 </motion.div>
               ))}
@@ -128,7 +140,9 @@ export const WordAssociationSummary = ({
               </div>
               <div>
                 <p className="text-gray-500 text-sm">Total</p>
-                <p className="text-2xl font-bold text-gray-700">{results.length}</p>
+                <p className="text-2xl font-bold text-gray-700">
+                  {results.length}
+                </p>
               </div>
             </div>
           </div>
@@ -145,7 +159,7 @@ export const WordAssociationSummary = ({
 
             <button
               onClick={() => setShowReview((p) => !p)}
-              className="w-full bg-white border-2 border-blue-300 text-blue-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-all"
+              className="w-full bg-white border-2 border-purple-200 text-purple-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-all"
             >
               {showReview ? "Hide Review" : "Review Answers"}
             </button>
@@ -161,7 +175,9 @@ export const WordAssociationSummary = ({
           {/* Review Section */}
           {showReview && (
             <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
-              <h3 className="font-semibold text-gray-700 mb-2 text-sm">Answer Review</h3>
+              <h3 className="font-semibold text-gray-700 mb-2 text-sm">
+                Answer Review
+              </h3>
               <ul className="space-y-3 text-sm">
                 {results.map((r, i) => (
                   <li
@@ -185,11 +201,16 @@ export const WordAssociationSummary = ({
 
                     {!r.isCorrect && (
                       <p className="text-red-700 mb-1 text-sm">
-                        Your answer: <span className="font-semibold">{r.userAnswer || "(blank)"}</span>
+                        Your answer:{" "}
+                        <span className="font-semibold">
+                          {r.userAnswer || "(blank)"}
+                        </span>
                       </p>
                     )}
 
-                    <p className="text-gray-600 text-xs">{r.questionData.hint}</p>
+                    <p className="text-gray-600 text-xs">
+                      {r.questionData.hint}
+                    </p>
 
                     <div className="mt-3 grid grid-cols-4 gap-2">
                       {r.questionData.images.map((src, idx) => (
@@ -211,10 +232,16 @@ export const WordAssociationSummary = ({
         </motion.div>
       </div>
 
-        <div className="md:col-span-1">
-          <Leaderboard gameId={5} gameType="word-association" areaId={4} difficulty={difficulty} limit={10} />
-        </div>
-
+      <div className="md:col-span-1">
+        <Leaderboard
+          gameId={5}
+          gameType="word-association"
+          areaId={4}
+          difficulty={difficulty}
+          limit={10}
+          variant="light"
+        />
       </div>
+    </div>
   );
 };

@@ -21,7 +21,11 @@ export interface WordAssociationResult {
 
 interface GameProps {
   questions: WordAssociationQuestion[];
+<<<<<<< HEAD
   difficulty?: number,
+=======
+  difficulty?: number;
+>>>>>>> development
   onGameComplete: (summary: {
     score: number;
     rawPoints: number;
@@ -96,7 +100,11 @@ export const WordAssociationGame = ({
         isCorrect: false,
       });
     }
-    onGameComplete({ score, results: finalResults });
+    onGameComplete({
+      score,
+      rawPoints: score,
+      results: finalResults,
+    });
   }, [score, results, currentIndex, shuffledQuestions, onGameComplete]);
 
   useEffect(() => {
@@ -169,6 +177,10 @@ export const WordAssociationGame = ({
             : score;
           onGameComplete({
             score: finalScore,
+<<<<<<< HEAD
+=======
+            rawPoints: finalScore,
+>>>>>>> development
             results: updatedResults,
           });
         }, 50); // small delay ensures it runs after render
@@ -352,7 +364,17 @@ export const WordAssociationGame = ({
           <div className="w-full flex items-center justify-between gap-6 py-2 flex-nowrap overflow-x-auto">
             {/* Mascot image (left) */}
             <div className="flex-shrink-0">
+<<<<<<< HEAD
               <Image src={lilaImage} alt="Lila" width={160} height={160} priority />
+=======
+              <Image
+                src={lilaImage}
+                alt="Lila"
+                width={160}
+                height={160}
+                priority
+              />
+>>>>>>> development
             </div>
 
             {/* Dialogue box (center) */}
@@ -365,16 +387,39 @@ export const WordAssociationGame = ({
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                           <span className="text-2xl">✓</span>
                         </div>
+<<<<<<< HEAD
                         <p className="text-green-600 font-bold text-lg">Tama!</p>
                         <p className="text-green-700 text-sm">+{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos</p>
+=======
+                        <p className="text-green-600 font-bold text-lg">
+                          Tama!
+                        </p>
+                        <p className="text-green-700 text-sm">
+                          +{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos
+                        </p>
+>>>>>>> development
                       </>
                     ) : (
                       <>
                         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                           <span className="text-2xl">✗</span>
                         </div>
+<<<<<<< HEAD
                         <p className="text-red-600 font-bold text-lg">{feedback.type === "skipped" ? "Nilaktawan!" : "Mali!"}</p>
                         <p className="text-red-700 text-sm">Ang tamang sagot: <span className="font-bold">{currentQuestion.answer}</span></p>
+=======
+                        <p className="text-red-600 font-bold text-lg">
+                          {feedback.type === "skipped"
+                            ? "Nilaktawan!"
+                            : "Mali!"}
+                        </p>
+                        <p className="text-red-700 text-sm">
+                          Ang tamang sagot:{" "}
+                          <span className="font-bold">
+                            {currentQuestion.answer}
+                          </span>
+                        </p>
+>>>>>>> development
                       </>
                     )}
                   </div>
@@ -390,8 +435,23 @@ export const WordAssociationGame = ({
             <div className="flex-shrink-0 relative">
               <AnimatePresence>
                 {showAssistAnimation && (
+<<<<<<< HEAD
                   <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <motion.div className="text-6xl font-bold text-green-500" initial={{ scale: 0, rotate: -180 }} animate={{ scale: [1, 1.5, 1], rotate: 0 }} exit={{ scale: 0, opacity: 0 }}>
+=======
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-40"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <motion.div
+                      className="text-6xl font-bold text-green-500"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: [1, 1.5, 1], rotate: 0 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                    >
+>>>>>>> development
                       ✨
                     </motion.div>
                   </motion.div>
@@ -408,11 +468,36 @@ export const WordAssociationGame = ({
                     value={userLetters[index] || ""}
                     onChange={(e) => updateLetter(index, e.target.value)}
                     onKeyDown={(e) => handleKeyPress(e, index)}
+<<<<<<< HEAD
                     initial={showAssistAnimation && revealedIndices.has(index) && userLetters[index] ? { scale: 0, backgroundColor: "#10b981" } : {}}
                     animate={showAssistAnimation && revealedIndices.has(index) && userLetters[index] ? { scale: [1.5, 1], backgroundColor: ["#10b981", "#f1f5f9"] } : {}}
                     transition={{ duration: 0.5 }}
                     className={`${boxSize} font-bold text-center rounded-lg border-2 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0 ${
                       revealedIndices.has(index) ? "bg-green-50 border-green-400 text-green-700 cursor-not-allowed" : "bg-slate-100 border-slate-300 text-slate-800"
+=======
+                    initial={
+                      showAssistAnimation &&
+                      revealedIndices.has(index) &&
+                      userLetters[index]
+                        ? { scale: 0, backgroundColor: "#10b981" }
+                        : {}
+                    }
+                    animate={
+                      showAssistAnimation &&
+                      revealedIndices.has(index) &&
+                      userLetters[index]
+                        ? {
+                            scale: [1.5, 1],
+                            backgroundColor: ["#10b981", "#f1f5f9"],
+                          }
+                        : {}
+                    }
+                    transition={{ duration: 0.5 }}
+                    className={`${boxSize} font-bold text-center rounded-lg border-2 focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-300 flex-shrink-0 ${
+                      revealedIndices.has(index)
+                        ? "bg-green-50 border-green-400 text-green-700 cursor-not-allowed"
+                        : "bg-slate-100 border-slate-300 text-slate-800"
+>>>>>>> development
                     }`}
                     autoFocus={index === 0}
                     disabled={!!feedback || revealedIndices.has(index)}

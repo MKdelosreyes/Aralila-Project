@@ -2,11 +2,15 @@
 
 import React, { useState } from "react";
 
-import AnimatedBackground from "@/components/bg/animatedforest-bg"; // Assuming path
+import AnimatedBackground from "@/components/bg/animated-bg"; // Assuming path
 import { SentenceConstructionIntro } from "@/components/games/sentence-construction/intro";
 import { SentenceConstructionGame } from "@/components/games/sentence-construction/game";
-import { SentenceConstructionSummary, SentenceResult } from "@/components/games/sentence-construction/summary";
+import {
+  SentenceConstructionSummary,
+  SentenceResult,
+} from "@/components/games/sentence-construction/summary";
 import { sentenceArrangementChallenges } from "@/data/SentenceConstructionData";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
 
@@ -19,7 +23,13 @@ const SentenceConstructionPage = () => {
     setGameState("playing");
   };
 
-  const handleGameComplete = ({ score, results }: { score: number; results: SentenceResult[] }) => {
+  const handleGameComplete = ({
+    score,
+    results,
+  }: {
+    score: number;
+    results: SentenceResult[];
+  }) => {
     setFinalScore(score);
     setFinalResults(results);
     setGameState("summary");
@@ -58,7 +68,7 @@ const SentenceConstructionPage = () => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       {/* Background */}
-      <AnimatedBackground />
+      <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />
 
       {/* Game Content */}
       <div className="w-full flex items-center justify-center">

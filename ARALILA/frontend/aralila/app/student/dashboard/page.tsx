@@ -2,14 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Lock,
-  CheckCircle,
-  TrendingUp,
-  BookOpen,
-  Trophy,
-  X,
-} from "lucide-react";
+import { CheckCircle, TrendingUp, BookOpen, Trophy, X } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
@@ -329,7 +323,7 @@ export default function DashboardPage() {
 
             {/* Area Nodes */}
             <div
-              className="relative flex justify-between items-center px-12"
+              className="relative flex items-center px-4 md:px-12 overflow-x-auto gap-6 md:gap-10"
               style={{ zIndex: 1 }}
             >
               {areas.map((area, index) => {
@@ -348,32 +342,78 @@ export default function DashboardPage() {
                       type: "spring",
                       stiffness: 200,
                     }}
-                    className="flex flex-col items-center w-40"
+                    className="flex flex-col items-center w-40 flex-shrink-0"
                   >
                     <motion.div
                       whileHover={!locked ? { scale: 1.1 } : {}}
-                      className={`relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-4 shadow-xl transition-all ${
-                        locked
-                          ? "bg-gray-600 border-gray-700 opacity-50 cursor-not-allowed"
-                          : isComplete
-                          ? "bg-gradient-to-br from-yellow-400 to-amber-500 border-yellow-600 shadow-yellow-500/50 cursor-pointer"
-                          : "bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-600 shadow-blue-500/50 cursor-pointer"
+                      className={`relative flex items-center justify-center transition-all overflow-visible ${
+                        locked || area.order_index === 0
+                          ? `w-40 h-40 md:w-52 md:h-52 ${
+                              locked ? "cursor-not-allowed" : "cursor-pointer"
+                            }`
+                          : `w-24 h-24 md:w-28 md:h-28 rounded-full border-4 shadow-xl cursor-pointer ${
+                              isComplete
+                                ? "bg-gradient-to-br from-purple-400 to-fuchsia-500 border-purple-500 shadow-purple-500/50"
+                                : "bg-gradient-to-br from-indigo-400 to-purple-600 border-purple-600 shadow-purple-500/50"
+                            }`
                       }`}
                     >
-                      {locked && <Lock className="text-gray-300" size={32} />}
-                      {!locked && isComplete && (
+                      {locked ? (
                         <motion.div
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1.5 border-2 border-white"
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                            ease: "easeInOut",
+                          }}
+                          className="relative flex items-center justify-center"
                         >
-                          <CheckCircle className="text-white" size={16} />
+                          <Image
+                            src="/images/overlays/book-closed.png"
+                            alt="Locked area"
+                            width={192}
+                            height={192}
+                            className="relative w-32 h-32 md:w-44 md:h-44 object-contain"
+                            priority
+                          />
                         </motion.div>
-                      )}
-                      {!locked && (
-                        <span className="text-2xl font-bold text-white">
-                          {area.id}
-                        </span>
+                      ) : area.order_index === 0 ? (
+                        <motion.div
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                            ease: "easeInOut",
+                          }}
+                          className="relative flex items-center justify-center"
+                        >
+                          <div className="absolute -inset-6 md:-inset-10 rounded-3xl bg-purple-400/50 blur-3xl shadow-[0_0_65px_26px_rgba(216,180,254,1)]" />
+                          <Image
+                            src="/images/overlays/assessment-area-book-1.png"
+                            alt="Assessment area 1"
+                            width={192}
+                            height={192}
+                            className="relative w-32 h-32 md:w-44 md:h-44 object-contain drop-shadow-[0_0_35px_rgba(216,180,254,1)]"
+                            priority
+                          />
+                        </motion.div>
+                      ) : (
+                        <>
+                          {isComplete && (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1.5 border-2 border-white"
+                            >
+                              <CheckCircle className="text-white" size={16} />
+                            </motion.div>
+                          )}
+                          <span className="text-2xl font-bold text-white">
+                            {area.id}
+                          </span>
+                        </>
                       )}
                     </motion.div>
 
@@ -528,14 +568,16 @@ export default function DashboardPage() {
                 </h1>
 
                 {/* Badge Image */}
-
-                <img
+                <Image
                   src={
                     badgeList.find((b) => b.id === recentBadge.id.toString())
-                      ?.icon
+                      ?.icon || "/images/badges/3days.png"
                   }
                   alt={recentBadge.name}
-                  className="w-85 h-85 md:w-[300px] md:h-[300px] mb-8 object-contain"
+                  width={300}
+                  height={300}
+                  className="w-72 h-72 md:w-[300px] md:h-[300px] mb-8 object-contain"
+                  priority
                 />
 
                 <p

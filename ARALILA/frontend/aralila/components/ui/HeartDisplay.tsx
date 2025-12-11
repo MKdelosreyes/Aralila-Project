@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
 
-const HEART_REFILL_TIME = 5 * 60 * 1000; // 5 minutes
 const MAX_HEARTS = 3;
 
 type HeartsDisplayProps = {
@@ -11,83 +11,35 @@ type HeartsDisplayProps = {
 };
 
 export const HeartsDisplay = ({ variant = "dark" }: HeartsDisplayProps) => {
-  const [hearts, setHearts] = useState(MAX_HEARTS);
+  const { user, refreshUser } = useAuth();
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => setIsClient(true), []);
 
-  // ✅ Check heart status on mount
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !user?.next_refill_at) {
+      setTimeLeft(0);
+      return;
+    }
 
-    const checkHeartStatus = () => {
-      const savedRefillTime = localStorage.getItem("heartRefillTime");
-      const savedHearts = localStorage.getItem("currentHearts");
+    const calculateTimeLeft = () => {
+      const refillTime = new Date(user.next_refill_at!).getTime();
+      const now = Date.now();
+      const remaining = Math.max(0, refillTime - now);
+      setTimeLeft(remaining);
 
-      if (savedRefillTime) {
-        const refillTimestamp = parseInt(savedRefillTime, 10);
-        const now = Date.now();
-        const remaining = refillTimestamp - now;
-
-        if (remaining > 0) {
-          // Still waiting for refill
-          setHearts(0);
-          setTimeLeft(remaining);
-        } else {
-          // Time expired, refill hearts
-          localStorage.removeItem("heartRefillTime");
-          localStorage.setItem("currentHearts", MAX_HEARTS.toString());
-          setHearts(MAX_HEARTS);
-          setTimeLeft(0);
-        }
-      } else if (savedHearts) {
-        const currentHearts = parseInt(savedHearts, 10);
-        setHearts(Math.min(currentHearts, MAX_HEARTS));
-        setTimeLeft(0);
-      } else {
-        localStorage.setItem("currentHearts", MAX_HEARTS.toString());
-        setHearts(MAX_HEARTS);
-        setTimeLeft(0);
+      if (remaining <= 0 && user.current_hearts! < MAX_HEARTS) {
+        refreshUser();
       }
     };
 
-    checkHeartStatus();
-  }, [isClient]);
-
-  // ✅ Countdown timer - updates every second
-  useEffect(() => {
-    if (!isClient || timeLeft <= 0) return;
-
-    const interval = setInterval(() => {
-      const savedRefillTime = localStorage.getItem("heartRefillTime");
-      if (!savedRefillTime) {
-        setTimeLeft(0);
-        setHearts(MAX_HEARTS);
-        localStorage.setItem("currentHearts", MAX_HEARTS.toString());
-        clearInterval(interval);
-        return;
-      }
-
-      const refillTimestamp = parseInt(savedRefillTime, 10);
-      const now = Date.now();
-      const remaining = refillTimestamp - now;
-
-      if (remaining <= 0) {
-        localStorage.removeItem("heartRefillTime");
-        localStorage.setItem("currentHearts", MAX_HEARTS.toString());
-        setTimeLeft(0);
-        setHearts(MAX_HEARTS);
-        clearInterval(interval);
-      } else {
-        setTimeLeft(remaining);
-      }
-    }, 1000);
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(interval);
-  }, [isClient, timeLeft]);
+  }, [isClient, user?.next_refill_at, user?.current_hearts, refreshUser]);
 
-  // ✅ Format time as MM:SS
   const formatTime = (ms: number) => {
     const totalSeconds = Math.ceil(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -110,6 +62,7 @@ export const HeartsDisplay = ({ variant = "dark" }: HeartsDisplayProps) => {
   };
 
   const currentStyle = styles[variant];
+  const hearts = user?.current_hearts ?? MAX_HEARTS;
 
   if (!isClient) {
     return (
@@ -128,13 +81,12 @@ export const HeartsDisplay = ({ variant = "dark" }: HeartsDisplayProps) => {
     <div
       className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors ${currentStyle.container}`}
     >
-      <Image src="/images/art/heart.svg" height={20} width={20} alt="Heart" />
-      {/* ✅ Show hearts and timer side by side */}
+      <Image src="/images/art/heart.svg" height={24} width={24} alt="Heart" />
       <div className="flex items-center gap-2">
-        <span className={`text-sm font-bold ${currentStyle.hearts}`}>
+        <span className={`text-xl font-bold ${currentStyle.hearts}`}>
           {hearts}
         </span>
-        {timeLeft > 0 && hearts === 0 && (
+        {timeLeft > 0 && hearts < MAX_HEARTS && (
           <>
             <span className={`text-sm ${currentStyle.timer}`}>•</span>
             <span className={`text-sm font-medium ${currentStyle.timer}`}>

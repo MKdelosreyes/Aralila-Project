@@ -168,7 +168,7 @@ export default function DashboardPage() {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) return;
-      const res = await fetch(`${env.backendUrl}/api/users/me/badges/`, {
+      const res = await fetch(`${env.backendUrl}/api/users/badges/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -198,7 +198,7 @@ export default function DashboardPage() {
     try {
       const token = localStorage.getItem("access_token");
       const res = await fetch(
-        `${env.backendUrl}/api/users/me/badges/${badgeId}/claim/`,
+        `${env.backendUrl}/api/users/badges/${badgeId}/claim/`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

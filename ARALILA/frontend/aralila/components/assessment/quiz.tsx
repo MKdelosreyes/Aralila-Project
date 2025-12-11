@@ -21,6 +21,7 @@ import { ResultCard } from "./result-card";
 import { QuizProps, ChallengeOption } from "@/types/games";
 import { Button } from "@/components/ui/button";
 import { error } from "console";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MAX_HEARTS = 5;
 
@@ -69,6 +70,7 @@ export const Quiz = ({
 
   const [lessonId] = useState(initialLessonId);
   const [areaId] = useState(initialAreaId);
+  const { user, refreshUser } = useAuth();
   const [hearts, setHearts] = useState(initialHearts);
   const [overlayTimeLeft, setOverlayTimeLeft] = useState<number>(0);
   const [percentage, setPercentage] = useState(() => {
@@ -96,10 +98,10 @@ export const Quiz = ({
   const [taggedWords, setTaggedWords] = useState<Record<number, string>>({});
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("currentHearts", hearts.toString());
+    if (user?.current_hearts !== undefined) {
+      setHearts(user.current_hearts);
     }
-  }, [hearts]);
+  }, [user?.current_hearts]);
 
   useEffect(() => {
     const checkHeartRefill = () => {
@@ -112,7 +114,7 @@ export const Quiz = ({
         if (now >= refillTimestamp) {
           // Time expired, refill hearts
           localStorage.removeItem("heartRefillTime");
-          localStorage.setItem("currentHearts", "3");
+          // localStorage.setItem("currentHearts", "3");
           setHearts(3);
           toast.success("Your hearts have been refilled! 💖");
         } else if (hearts === 0) {
@@ -210,21 +212,22 @@ export const Quiz = ({
       data: { session },
     } = await supabase.auth.getSession();
 
-    const response = await fetch(
-      `${env.backendUrl}/api/games/assessment/reduce-hearts/`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      }
-    );
+    const response = await fetch(`${env.backendUrl}/api/users/hearts/reduce/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    });
 
     if (!response.ok) {
       throw new Error("Failed to reduce hearts");
     }
 
-    return response.json();
+    const data = await response.json();
+    setHearts(data.current_hearts);
+    await refreshUser();
+
+    return data;
   };
 
   const onContinue = () => {
@@ -297,9 +300,16 @@ export const Quiz = ({
                 if (!response?.error) {
                   const newHearts = Math.max(hearts - 1, 0);
                   setHearts(newHearts);
-                  localStorage.setItem("currentHearts", newHearts.toString());
+                  // localStorage.setItem("currentHearts", newHearts.toString());
 
                   if (newHearts === 0) {
+                    const HEART_REFILL_TIME = 5 * 60 * 1000;
+                    const refillTime = Date.now() + HEART_REFILL_TIME;
+                    // localStorage.setItem(
+                    //   "heartRefillTime",
+                    //   refillTime.toString()
+                    // );
+
                     openHeartsModal();
                   }
                 }
@@ -408,9 +418,13 @@ export const Quiz = ({
           await reduceHearts();
           const newHearts = Math.max(hearts - 1, 0);
           setHearts(newHearts);
-          localStorage.setItem("currentHearts", newHearts.toString());
+          // localStorage.setItem("currentHearts", newHearts.toString());
 
           if (newHearts === 0) {
+            const HEART_REFILL_TIME = 5 * 60 * 1000; // 5 minutes
+            const refillTime = Date.now() + HEART_REFILL_TIME;
+            // localStorage.setItem("heartRefillTime", refillTime.toString());
+
             openHeartsModal();
           }
         }

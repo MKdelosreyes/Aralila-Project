@@ -1,14 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Lock, CheckCircle, TrendingUp, BookOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Lock,
+  CheckCircle,
+  TrendingUp,
+  BookOpen,
+  Trophy,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
 import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { useAreaUnlocks } from "@/hooks/useAreaUnlocks";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -30,14 +37,32 @@ interface UserData {
   email?: string;
 }
 
+const badgeList = [
+  { id: "1", name: "3 Days Login streak", icon: "/images/badges/3days.png" },
+  { id: "2", name: "5 Days Login streak", icon: "/images/badges/5days.png" },
+  { id: "3", name: "30 Days Login Streak", icon: "/images/badges/30days.png" },
+  {
+    id: "4",
+    name: "100 Days Login Streak",
+    icon: "/images/badges/100days.png",
+  },
+  {
+    id: "5",
+    name: "200 Days Login Streak",
+    icon: "/images/badges/200days.png",
+  },
+];
+
 export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [areas, setAreas] = useState<Area[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
   const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [recentBadge, setRecentBadge] = useState<any | null>(null);
+  const [showBadgePopup, setShowBadgePopup] = useState(false);
   const router = useRouter();
-
   const {
     unlockedAreas,
     isAreaLocked,
@@ -45,6 +70,9 @@ export default function DashboardPage() {
     loading: progressLoading,
   } = useAreaUnlocks();
 
+  // -------------------------
+  // FETCH AREAS
+  // -------------------------
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -53,43 +81,28 @@ export default function DashboardPage() {
 
     if (user) {
       fetchAreas();
+      fetchBadges();
     }
   }, [user, authLoading]);
 
   const fetchAreas = async () => {
     try {
       const token = localStorage.getItem("access_token");
+      if (!token) return router.push("/login");
 
-      if (!token) {
-        console.error("No authentication token found");
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch(`${env.backendUrl}/api/games/areas/`, {
+      const res = await fetch(`${env.backendUrl}/api/games/areas/`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      if (response.status === 401) {
-        console.error("Token is invalid or expired");
-        localStorage.removeItem("access_token");
-        router.push("/login");
-        return;
-      }
+      if (!res.ok) throw new Error("Failed to fetch areas");
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch areas: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await res.json();
       setAreas(data.areas);
-    } catch (error) {
-      console.error("Error fetching areas:", error);
-
-      // Fallback data
+    } catch (err) {
+      console.error(err);
       setAreas([
         {
           id: 1,
@@ -147,6 +160,67 @@ export default function DashboardPage() {
     }
   };
 
+  // -------------------------
+  // FETCH USER BADGES
+  // -------------------------
+
+  const fetchBadges = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+      const res = await fetch(`${env.backendUrl}/api/users/me/badges/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch badges");
+      const data = await res.json();
+      const unclaimed = data.badges.filter(
+        (b: any) => b.status === "unclaimed"
+      );
+
+      setUserBadges(unclaimed);
+
+      if (unclaimed.length > 0) {
+        setRecentBadge(unclaimed[0]);
+
+        setShowBadgePopup(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // -------------------------
+  // CLAIM BADGE
+  // -------------------------
+
+  const claimBadge = async (badgeId: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(
+        `${env.backendUrl}/api/users/me/badges/${badgeId}/claim/`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to claim badge");
+
+      // Update frontend
+      setUserBadges((prev) => prev.filter((b) => b.id !== badgeId));
+      setRecentBadge(null);
+      setShowBadgePopup(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const closeBadgePopup = () => {
+    setRecentBadge(null);
+    setShowBadgePopup(false);
+  };
+
   const getReadinessColor = (readiness: string) => {
     switch (readiness) {
       case "well-prepared":
@@ -169,6 +243,13 @@ export default function DashboardPage() {
     }
   };
 
+  const canTakeAssessment = (progress: any) => {
+    if (!progress) return false;
+
+    // User needs at least 1 star in all 6 games
+    return progress.gamesWithStars >= 6;
+  };
+
   if (loading || progressLoading) {
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black text-white flex items-center justify-center">
@@ -180,21 +261,24 @@ export default function DashboardPage() {
     );
   }
 
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <FullscreenMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-      <AnimatedBackground />
+      <AnimatedBackground imagePath="/images/bg/forestbg-learn.jpg" />
       <Sidebar />
 
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4 pt-28 pb-10 md:p-8 md:pl-24 md:pt-32 md:pb-12">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-full p-4 pt-28 pb-10 md:p-8 md:pl-24 md:pt-32 md:pb-12">
         <div className="w-full max-w-6xl">
           <h1 className="text-4xl font-bold mb-4 text-center">
             Your Learning Journey
           </h1>
           <p className="text-gray-400 text-center mb-4">
-            Complete assessments to unlock new areas. Practice in Challenges
-            first!
+            Earn at least 1 star in all practice games, then take the assessment
+            to unlock new areas!
           </p>
 
           {/* Quick Stats */}
@@ -213,9 +297,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Level Map Container */}
+          {/* Level Map */}
           <div className="relative w-full py-12">
-            {/* Glowing Connection Line */}
+            {/* Connection Line */}
             <svg
               className="absolute top-1/2 left-0 w-full h-1 -translate-y-1/2"
               style={{ zIndex: 0 }}
@@ -252,6 +336,7 @@ export default function DashboardPage() {
                 const locked = isAreaLocked(area.order_index);
                 const progress = getAreaProgress(area.order_index);
                 const isComplete = area.completed_games === area.total_games;
+                const canAssess = canTakeAssessment(progress);
 
                 return (
                   <motion.div
@@ -263,9 +348,8 @@ export default function DashboardPage() {
                       type: "spring",
                       stiffness: 200,
                     }}
-                    className="flex flex-col items-center w-32"
+                    className="flex flex-col items-center w-40"
                   >
-                    {/* Node Display */}
                     <motion.div
                       whileHover={!locked ? { scale: 1.1 } : {}}
                       className={`relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-4 shadow-xl transition-all ${
@@ -276,10 +360,7 @@ export default function DashboardPage() {
                           : "bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-600 shadow-blue-500/50 cursor-pointer"
                       }`}
                     >
-                      {/* Lock Icon */}
                       {locked && <Lock className="text-gray-300" size={32} />}
-
-                      {/* Completion Badge */}
                       {!locked && isComplete && (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
@@ -289,8 +370,6 @@ export default function DashboardPage() {
                           <CheckCircle className="text-white" size={16} />
                         </motion.div>
                       )}
-
-                      {/* Area Number */}
                       {!locked && (
                         <span className="text-2xl font-bold text-white">
                           {area.id}
@@ -308,15 +387,20 @@ export default function DashboardPage() {
                       <p className="text-sm md:text-base font-bold">
                         {area.name}
                       </p>
-
                       {locked ? (
                         <p className="text-xs text-gray-500 mt-1">🔒 Locked</p>
                       ) : (
                         <>
-                          {/* Readiness Indicator */}
+                          {/* Stars Progress */}
                           {progress && !progress.assessmentPassed && (
                             <div className="mt-2 space-y-1">
-                              <div
+                              {/* Star Count */}
+                              {/* <div className="text-xs text-yellow-400">
+                                ⭐ {progress.gamesWithStars || 0}/6 games
+                              </div> */}
+
+                              {/* Readiness Indicator */}
+                              {/* <div
                                 className={`text-[10px] px-2 py-1 rounded-full border inline-block ${getReadinessColor(
                                   progress.recommendedReadiness
                                 )}`}
@@ -324,13 +408,10 @@ export default function DashboardPage() {
                                 {getReadinessLabel(
                                   progress.recommendedReadiness
                                 )}
-                              </div>
-                              <p className="text-[10px] text-gray-400">
-                                {progress.challengesPracticed}/6 practiced
-                              </p>
+                              </div> */}
 
                               {/* Practice Button */}
-                              <button
+                              {/* <button
                                 onClick={() =>
                                   router.push(
                                     `/student/challenges?area=${area.order_index}`
@@ -339,15 +420,59 @@ export default function DashboardPage() {
                                 className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center justify-center gap-1 mx-auto mt-1"
                               >
                                 <BookOpen size={10} />
-                                Practice
-                              </button>
+                                Practice Games
+                              </button> */}
+
+                              {/* NEW: Assessment Button */}
+                              {/* {canAssess && !progress.assessmentPassed && (
+                                <motion.button
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() =>
+                                    router.push(
+                                      `/student/assessment/${area.order_index}`
+                                    )
+                                  }
+                                  className="mt-2 px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-[11px] font-bold rounded-lg shadow-lg hover:shadow-yellow-500/50 transition-all flex items-center gap-1 mx-auto"
+                                >
+                                  <Trophy size={12} />
+                                  Take Assessment
+                                </motion.button>
+                              )} */}
+                              <motion.button
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() =>
+                                  router.push(`/student/assessment/${area.id}`)
+                                }
+                                className="mt-2 px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-[11px] font-bold rounded-lg shadow-lg hover:shadow-yellow-500/50 transition-all flex items-center gap-1 mx-auto"
+                              >
+                                <Trophy size={12} />
+                                Take Assessment
+                              </motion.button>
+
+                              {/* Not Ready Message */}
+                              {/* {!canAssess && !progress.assessmentPassed && (
+                                <p className="text-[9px] text-gray-500 mt-1">
+                                  Earn 1 star in all games to unlock assessment
+                                </p>
+                              )} */}
                             </div>
                           )}
 
                           {progress?.assessmentPassed && (
-                            <p className="text-xs text-green-400 mt-1">
-                              ✓ Completed
-                            </p>
+                            <div className="mt-2">
+                              <p className="text-xs text-green-400">
+                                ✓ Assessment Passed
+                              </p>
+                              <p className="text-[10px] text-gray-400">
+                                Area Completed!
+                              </p>
+                            </div>
                           )}
 
                           {!progress && (
@@ -365,6 +490,96 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* ---------------------------- */}
+
+      {/* RECENT BADGE POPUP */}
+
+      {/* ---------------------------- */}
+
+      <AnimatePresence>
+        {showBadgePopup && recentBadge && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
+          >
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center  backdrop-blur-sm p-4">
+              <div className="relative w-full h-full flex flex-col items-center justify-center">
+                {/* Close Button */}
+
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                  onClick={closeBadgePopup}
+                >
+                  <X size={40} />
+                </button>
+
+                {/* Title */}
+
+                <h1
+                  className="text-7xl font-extrabold mb-8 text-center font-game
+                    bg-gradient-to-b from-yellow-300 to-purple-600 
+                    bg-clip-text text-transparent
+                    drop-shadow-lg animate-[shine_2s_linear_infinite]"
+                >
+                  New Badge!
+                </h1>
+
+                {/* Badge Image */}
+
+                <img
+                  src={
+                    badgeList.find((b) => b.id === recentBadge.id.toString())
+                      ?.icon
+                  }
+                  alt={recentBadge.name}
+                  className="w-85 h-85 md:w-[300px] md:h-[300px] mb-8 object-contain"
+                />
+
+                <p
+                  className="text-4xl font-bold mb-8 text-center
+                    bg-gradient-to-b from-yellow-300 to-purple-600 
+                    bg-clip-text text-transparent
+                    drop-shadow-lg animate-[shine_2s_linear_infinite]"
+                >
+                  {badgeList.find((b) => b.id === recentBadge.id.toString())
+                    ?.name || recentBadge.name}
+                </p>
+
+                {/* Claim Button */}
+
+                <button
+                  onClick={() => claimBadge(recentBadge.id)}
+                  className="
+                    cursor-pointer 
+                    bg-purple-600 
+                    hover:bg-purple-700 
+                    text-white
+                    font-bold 
+                    py-3 
+                    px-9 
+                    rounded-2xl 
+                    text-3xl 
+                    border-2
+                    border-yellow-600
+                    font-game
+                    [text-shadow:1px_1px_0_#facc15]
+                    [-webkit-text-stroke:1px_#c4ac4b]
+                    shadow-[0_0_15px_3px_rgba(250,204,21,0.6)]
+                    hover:shadow-[0_0_20px_5px_rgba(250,204,21,0.9)]
+                    transition-all 
+                    duration-300
+                  "
+                >
+                  Claim
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

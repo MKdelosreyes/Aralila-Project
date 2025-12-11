@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { GrammarCheckIntro } from "@/components/games/grammar-check/intro";
 import { GrammarCheckGame } from "@/components/games/grammar-check/game";
 import {
@@ -12,10 +12,29 @@ import {
 import { grammarAccuracyQuestions } from "@/data/GrammarAccuracyData";
 import { buildRuntimeQuestions, RuntimeGrammarQuestion } from "@/lib/utils";
 import { env } from "@/lib/env";
+import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
-
 type Difficulty = 1 | 2 | 3;
+
+/* -------------------------------------------
+   Tutorial steps for Grammar Check
+--------------------------------------------*/
+const tutorialSteps = [
+  {
+    videoSrc: "/videos/GRAMATIKA_GALORE/1.mp4",
+    description: "Basahin ang bawat salita nang mabuti.",
+  },
+  {
+    videoSrc: "/videos/GRAMATIKA_GALORE/2.mp4",
+    description: "Tiyakin kung ano ang bawat salita.",
+  },
+  {
+    videoSrc: "/videos/GRAMATIKA_GALORE/3.mp4",
+    description:
+      "Hilahin ang mga salita sa tamang puwesto hanggang mabuo ang pangungusap.",
+  },
+];
 
 const GrammarCheckPage = () => {
   const router = useRouter();
@@ -37,6 +56,10 @@ const GrammarCheckPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  /* -------------------------------------------
+     Tutorial state
+  --------------------------------------------*/
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const toDifficulty = (n: number): Difficulty => {
     if (n === 2) return 2;
@@ -44,10 +67,9 @@ const GrammarCheckPage = () => {
     return 1;
   };
 
-  // useEffect(() => {
-  //   setQuestions(buildRuntimeQuestions(grammarAccuracyQuestions));
-  // }, []);
-
+  /* -------------------------------------------
+     Initialization
+  --------------------------------------------*/
   useEffect(() => {
     const init = async () => {
       try {
@@ -56,20 +78,21 @@ const GrammarCheckPage = () => {
           router.push("/login");
           return;
         }
+
         const orderIndex = parseInt(areaId, 10);
         const areaResp = await fetch(
           `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!areaResp.ok) throw new Error("Failed to load area");
+
         const areaJson = await areaResp.json();
         setResolvedAreaId(areaJson.area.id);
 
         const grammar = (areaJson.games || []).find(
           (g: any) => g.game_type === "grammar-check"
         );
+
         if (grammar) {
           const du = grammar.difficulty_unlocked || {};
           const mapped: Record<Difficulty, boolean> = {
@@ -79,10 +102,8 @@ const GrammarCheckPage = () => {
           };
           setUnlocked(mapped);
 
-          // Validate URL difficulty; fallback to highest available or 1
           const requestedRaw = initialDifficulty;
           const requested = toDifficulty(requestedRaw);
-
           const highest: Difficulty = mapped[3] ? 3 : mapped[2] ? 2 : 1;
           setCurrentDifficulty(mapped[requested] ? requested : highest);
           setGameData(grammar);
@@ -99,6 +120,9 @@ const GrammarCheckPage = () => {
     init();
   }, [areaId]);
 
+  /* -------------------------------------------
+     Fetch Questions
+  --------------------------------------------*/
   const fetchQuestions = async (rawAreaParam: string, difficulty: number) => {
     setLoading(true);
     setError(null);
@@ -123,11 +147,9 @@ const GrammarCheckPage = () => {
           const areaData = await areaResp.json();
           actualAreaId = areaData.area.id;
           setResolvedAreaId(actualAreaId);
-        } else {
-          console.warn("Area-by-order lookup failed, using raw param as id.");
         }
       } catch (e) {
-        console.warn("Area-by-order request error, using raw param as id.");
+        console.warn("Area lookup failed, using raw param as id.");
       }
 
       const response = await fetch(
@@ -135,63 +157,37 @@ const GrammarCheckPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.status === 403) {
-        const data = await response.json();
-        setError(data.error || "Access denied");
-        alert(data.error);
-        router.back();
-        return;
-      }
-
-      if (response.status === 500) {
-        let errorDetails = "Internal server error. Please try again later.";
-        try {
-          const errorData = await response.json();
-          errorDetails = errorData.error || errorDetails;
-        } catch {}
-        setError(errorDetails);
-        return;
-      }
-
       if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {}
-        throw new Error(errorMessage);
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to load questions");
       }
 
       const data = await response.json();
 
-      if (!data.questions || data.questions.length === 0) {
+      if (!data.questions?.length) {
         setError("No questions available for this difficulty level.");
         return;
       }
 
       const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, 10);
-
       setQuestions(buildRuntimeQuestions(selected));
-      console.log("First question: ", questions[0]);
+
       setGameData({
         ...data,
         total_pool: data.questions.length,
         used_count: selected.length,
       });
-      if (data.skip_message) {
-        console.log("Skip message:", data.skip_message);
-      }
-    } catch (error) {
-      console.error("Failed to fetch questions:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load questions"
-      );
+    } catch (error: any) {
+      setError(error.message || "Failed to fetch questions");
     } finally {
       setLoading(false);
     }
   };
 
+  /* -------------------------------------------
+     Start Game
+  --------------------------------------------*/
   const handleStart = async () => {
     setError(null);
     setLoading(true);
@@ -199,17 +195,18 @@ const GrammarCheckPage = () => {
     try {
       await fetchQuestions(areaId, currentDifficulty);
 
+      // Move to playing state after questions loaded
       setTimeout(() => {
         setGameState("playing");
       }, 100);
-    } catch (error) {
-      console.error("Error starting game:", error);
-      setError("Failed to start game. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  /* -------------------------------------------
+     Game Complete
+  --------------------------------------------*/
   const handleGameComplete = async ({
     percentScore,
     rawPoints,
@@ -240,10 +237,7 @@ const GrammarCheckPage = () => {
           }),
         }
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        console.error("submit-score failed", response.status, err);
-      }
+
       const data = await response.json().catch(() => ({}));
       setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
     } catch (error) {
@@ -253,6 +247,9 @@ const GrammarCheckPage = () => {
     setGameState("summary");
   };
 
+  /* -------------------------------------------
+     Restart
+  --------------------------------------------*/
   const handleRestart = () => {
     setGameState("intro");
     setFinalScore(0);
@@ -260,9 +257,60 @@ const GrammarCheckPage = () => {
     fetchQuestions(areaId, currentDifficulty);
   };
 
+  /* -------------------------------------------
+     Back Button
+  --------------------------------------------*/
   const handleBack = () => {
     router.push(`/student/challenges?area=${areaId}`);
   };
+
+  const getAreaBGImage = () => {
+    if (resolvedAreaId === null) {
+      return "/images/bg/forestbg-learn.jpg";
+    }
+
+    if (resolvedAreaId === 4) return "/images/bg/Playground.png";
+    else if (resolvedAreaId === 5) return "/images/bg/Classroom.png";
+    else if (resolvedAreaId === 6) return "/images/bg/Home.png";
+    else if (resolvedAreaId === 7) return "/images/bg/Town.png";
+    else if (resolvedAreaId === 8) return "/images/bg/Mountainside.png";
+    else return "/images/bg/Playground.png";
+  };
+
+  if (loading) {
+    return (
+      <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+        <AnimatedBackground imagePath={getAreaBGImage()} />
+        <div className="relative z-20 rounded-3xl p-8 max-w-md w-full">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
+            <p className="text-white font-semibold">Loading questions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+        <AnimatedBackground imagePath={getAreaBGImage()} />
+        <div className="relative z-20 bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="flex flex-col items-center justify-center gap-4 text-center">
+            <div className="text-6xl">😕</div>
+            <h2 className="text-2xl font-bold text-red-600">Oops!</h2>
+            <p className="text-gray-700">{error}</p>
+            <button
+              onClick={handleBack}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
+            >
+              Go Back to Challenges
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderGameState = () => {
     switch (gameState) {
@@ -297,20 +345,34 @@ const GrammarCheckPage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            onHelp={() => setShowTutorial(true)} // <-- show tutorial modal
           />
         );
     }
   };
 
+  /* -------------------------------------------
+     Page Render
+  --------------------------------------------*/
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       {/* Background */}
-      <AnimatedBackground />
+      <AnimatedBackground imagePath={getAreaBGImage()} />
 
       {/* Game Content */}
       <div className="w-full flex items-center justify-center">
         {renderGameState()}
       </div>
+
+      {/* -----------------------------
+           Tutorial Modal
+      ------------------------------ */}
+      {showTutorial && (
+        <TutorialModal
+          steps={tutorialSteps}
+          onClose={() => setShowTutorial(false)}
+        />
+      )}
     </div>
   );
 };

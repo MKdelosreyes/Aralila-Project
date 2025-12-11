@@ -1,174 +1,136 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import Image from "next/image";
+import AnimatedBackground from "@/components/bg/animated-bg";
 
 export default function PlaygroundHome() {
-  const [mode, setMode] = useState<"create" | "join" | null>(null);
-  const [playerName, setPlayerName] = useState("");
-  const [roomKey, setRoomKey] = useState("");
-  const [useRealName, setUseRealName] = useState(false);
   const router = useRouter();
-  const { user } = useAuth();
-
-  // ✅ Auto-fill with real name if checkbox is checked
-  useEffect(() => {
-    if (useRealName && user) {
-      setPlayerName(user.full_name);
-    }
-  }, [useRealName, user]);
-
-  const generateRoomKey = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    return Array.from(
-      { length: 6 },
-      () => chars[Math.floor(Math.random() * chars.length)]
-    ).join("");
-  };
-
-  const handleCreateRoom = () => {
-    if (!playerName) {
-      alert("Please enter your name!");
-      return;
-    }
-
-    const newKey = generateRoomKey();
-    router.push(
-      `/student/playground/lobby?player=${encodeURIComponent(
-        playerName
-      )}&room=${newKey}&isHost=true`
-    );
-  };
-
-  const handleJoinRoom = () => {
-    if (!playerName || !roomKey) {
-      alert("Please enter your name and room key!");
-      return;
-    }
-
-    router.push(
-      `/student/playground/lobby?player=${encodeURIComponent(
-        playerName
-      )}&room=${roomKey}&isHost=false`
-    );
-  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6">
-      <h2 className="text-3xl font-bold">🎨 Story Chain Playground</h2>
+    <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
+      <AnimatedBackground />
 
-      {!mode && (
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={() => setMode("create")}
-            className="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600 transition"
-          >
-            Create Game Room
-          </button>
-          <button
-            onClick={() => setMode("join")}
-            className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition"
-          >
-            Join Existing Room
-          </button>
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-20">
+        <div className="w-full max-w-6xl">
+          <h1 className="text-6xl md:text-7xl font-extrabold text-white mb-4 text-center">
+            Playground
+          </h1>
+          <p className="text-lg md:text-xl text-white/80 mb-10 text-center">
+            Choose a game mode to play — invite friends, compete, and have fun.
+          </p>
+
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            {/* Story Chain Card */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                router.push("/student/playground/modes/story-chain")
+              }
+              className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-b from-white/80 to-white/70 p-8 shadow-2xl hover:scale-[1.02] transition"
+            >
+              <div className="flex items-start gap-6">
+                <div className="flex-1">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    Story Chain
+                  </h3>
+                  <p className="text-sm md:text-base text-gray-600 mt-3">
+                    Take turns adding words or short phrases to build a sentence
+                    based on the image.
+                  </p>
+                </div>
+
+                <div className="w-28 h-28 relative hidden md:block flex-shrink-0">
+                  <Image
+                    src="/images/character/lila-pencil.png"
+                    alt="Lila with pencil"
+                    fill
+                    sizes="(max-width: 768px) 120px, 112px"
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <button className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg hover:brightness-105 transition">
+                  Play
+                </button>
+                <div className="text-sm text-gray-500">2–3 players</div>
+              </div>
+            </div>
+
+            {/* Filipino Wordle Card */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                router.push("/student/playground/modes/filipino-wordle")
+              }
+              className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-b from-white/80 to-white/70 p-8 shadow-2xl hover:scale-[1.02] transition"
+            >
+              <div className="flex items-start gap-6">
+                <div className="flex-1">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    Filipino Wordle
+                  </h3>
+                  <p className="text-sm md:text-base text-gray-600 mt-3">
+                    Guess the Filipino word — daily puzzles and word practice.
+                  </p>
+                </div>
+
+                <div className="w-28 h-28 relative hidden md:block flex-shrink-0">
+                  <Image
+                    src="/images/character/lila-computer.png"
+                    alt="Lila on computer"
+                    fill
+                    sizes="(max-width: 768px) 120px, 112px"
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <button className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg hover:brightness-105 transition">
+                  Play
+                </button>
+                <div className="text-sm text-gray-500">Solo / Practice</div>
+              </div>
+            </div>
+
+            {/* Locked Card */}
+            <div className="relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-white/5 p-8 shadow-2xl opacity-80">
+              <div className="flex items-start gap-6">
+                <div className="flex-1">
+                  <h3 className="text-2xl md:text-3xl font-bold text-white/90">
+                    Locked
+                  </h3>
+                  <p className="text-sm md:text-base text-white/60 mt-3">
+                    More game modes coming soon — stay tuned!
+                  </p>
+                </div>
+
+                <div className="w-28 h-28 relative hidden md:block flex-shrink-0 opacity-30">
+                  <Image
+                    src="/images/character/lila-normal.png"
+                    alt="Lila"
+                    fill
+                    sizes="(max-width: 768px) 120px, 112px"
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <div className="px-4 py-2 rounded-lg font-semibold text-gray-400">
+                  Coming Soon
+                </div>
+                <div className="text-sm text-gray-500">—</div>
+              </div>
+            </div>
+          </section>
         </div>
-      )}
-
-      {/* CREATE ROOM MODE */}
-      {mode === "create" && (
-        <div className="flex flex-col items-center gap-3 bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-semibold">Create a Game Room</h3>
-
-          {/* ✅ NEW: Checkbox to use real name */}
-          {user && (
-            <label className="flex items-center gap-2 text-sm text-gray-600">
-              <input
-                type="checkbox"
-                checked={useRealName}
-                onChange={(e) => setUseRealName(e.target.checked)}
-                className="w-4 h-4"
-              />
-              Use my real name ({user.full_name})
-            </label>
-          )}
-
-          <input
-            className="border p-2 rounded w-64"
-            placeholder="Your game name..."
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            disabled={useRealName}
-          />
-          <button
-            onClick={handleCreateRoom}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-          >
-            Generate Room
-          </button>
-          <button
-            onClick={() => {
-              setMode(null);
-              setPlayerName("");
-              setUseRealName(false);
-            }}
-            className="text-gray-500 underline text-sm mt-2"
-          >
-            ← Back
-          </button>
-        </div>
-      )}
-
-      {/* JOIN ROOM MODE */}
-      {mode === "join" && (
-        <div className="flex flex-col items-center gap-3 bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-semibold">Join a Game Room</h3>
-
-          {/* ✅ NEW: Checkbox to use real name */}
-          {user && (
-            <label className="flex items-center gap-2 text-sm text-gray-600">
-              <input
-                type="checkbox"
-                checked={useRealName}
-                onChange={(e) => setUseRealName(e.target.checked)}
-                className="w-4 h-4"
-              />
-              Use my real name ({user.full_name})
-            </label>
-          )}
-
-          <input
-            className="border p-2 rounded w-64"
-            placeholder="Your game name..."
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            disabled={useRealName}
-          />
-          <input
-            className="border p-2 rounded w-64 uppercase"
-            placeholder="Enter Room Key (e.g., X5B7QK)"
-            value={roomKey}
-            onChange={(e) => setRoomKey(e.target.value.toUpperCase())}
-          />
-          <button
-            onClick={handleJoinRoom}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            Join Room
-          </button>
-          <button
-            onClick={() => {
-              setMode(null);
-              setPlayerName("");
-              setRoomKey("");
-              setUseRealName(false);
-            }}
-            className="text-gray-500 underline text-sm mt-2"
-          >
-            ← Back
-          </button>
-        </div>
-      )}
+      </main>
     </div>
   );
 }

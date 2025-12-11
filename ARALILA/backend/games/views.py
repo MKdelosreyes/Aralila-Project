@@ -8,6 +8,7 @@ from django.db.models import Avg, Max, Count, Q
 from .models import Area, Game, GameItem, AssessmentLesson, AssessmentChallenge, AssessmentProgress
 from progress.models import GameProgress
 import os
+import random
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
@@ -968,7 +969,7 @@ def get_assessment_lesson(request, area_id):
         total_practice_games = Game.objects.filter(id__in=game_ids).count()
         
         if total_practice_games == 0:
-            total_practice_games = 6  # Expected number of games per area
+            total_practice_games = 6  
         
         # Check if user has at least 1 star in ALL practice games
         practice_progress = GameProgress.objects.filter(
@@ -990,9 +991,11 @@ def get_assessment_lesson(request, area_id):
         
         # Get or create assessment lesson
         lesson, _ = AssessmentLesson.objects.get_or_create(area=area)
-        challenges = AssessmentChallenge.objects.filter(
+        challenges = list(AssessmentChallenge.objects.filter(
             lesson=lesson
-        ).prefetch_related('options')
+        ).prefetch_related('options'))
+
+        random.shuffle(challenges) 
         
         user_completed = set(
             AssessmentProgress.objects.filter(
@@ -1003,12 +1006,12 @@ def get_assessment_lesson(request, area_id):
         )
         
         challenges_data = []
-        for challenge in challenges:
+        for new_order, challenge in enumerate(challenges, start=1):
             challenge_dict = {
                 'id': challenge.id,
                 'type': challenge.type,
                 'question': challenge.question,
-                'order': challenge.order_index,
+                'order': new_order,
                 'completed': challenge.id in user_completed,
             }
 
@@ -1047,7 +1050,7 @@ def get_assessment_lesson(request, area_id):
                 mark_groups = {}
                 for opt in challenge.options.all():
                     mark = opt.text
-                    word_idx = opt.order_position  # ✅ Already a word index from seed
+                    word_idx = opt.order_position  
                     
                     if mark not in mark_groups:
                         mark_groups[mark] = []
@@ -1057,7 +1060,7 @@ def get_assessment_lesson(request, area_id):
                     {
                         'id': idx,
                         'mark': mark,
-                        'positions': positions  # ✅ List of word indices
+                        'positions': positions  
                     }
                     for idx, (mark, positions) in enumerate(mark_groups.items())
                 ]
@@ -1174,14 +1177,12 @@ def validate_challenge_answer(request):
                     )
                 )
             
-            # ✅ DEBUG logging
             print(f"📊 TAG_POS Validation:")
             print(f"   User answer: {answer}")
             print(f"   Correct matches: {correct_matches}")
             print(f"   Is correct: {is_correct}")
         
         elif challenge.type == 'COMPOSE':
-            # ✅ Use AI validation instead of keyword matching
             try:
                 # Extract emojis from question (e.g., "Write a sentence using: 🌧️ 📚 ☕")
                 import re
@@ -1208,7 +1209,7 @@ def validate_challenge_answer(request):
                 
                 return Response({
                     'correct': is_correct,
-                    'correctAnswer': None,  # No single correct answer for COMPOSE
+                    'correctAnswer': None,  
                     'ai_feedback': ai_result.get('explanation'),
                     'score': ai_result.get('score'),
                     'suggestions': ai_result.get('filipino_equivalents', {})

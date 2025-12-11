@@ -21,6 +21,8 @@ interface User {
     status: string;
     claimed_at?: string;
   }>;
+  current_hearts?: number;
+  next_refill_at?: string | null;
 }
 
 interface AuthContextType {
@@ -71,6 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile_pic: data.profile_pic,
         ls_points: data.ls_points || 0,
         collected_badges: data.collected_badges || [],
+        current_hearts: data.current_hearts ?? 3,
+        next_refill_at: data.next_refill_at,
       };
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -136,13 +140,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await authAPI.login({ email, password });
 
-      // Mirror tokens immediately after password login
       localStorage.setItem("access_token", response.session.access_token);
       if (response.session.refresh_token) {
         localStorage.setItem("refresh_token", response.session.refresh_token);
       }
 
-      // Fetch complete user profile from Django backend
       const userData = await fetchUserProfile(response.session.access_token);
       setUser(userData);
 

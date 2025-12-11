@@ -2,9 +2,13 @@ import Image from "next/image";
 
 type QuestionBubbleProps = {
   question: string;
+  challengeType?: string;
 };
 
-export const QuestionBubble = ({ question }: QuestionBubbleProps) => {
+export const QuestionBubble = ({
+  question,
+  challengeType,
+}: QuestionBubbleProps) => {
   return (
     <div className="mb-6 flex items-center gap-x-4">
       <Image
@@ -22,7 +26,13 @@ export const QuestionBubble = ({ question }: QuestionBubbleProps) => {
         className="block lg:hidden"
       />
 
-      <div className="relative rounded-xl border-2 px-4 py-2 text-sm lg:text-base">
+      <div
+        className={
+          challengeType === "COMPOSE"
+            ? "relative rounded-xl border-2 px-4 py-2 text-sm lg:text-4xl text-center"
+            : "relative rounded-xl border-2 px-4 py-2 text-sm lg:text-base"
+        }
+      >
         {question}
 
         <div

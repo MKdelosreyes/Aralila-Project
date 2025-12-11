@@ -14,11 +14,35 @@ type LessonData = {
   challenges: ChallengeType[];
 };
 
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 export default function AssessmentPage() {
   const params = useParams();
   const router = useRouter();
   const [lessonData, setLessonData] = useState<LessonData | null>(null);
-  const [hearts, setHearts] = useState(5);
+  const [hearts, setHearts] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedHearts = localStorage.getItem("currentHearts");
+      const savedRefillTime = localStorage.getItem("heartRefillTime");
+
+      if (savedRefillTime) {
+        const refillTimestamp = parseInt(savedRefillTime, 10);
+        if (Date.now() < refillTimestamp) {
+          return 0;
+        }
+      }
+
+      return savedHearts ? parseInt(savedHearts, 10) : 3;
+    }
+    return 3;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,8 +84,10 @@ export default function AssessmentPage() {
       if (!response.ok) throw new Error("Failed to load assessment");
 
       const data = await response.json();
+      const shuffledChallenges = shuffleArray(data.challenges);
       setLessonData({
         ...data,
+        challenges: shuffledChallenges,
         areaId: areaId,
       });
     } catch (error) {

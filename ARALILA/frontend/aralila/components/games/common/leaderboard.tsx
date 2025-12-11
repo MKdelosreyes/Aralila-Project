@@ -15,7 +15,6 @@ interface LeaderboardEntry {
 }
 
 interface LeaderboardProps {
-  // test change
   gameId: number | string | null;
   gameType: string | null;
   areaId: number | string | null;

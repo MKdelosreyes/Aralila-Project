@@ -5,114 +5,95 @@ import dynamic from "next/dynamic";
 import AnimatedBackground from "@/components/bg/animated-bg";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { ArrowLeft, Users, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const Lobby = dynamic(() => import("@/components/games/Lobby"), { ssr: false });
 
 export default function PlaygroundLobbyPage() {
+  const router = useRouter();
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       <AnimatedBackground />
 
+      {/* Back Button - fixed top-left */}
+      <button
+        onClick={() => router.push("/student/playground/modes/story-chain")}
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white border-2 border-gray-200 hover:border-purple-400 text-gray-700 hover:text-purple-700 font-medium transition-all shadow-sm hover:shadow-md"
+      >
+        <ArrowLeft size={20} />
+        <span>Back</span>
+      </button>
+
       <main className="relative z-10 flex flex-col items-center justify-start min-h-screen p-4 md:p-6 pt-8 md:pt-12">
-        {/* Top Decorative Element */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
-        >
-          <Image
-            src="/images/overlays/story-chain_title.png"
-            alt="Story Chain Title"
-            width={400}
-            height={120}
-            className="w-auto h-auto max-w-xs md:max-w-sm object-contain drop-shadow-2xl"
-            priority
-          />
-        </motion.div>
-
-        {/* Header Section with Glass Effect */}
-        <motion.div
-          className="w-full max-w-4xl backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 md:p-8 mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple-500/20 to-transparent rounded-full blur-2xl -z-10"></div>
-
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-            {/* Character Circle */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="w-28 h-28 md:w-32 md:h-32 relative flex-shrink-0 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border-2 border-white/20 flex items-center justify-center backdrop-blur-sm"
-            >
-              <Image
-                src="/images/character/lila-normal.png"
-                alt="Lila ready to play"
-                width={300}
-                height={300}
-                className="mx-auto drop-shadow-lg"
-              />
-            </motion.div>
-
-            {/* Header Text */}
-            <div className="flex-1 text-center md:text-left">
-              <motion.h1
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 mb-2"
-              >
-                Game Lobby
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-gray-300 text-sm md:text-base leading-relaxed mb-3"
-              >
-                Gather your creative crew and prepare for an epic story adventure
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex flex-wrap justify-center md:justify-start gap-2"
-              >
-                <span className="px-3 py-1 rounded-full bg-purple-500/30 border border-purple-400/50 text-xs text-purple-200 font-medium">
-                  🎯 Real-time
-                </span>
-                <span className="px-3 py-1 rounded-full bg-pink-500/30 border border-pink-400/50 text-xs text-pink-200 font-medium">
-                  🚀 Ready to play
-                </span>
-                <span className="px-3 py-1 rounded-full bg-purple-500/30 border border-purple-400/50 text-xs text-purple-200 font-medium">
-                  ✨ Exciting
-                </span>
-              </motion.div>
-            </div>
+        {/* Title Image - Pop out effect */}
+        <div className="relative z-20 mb-[-60px] md:mb-[-70px]">
+          <div className="relative">
+            <Image
+              src="/images/overlays/story-chain_title.png"
+              alt="Story Chain Title"
+              width={500}
+              height={200}
+              className="w-auto h-auto max-w-[300px] md:max-w-[450px] object-contain drop-shadow-2xl"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-500/30 via-transparent to-transparent blur-xl -z-10"></div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Lobby Card */}
+        {/* White Container */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="w-full max-w-2xl"
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-8 md:p-10 pt-20 md:pt-24"
         >
-          <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl p-8 md:p-10 overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-purple-500/20 to-transparent rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-pink-500/20 to-transparent rounded-full blur-3xl"></div>
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
+              {/* Character Circle */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="w-24 h-24 md:w-28 md:h-28 relative flex-shrink-0 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-300 flex items-center justify-center shadow-lg"
+              >
+                <Image
+                  src="/images/character/lila-normal.png"
+                  alt="Lila ready to play"
+                  width={300}
+                  height={300}
+                  className="mx-auto drop-shadow-lg"
+                />
+              </motion.div>
 
-            <div className="relative z-10">
-              <Lobby showHeader={false} />
+              {/* Header Text */}
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                  Game Lobby
+                </h1>
+                <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+                  Gather your creative crew and prepare for an epic story adventure
+                </p>
+              </div>
             </div>
+
+            {/* Feature Badges */}
+            <div className="flex flex-wrap justify-center md:justify-start gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-medium border border-purple-200">
+                <Zap size={14} />
+                Real-time
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-100 text-pink-700 text-xs font-medium border border-pink-200">
+                <Users size={14} />
+                Multiplayer
+              </span>
+            </div>
+          </div>
+
+          {/* Lobby Component */}
+          <div className="relative">
+            <Lobby showHeader={false} />
           </div>
         </motion.div>
       </main>

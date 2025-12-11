@@ -62,8 +62,16 @@ export default function StoryChainLanding() {
       {/* Background Layer */}
       <AnimatedBackground />
 
+      {/* Back Button - fixed top-left */}
+      <button
+        onClick={() => router.push("/student/playground")}
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 hover:bg-white border-2 border-gray-200 hover:border-purple-400 text-gray-700 hover:text-purple-700 font-medium transition-all shadow-sm hover:shadow-md"
+      >
+        <ArrowLeft size={20} />
+        <span>Back to Playground</span>
+      </button>
+
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
-        
         {/* Title Image - Positioned to "pop out" above container */}
         <div className="relative z-20 mb-[-60px] md:mb-[-80px]">
           <div className="relative">

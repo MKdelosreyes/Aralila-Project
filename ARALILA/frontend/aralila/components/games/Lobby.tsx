@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useLobby } from "@/hooks/useLobby";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
-import { Users, Rocket, Star } from "lucide-react";
+import { Users, Rocket, Star, AlertTriangle } from "lucide-react";
 
 interface LobbyProps {
   showHeader?: boolean;
@@ -76,44 +76,56 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
 
   if (connectionError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <h2 className="text-2xl font-bold text-red-600">❌ Connection Error</h2>
-        <p className="text-gray-600">{connectionError}</p>
-        <button
-          onClick={() => router.push("/student/playground")}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Back to Playground
-        </button>
+      <div className="flex items-center justify-center min-h-[320px] px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white border border-red-100 shadow-xl p-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <AlertTriangle className="text-red-500" />
+            <h2 className="text-xl font-bold text-red-600">Connection issue</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">{connectionError}</p>
+          <button
+            onClick={() => router.push("/student/playground")}
+            className="w-full font-semibold py-3 rounded-xl text-base flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-[0_4px_15px_rgba(168,85,247,0.35)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.45)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
+          >
+            Back to Playground
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!roomKey || !playerName) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <h2 className="text-2xl font-bold text-yellow-600">⚠️ Invalid Room</h2>
-        <p className="text-gray-600">Room key or player name is missing.</p>
-        <button
-          onClick={() => router.push("/student/playground")}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Back to Playground
-        </button>
+      <div className="flex items-center justify-center min-h-[320px] px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white border border-yellow-100 shadow-xl p-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <AlertTriangle className="text-yellow-500" />
+            <h2 className="text-xl font-bold text-yellow-700">Invalid room</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            The room code or player name is missing.
+          </p>
+          <button
+            onClick={() => router.push("/student/playground")}
+            className="w-full font-semibold py-3 rounded-xl text-base flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-[0_4px_15px_rgba(168,85,247,0.35)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.45)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
+          >
+            Back to Playground
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 px-4">
+    <div className="flex flex-col items-center gap-6 px-2 sm:px-4 py-2 w-full">
       {showHeader && (
-        <h2 className="text-3xl font-bold text-purple-700 flex items-center gap-2">
-          <Users />
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <Users className="text-purple-600" />
           Story Chain Lobby
         </h2>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 text-gray-700">
         <div
           className={`w-3 h-3 rounded-full transition-all duration-300 ${
             displayConnected ? "bg-purple-500 animate-pulse" : "bg-gray-400"
@@ -124,35 +136,47 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
         </span>
       </div>
 
-      <div className="text-center">
-        <p className="text-sm text-gray-600">Room Code:</p>
-        <p className="text-2xl font-bold text-purple-600">{roomKey}</p>
-        <p className="text-xs text-gray-500 mt-1">
-          Share this code with friends
-        </p>
-        <p className="text-sm text-purple-600 font-semibold mt-2">
-          {displayMaxPlayers} Player Game
-        </p>
+      <div className="w-full max-w-md">
+        <div className="rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 to-white px-5 py-4 shadow-sm text-center">
+          <p className="text-xs font-semibold tracking-wide text-gray-600 uppercase">
+            Room code
+          </p>
+          <p className="mt-1 text-2xl font-extrabold text-purple-700 tracking-[0.15em]">
+            {roomKey}
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            Share this code with your friends to invite them
+          </p>
+          <p className="mt-3 inline-flex items-center justify-center gap-2 rounded-full bg-white/80 border border-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
+            <Users size={14} /> {displayMaxPlayers} player game
+          </p>
+        </div>
       </div>
 
-      <div className="bg-white border-2 border-gray-200 rounded-lg p-4 w-80 text-center shadow-sm">
-        <h3 className="font-semibold text-lg mb-3 flex items-center justify-center gap-2">
-          <Users className="text-purple-500" /> Players ({displayPlayers.length}
-          /{displayMaxPlayers})
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 w-full max-w-md shadow-sm">
+        <h3 className="font-semibold text-base mb-3 flex items-center justify-between gap-2 text-gray-900">
+          <span className="inline-flex items-center gap-2">
+            <Users className="text-purple-500" /> Players
+          </span>
+          <span className="text-xs font-medium text-gray-500">
+            {displayPlayers.length}/{displayMaxPlayers}
+          </span>
         </h3>
 
         <ul className="space-y-2">
           {displayPlayers.length === 0 ? (
-            <li className="text-gray-400 italic">Waiting for players...</li>
+            <li className="text-gray-500 italic text-sm">
+              Waiting for other players to join...
+            </li>
           ) : (
             displayPlayers.map((p, index) => (
               <li
                 key={`${p}-${index}`}
-                className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded"
+                className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg"
               >
-                <span className="text-sm font-medium">{p}</span>
+                <span className="text-sm font-medium text-gray-800">{p}</span>
                 {p === playerName && (
-                  <span className="text-xs bg-purple-500 text-white px-2 py-1 rounded">
+                  <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full font-semibold">
                     You
                   </span>
                 )}
@@ -172,7 +196,7 @@ export default function Lobby({ showHeader = true }: LobbyProps) {
       )}
 
       {isStarting && (
-        <div className="text-purple-600 font-bold text-xl mt-4 animate-bounce flex items-center gap-2">
+        <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-purple-800 bg-purple-50 border border-purple-200 rounded-full px-4 py-2">
           <Rocket className="text-purple-600" /> Starting the game...
         </div>
       )}

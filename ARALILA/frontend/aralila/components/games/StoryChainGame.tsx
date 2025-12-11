@@ -117,20 +117,22 @@ export default function StoryChainGame() {
     const winner = sortedScores[0];
 
     return (
-      <div className="p-8 max-w-2xl mx-auto">
+      <div className="p-6 md:p-8 max-w-2xl mx-auto">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-3">
             <Trophy className="text-yellow-400" />
-            <h2 className="text-4xl font-bold mb-2">Game Over</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-1 text-gray-900">
+              Game Over
+            </h2>
           </div>
-          <p className="text-xl text-purple-600 font-semibold mt-2">
+          <p className="text-base md:text-xl text-purple-600 font-semibold mt-2">
             Winner: {winner?.[0] || "N/A"} ({winner?.[1] || 0} pts)
           </p>
         </div>
 
         {/* Scores */}
-        <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6">
-          <h3 className="text-xl font-bold mb-4 text-center flex items-center justify-center gap-2">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
+          <h3 className="text-lg md:text-xl font-bold mb-4 text-center flex items-center justify-center gap-2 text-gray-900">
             <Star className="text-purple-500" />
             Final Scores
           </h3>
@@ -138,7 +140,7 @@ export default function StoryChainGame() {
             {sortedScores.map(([p, s], i) => (
               <li
                 key={p}
-                className={`flex justify-between items-center p-3 rounded-lg ${
+                className={`flex justify-between items-center p-3 rounded-xl ${
                   i === 0
                     ? "bg-purple-50 border-2 border-purple-400"
                     : "bg-gray-50 border border-gray-200"
@@ -157,8 +159,8 @@ export default function StoryChainGame() {
         </div>
 
         {/* Full Story */}
-        <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 mb-6">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
+          <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
             <FileText className="text-purple-500" /> Complete Story
           </h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -172,9 +174,9 @@ export default function StoryChainGame() {
 
         <button
           onClick={() => router.push("/student/playground")}
-          className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 font-semibold"
+          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl hover:from-purple-500 hover:to-purple-600 font-semibold shadow-md hover:shadow-lg transition-all"
         >
-          Play Again
+          Back to Playground
         </button>
       </div>
     );
@@ -184,59 +186,60 @@ export default function StoryChainGame() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex flex-row items-center justify-between ">
-          <div className="flex flex-row gap-5 items-center justify-center">
-            <h2 className="text-3xl font-bold text-center mb-2 flex items-center justify-center gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
               <BookOpen className="text-purple-600" />
-              Story Chain: {room}
+              Story Chain
             </h2>
-
-            {/* Connection Status */}
-            <div className="flex justify-center items-center gap-2 mb-4">
+            <p className="text-sm text-gray-600">
+              Room
+              <span className="ml-1 font-semibold text-purple-600">{room}</span>
+            </p>
+            <div className="flex items-center gap-2 mt-1">
               <div
                 className={`w-2 h-2 rounded-full ${
                   isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
                 }`}
               />
-              <span className="text-sm text-gray-600">
+              <span className="text-xs font-medium text-gray-600">
                 {isConnected ? "Connected" : "Reconnecting..."}
               </span>
             </div>
           </div>
 
           {/* Game Stats */}
-          <div className="flex flex-wrap justify-center gap-3 text-sm">
+          <div className="flex flex-wrap justify-center gap-3 text-xs md:text-sm">
             <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full inline-flex items-center gap-2">
               <ImageIcon size={14} /> Image {gameState.imageIndex + 1}/
               {gameState.totalImages}
             </span>
 
             <span
-              className={`px-3 py-1 rounded-full font-bold ${
+              className={`px-3 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
                 isMyTurn
                   ? "bg-purple-200 text-purple-800 animate-pulse"
-                  : "bg-gray-200"
+                  : "bg-gray-200 text-gray-700"
               }`}
             >
-              <Zap className="inline-block mr-1" size={14} />{" "}
-              {isMyTurn ? "Your Turn" : `Turn: ${gameState.currentTurn}`}
+              <Zap size={14} />
+              {isMyTurn ? "Your turn" : `Turn: ${gameState.currentTurn}`}
             </span>
 
             <span
-              className={`px-3 py-1 rounded-full font-bold ${
+              className={`px-3 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
                 gameState.timeLeft <= 5
-                  ? "bg-red-200 text-red-700 animate-pulse"
-                  : "bg-orange-100"
+                  ? "bg-red-100 text-red-700 animate-pulse"
+                  : "bg-orange-100 text-orange-800"
               }`}
             >
-              <Clock className="inline-block mr-1" size={14} />{" "}
-              {gameState.timeLeft}s
+              <Clock size={14} /> {gameState.timeLeft}s
             </span>
           </div>
         </div>
 
         {/* Player Order */}
-        <div className="flex justify-center gap-2 mt-3">
+        <div className="flex flex-wrap justify-center gap-2 mt-3">
           {gameState.players.map((p, idx) => (
             <div
               key={p}
@@ -245,7 +248,7 @@ export default function StoryChainGame() {
                   ? "bg-green-500 text-white"
                   : p === player
                   ? "bg-blue-500 text-white"
-                  : "bg-gray-300 text-gray-700"
+                  : "bg-gray-200 text-gray-700"
               }`}
             >
               {idx + 1}. {p}
@@ -258,39 +261,41 @@ export default function StoryChainGame() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Current Image (2/3 width on large screens) */}
         <div className="lg:col-span-2">
-          {gameState.imageUrl ? (
-            <div>
-              <div className="relative">
-                <Image
-                  src={gameState.imageUrl}
-                  alt="Story scene"
-                  width={150}
-                  height={150}
-                  className="rounded-lg w-full shadow-xl object-contain border-4 border-purple-200"
-                  style={{ maxHeight: "350px" }}
-                />
-                <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                  Image {gameState.imageIndex + 1}
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 h-full shadow-sm">
+            {gameState.imageUrl ? (
+              <div>
+                <div className="relative">
+                  <Image
+                    src={gameState.imageUrl}
+                    alt="Story scene"
+                    width={150}
+                    height={150}
+                    className="rounded-lg w-full shadow-xl object-contain border-4 border-purple-200"
+                    style={{ maxHeight: "350px" }}
+                  />
+                  <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-md">
+                    Image {gameState.imageIndex + 1}
+                  </div>
                 </div>
-              </div>
               {/* {gameState.imageDescription && (
                 <p className="mt-3 text-sm text-gray-600 text-center italic bg-gray-50 p-3 rounded-lg flex items-start gap-2">
                   <ImageIcon size={16} className="text-purple-500" />
                   <span>{gameState.imageDescription}</span>
                 </p>
               )} */}
-            </div>
-          ) : (
-            <div className="bg-gray-100 rounded-lg p-12 text-center">
-              <p className="text-gray-400 text-lg">Loading image...</p>
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="bg-gray-50 rounded-xl p-10 text-center border border-dashed border-gray-200">
+                <p className="text-gray-400 text-sm md:text-base">Loading image...</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ✅ Previous Sentences (1/3 width on large screens) */}
         <div className="lg:col-span-1">
-          <div className="bg-white border-2 border-gray-200 rounded-lg p-4 h-full">
-            <h3 className="font-bold text-sm text-gray-600 mb-3 flex items-center gap-2">
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 h-full shadow-sm">
+            <h3 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
               <FileText className="text-purple-600" />
               <span>Previous Sentences</span>
             </h3>
@@ -319,8 +324,8 @@ export default function StoryChainGame() {
       </div>
 
       {/* ✅ Current Sentence Being Formed - RESETS PER IMAGE */}
-      <div className="bg-gradient-to-r from-purple-50 to-white border-2 border-purple-200 rounded-lg p-4 mb-4">
-        <h3 className="font-bold text-sm text-gray-600 mb-2 flex items-center gap-2">
+      <div className="bg-gradient-to-r from-purple-50 to-white border border-purple-200 rounded-2xl p-4 mb-4">
+        <h3 className="font-bold text-sm text-gray-700 mb-2 flex items-center gap-2">
           <Edit3 className="text-purple-600" />
           Current Sentence (Image {gameState.imageIndex + 1}):
         </h3>
@@ -353,7 +358,7 @@ export default function StoryChainGame() {
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-2 border-gray-300 rounded-lg p-4 shadow-lg">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
         {isMyTurn ? (
           <>
             <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -365,7 +370,7 @@ export default function StoryChainGame() {
               value={sentence}
               onChange={(e) => setSentence(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="border-2 border-gray-300 p-3 rounded-lg w-full focus:border-blue-500 focus:outline-none text-lg"
+              className="border-2 border-gray-300 bg-gray-50 p-3 rounded-lg w-full focus:border-purple-500 focus:outline-none text-base md:text-lg"
               placeholder={
                 currentSentenceParts.length === 0
                   ? "Start the sentence (will auto-capitalize)..."
@@ -384,7 +389,7 @@ export default function StoryChainGame() {
                 className={`px-6 py-2 rounded-lg font-semibold transition-all ${
                   sentence.trim()
                     ? "bg-purple-600 text-white hover:bg-purple-700 hover:scale-105"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
                 }`}
               >
                 Submit Word

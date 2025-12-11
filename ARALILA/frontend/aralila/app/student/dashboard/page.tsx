@@ -389,13 +389,13 @@ export default function DashboardPage() {
                           }}
                           className="relative flex items-center justify-center"
                         >
-                          <div className="absolute -inset-6 md:-inset-10 rounded-3xl bg-purple-400/50 blur-3xl shadow-[0_0_65px_26px_rgba(216,180,254,1)]" />
+                          <div className="absolute inset-0 rounded-3xl" />
                           <Image
                             src="/images/overlays/assessment-area-book-1.png"
                             alt="Assessment area 1"
                             width={192}
                             height={192}
-                            className="relative w-32 h-32 md:w-44 md:h-44 object-contain drop-shadow-[0_0_35px_rgba(216,180,254,1)]"
+                            className="relative w-32 h-32 md:w-44 md:h-44 object-contain"
                             priority
                           />
                         </motion.div>

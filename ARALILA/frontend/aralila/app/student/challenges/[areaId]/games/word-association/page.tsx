@@ -67,6 +67,25 @@ const WordAssociationPage = () => {
 
         const areaJson = await areaResp.json();
         setResolvedAreaId(areaJson.area.id);
+
+        // Populate difficulty unlocks from backend for word-association
+        const wa = (areaJson.games || []).find(
+          (g: any) => g.game_type === "word-association"
+        );
+        if (wa) {
+          const du = wa.difficulty_unlocked || {};
+          const mapped: { [k: number]: boolean } = {
+            1: true,
+            2: !!(du[2] ?? du["2"]),
+            3: !!(du[3] ?? du["3"]),
+          };
+          setUnlocked(mapped);
+
+          // Validate current difficulty against unlocked; fallback to highest available
+          const requested = initialDifficulty;
+          const highestUnlocked = mapped[3] ? 3 : mapped[2] ? 2 : 1;
+          setCurrentDifficulty(mapped[requested] ? requested : highestUnlocked);
+        }
       } catch (e: any) {
         setError(e.message || "Failed to load area");
       } finally {
@@ -187,6 +206,22 @@ const WordAssociationPage = () => {
       const data = await response.json().catch(() => ({}));
       // server should return stars_earned, difficulty_unlocked, next_difficulty etc.
       setGameData((prev: any) => ({ ...prev, ...data, raw_points: score }));
+
+      // Update unlocked map if backend returns it
+      if (data?.difficulty_unlocked) {
+        const du = data.difficulty_unlocked;
+        const mapped: { [k: number]: boolean } = {
+          1: true,
+          2: !!(du[2] ?? du["2"]),
+          3: !!(du[3] ?? du["3"]),
+        };
+        setUnlocked(mapped);
+      }
+
+      // Optionally set next difficulty if provided and unlocked
+      if (data?.next_difficulty && unlocked[data.next_difficulty]) {
+        setCurrentDifficulty(data.next_difficulty as number);
+      }
     } catch (error) {
       console.error("Failed to submit score:", error);
     }
@@ -282,10 +317,12 @@ const WordAssociationPage = () => {
           <WordAssociationIntro
             difficulty={currentDifficulty}
             unlocked={unlocked}
-            onSelectDifficulty={(d) => setCurrentDifficulty(d)}
+            onSelectDifficulty={(d) => {
+              if (unlocked[d]) setCurrentDifficulty(d);
+            }}
             onStartChallenge={handleStart}
             onBack={handleBack}
-            areaId = {resolvedAreaId}
+            areaId={resolvedAreaId}
           />
         );
     }

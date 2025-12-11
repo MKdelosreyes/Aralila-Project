@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { HeartsDisplay } from "../ui/HeartDisplay";
 
 type HeaderProps = {
   menuOpen: boolean;
@@ -32,7 +33,10 @@ export default function Header({ menuOpen, setMenuOpen }: HeaderProps) {
       </a>
 
       {!menuOpen && user && (
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-6">
+          <HeartsDisplay />
+
+          {/* User Info */}
           <div className="flex flex-row gap-2 items-center justify-center">
             <Avatar className="w-12 h-12 relative ring-2 ring-purple-500 shadow-[0_0_12px_3px_rgba(168,85,247,0.5)]">
               <AvatarImage

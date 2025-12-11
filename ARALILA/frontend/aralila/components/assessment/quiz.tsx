@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -70,6 +70,7 @@ export const Quiz = ({
   const [lessonId] = useState(initialLessonId);
   const [areaId] = useState(initialAreaId);
   const [hearts, setHearts] = useState(initialHearts);
+  const [overlayTimeLeft, setOverlayTimeLeft] = useState<number>(0);
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
   });
@@ -93,6 +94,62 @@ export const Quiz = ({
     Array<{ mark: string; position: number }>
   >([]);
   const [taggedWords, setTaggedWords] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("currentHearts", hearts.toString());
+    }
+  }, [hearts]);
+
+  useEffect(() => {
+    const checkHeartRefill = () => {
+      const savedRefillTime = localStorage.getItem("heartRefillTime");
+
+      if (savedRefillTime) {
+        const refillTimestamp = parseInt(savedRefillTime, 10);
+        const now = Date.now();
+
+        if (now >= refillTimestamp) {
+          // Time expired, refill hearts
+          localStorage.removeItem("heartRefillTime");
+          localStorage.setItem("currentHearts", "3");
+          setHearts(3);
+          toast.success("Your hearts have been refilled! 💖");
+        } else if (hearts === 0) {
+          // Still waiting for refill
+          openHeartsModal();
+        }
+      }
+    };
+
+    checkHeartRefill();
+  }, []);
+
+  useEffect(() => {
+    if (hearts !== 0) return;
+
+    const updateOverlayTime = () => {
+      const savedRefillTime = localStorage.getItem("heartRefillTime");
+      if (savedRefillTime) {
+        const refillTimestamp = parseInt(savedRefillTime, 10);
+        const now = Date.now();
+        const remaining = Math.max(0, refillTimestamp - now);
+        setOverlayTimeLeft(remaining);
+      }
+    };
+
+    updateOverlayTime();
+    const interval = setInterval(updateOverlayTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [hearts]);
+
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   // Play audio functions using native Audio API
   const playCorrectSound = () => {
@@ -171,6 +228,11 @@ export const Quiz = ({
   };
 
   const onContinue = () => {
+    if (hearts === 0 && initialPercentage !== 100) {
+      openHeartsModal();
+      return;
+    }
+
     if (challenge.type === "SELECT" || challenge.type === "ASSIST") {
       if (!selectedOption) return;
 
@@ -187,11 +249,16 @@ export const Quiz = ({
         return;
       }
 
+      setIsChecking(true);
+
       const correctOption = options.find(
         (option: ChallengeOption) => option.correct
       );
 
-      if (!correctOption) return;
+      if (!correctOption) {
+        setIsChecking(false);
+        return;
+      }
 
       if (correctOption.id === selectedOption) {
         startTransition(() => {
@@ -206,17 +273,16 @@ export const Quiz = ({
               setStatus("correct");
               setPercentage((prev) => prev + 100 / challenges.length);
 
-              // This is a practice
               if (initialPercentage === 100) {
                 setHearts((prev) => Math.min(prev + 1, MAX_HEARTS));
               }
             })
-            .catch(() =>
-              toast.error("Something went wrong. Please try again.")
-            );
+            .catch(() => toast.error("Something went wrong. Please try again."))
+            .finally(() => {
+              setIsChecking(false);
+            });
         });
       } else {
-        // playIncorrectSound();
         setStatus("wrong");
 
         if (initialPercentage !== 100) {
@@ -229,13 +295,24 @@ export const Quiz = ({
                 }
 
                 if (!response?.error) {
-                  setHearts((prev) => Math.max(prev - 1, 0));
+                  const newHearts = Math.max(hearts - 1, 0);
+                  setHearts(newHearts);
+                  localStorage.setItem("currentHearts", newHearts.toString());
+
+                  if (newHearts === 0) {
+                    openHeartsModal();
+                  }
                 }
               })
               .catch(() =>
                 toast.error("Something went wrong. Please try again.")
-              );
+              )
+              .finally(() => {
+                setIsChecking(false);
+              });
           });
+        } else {
+          setIsChecking(false);
         }
       }
     } else {
@@ -255,6 +332,8 @@ export const Quiz = ({
         setArrangedWords([]);
         setSelectedPunctuation([]);
         setTaggedWords({});
+        setAiFeedback("");
+        setAiScore(0);
         return;
       }
       validateAnswer();
@@ -309,19 +388,17 @@ export const Quiz = ({
         playCorrectSound();
         setStatus("correct");
 
-        // ✅ Store AI feedback for COMPOSE challenges
         if (challenge.type === "COMPOSE" && result.ai_feedback) {
           setAiFeedback(result.ai_feedback);
           setAiScore(result.score || 100);
         }
 
-        // Mark as completed
         await upsertChallengeProgress(challenge.id);
         setPercentage((prev) => prev + 100 / challenges.length);
       } else {
         setStatus("wrong");
 
-        // ✅ Show AI feedback even for wrong answers
+        // Show AI feedback even for wrong answers
         if (challenge.type === "COMPOSE" && result.ai_feedback) {
           setAiFeedback(result.ai_feedback);
           setAiScore(result.score || 0);
@@ -329,7 +406,13 @@ export const Quiz = ({
 
         if (initialPercentage !== 100) {
           await reduceHearts();
-          setHearts((prev) => Math.max(prev - 1, 0));
+          const newHearts = Math.max(hearts - 1, 0);
+          setHearts(newHearts);
+          localStorage.setItem("currentHearts", newHearts.toString());
+
+          if (newHearts === 0) {
+            openHeartsModal();
+          }
         }
       }
     } catch (error) {
@@ -490,13 +573,13 @@ export const Quiz = ({
       : challenge.type === "SPELL"
       ? "Spell the word depicted by the image shown"
       : challenge.type === "ARRANGE"
-      ? "Arrange the words correctly"
+      ? "Arrange the words correctly" // Arrange the words correctly
       : challenge.type === "PUNCTUATE"
       ? "Add the correct punctuation"
       : challenge.type === "TAG_POS"
-      ? challenge.question
+      ? "" // challenge.question
       : challenge.type === "COMPOSE"
-      ? challenge.question
+      ? "Write a sentence based on the given set of emojis" // challenge.question
       : challenge.question;
 
   return (
@@ -507,14 +590,81 @@ export const Quiz = ({
         hasActiveSubscription={!!userSubscription?.isActive}
       />
 
+      {/* Overlay when hearts are depleted */}
+      {hearts === 0 && initialPercentage !== 100 && (
+        <div className="fixed inset-0 bg-black/60 z-40 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md text-center shadow-2xl">
+            <Image
+              src="/images/character/lila-sad.png"
+              alt="No Hearts"
+              height={120}
+              width={120}
+              className="mx-auto mb-4"
+            />
+            <h2 className="text-2xl font-bold mb-2 text-neutral-800">
+              No Hearts Left!
+            </h2>
+
+            {/* ✅ ADD: Hearts and Timer Display */}
+            <div className="my-6 p-4 bg-rose-50 rounded-lg border-2 border-rose-200">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <Image
+                  src="/images/art/heart.svg"
+                  height={32}
+                  width={32}
+                  alt="Heart"
+                />
+                <span className="text-4xl font-bold text-rose-500">0</span>
+              </div>
+              {overlayTimeLeft > 0 && (
+                <div className="space-y-2">
+                  <div className="text-5xl font-bold text-rose-600">
+                    {formatTime(overlayTimeLeft)}
+                  </div>
+                  <p className="text-sm text-neutral-600">
+                    until hearts refill
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <p className="text-neutral-600 mb-6 text-sm">
+              All 3 hearts will be restored automatically. Take a break and come
+              back!
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="default"
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  router.push("/student/dashboard");
+                }}
+              >
+                Exit to Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => openHeartsModal()}
+              >
+                View Full Details
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1">
         <div className="flex h-full items-center justify-center">
           <div className="flex w-full flex-col gap-y-12 px-6 lg:min-h-[350px] lg:w-[600px] lg:px-0">
-            <div className="flex items-center justify-between">
-              <h1 className="text-center text-lg font-bold text-neutral-700 lg:text-start lg:text-3xl">
-                {title}
-              </h1>
-            </div>
+            {title && (
+              <div className="flex items-center justify-between">
+                <h1 className="text-center text-lg font-bold text-neutral-700 lg:text-start lg:text-3xl">
+                  {title}
+                </h1>
+              </div>
+            )}
 
             <div>
               {challenge.type === "ASSIST" && (
@@ -527,7 +677,6 @@ export const Quiz = ({
                 status={status}
                 selectedOption={selectedOption}
                 disabled={pending}
-                // 👇 NEW: Pass additional handlers
                 textAnswer={textAnswer}
                 onTextChange={setTextAnswer}
                 arrangedWords={arrangedWords}
@@ -544,23 +693,30 @@ export const Quiz = ({
 
       <Footer
         disabled={
+          hearts === 0 ||
           pending ||
           isChecking ||
-          (challenge.type === "SELECT" || challenge.type === "ASSIST"
-            ? !selectedOption
-            : challenge.type === "SPELL" || challenge.type === "COMPOSE"
-            ? !textAnswer?.trim()
-            : challenge.type === "ARRANGE"
-            ? arrangedWords.length === 0
-            : challenge.type === "PUNCTUATE"
-            ? selectedPunctuation.length === 0
-            : challenge.type === "TAG_POS"
-            ? Object.keys(taggedWords).length !== (challenge.words?.length || 0)
-            : true)
+          (status === "none" &&
+            (challenge.type === "SELECT" || challenge.type === "ASSIST"
+              ? !selectedOption
+              : challenge.type === "SPELL" || challenge.type === "COMPOSE"
+              ? !textAnswer?.trim()
+              : challenge.type === "ARRANGE"
+              ? arrangedWords.length === 0
+              : challenge.type === "PUNCTUATE"
+              ? selectedPunctuation.length === 0
+              : challenge.type === "TAG_POS"
+              ? Object.keys(taggedWords).length !==
+                (challenge.words?.filter(
+                  (w: any) => w.correctTag || w.index !== undefined
+                )?.length || 0)
+              : true))
         }
         status={status}
         onCheck={onContinue}
         resetAssessment={resetAssessment}
+        // aiFeedback={aiFeedback}
+        // aiScore={aiScore}
         isChecking={isChecking}
       />
     </div>

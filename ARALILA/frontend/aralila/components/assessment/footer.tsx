@@ -12,7 +12,7 @@ type FooterProps = {
   resetAssessment: () => void;
   aiFeedback?: string;
   aiScore?: number;
-  isChecking?: boolean; // ✅ Add loading state
+  isChecking?: boolean;
 };
 
 export const Footer = ({
@@ -23,7 +23,7 @@ export const Footer = ({
   resetAssessment,
   aiFeedback,
   aiScore,
-  isChecking = false, // ✅ Default to false
+  isChecking = false,
 }: FooterProps) => {
   useKey("Enter", onCheck, {}, [onCheck]);
   const isMobile = useMedia("(max-width: 1024px)");
@@ -78,14 +78,13 @@ export const Footer = ({
         )}
 
         <Button
-          disabled={disabled || isChecking} // ✅ Disable while checking
+          disabled={disabled || isChecking}
           aria-disabled={disabled || isChecking}
           className="ml-auto px-12 py-5 text-base border border-gray-300"
           onClick={onCheck}
           size={isMobile ? "sm" : "lg"}
           variant={status === "wrong" ? "danger" : "secondary"}
         >
-          {/* ✅ Show loading state */}
           {isChecking ? (
             <span className="flex items-center gap-2">
               <svg

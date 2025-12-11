@@ -74,7 +74,7 @@ class Command(BaseCommand):
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
                 'image_prompt': '/images/chicken.png',  # You'll replace with actual image path
-                'correct_answer': 'Aso',
+                'correct_answer': 'Manok',
                 'options': []  # No options needed for SPELL
             },
             {
@@ -88,21 +88,21 @@ class Command(BaseCommand):
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
                 'image_prompt': '/images/panda.png',
-                'correct_answer': 'Bahay',
+                'correct_answer': 'Panda',
                 'options': []
             },
             {
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
                 'image_prompt': '/images/watermelon.png',
-                'correct_answer': 'Puno',
+                'correct_answer': 'Watermelon',
                 'options': []
             },
             {
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
                 'image_prompt': '/images/owl.png',
-                'correct_answer': 'Tubig',
+                'correct_answer': 'Owl',
                 'options': []
             },
             
@@ -163,7 +163,7 @@ class Command(BaseCommand):
             # ========== ARRANGE (5 items) ==========
             {
                 'type': 'ARRANGE',
-                'question': 'Arrange: "I am happy"',
+                'question': '"I am happy"',
                 'correct_answer': 'Ako ay masaya',
                 'options': [
                     {'text': 'Ako', 'correct': True, 'order_position': 1},
@@ -173,7 +173,7 @@ class Command(BaseCommand):
             },
             {
                 'type': 'ARRANGE',
-                'question': 'Arrange: "The dog is playing"',
+                'question': '"The dog is playing"',
                 'correct_answer': 'Ang aso ay naglalaro',
                 'options': [
                     {'text': 'Ang', 'correct': True, 'order_position': 1},
@@ -184,7 +184,7 @@ class Command(BaseCommand):
             },
             {
                 'type': 'ARRANGE',
-                'question': 'Arrange: "I eat rice"',
+                'question': '"I eat rice"',
                 'correct_answer': 'Kumakain ako ng kanin',
                 'options': [
                     {'text': 'Kumakain', 'correct': True, 'order_position': 1},
@@ -195,7 +195,7 @@ class Command(BaseCommand):
             },
             {
                 'type': 'ARRANGE',
-                'question': 'Arrange: "My name is Maria"',
+                'question': '"My name is Maria"',
                 'correct_answer': 'Ang pangalan ko ay Maria',
                 'options': [
                     {'text': 'Ang', 'correct': True, 'order_position': 1},
@@ -207,7 +207,7 @@ class Command(BaseCommand):
             },
             {
                 'type': 'ARRANGE',
-                'question': 'Arrange: "I go to school"',
+                'question': '"I go to school"',
                 'correct_answer': 'Pumupunta ako sa paaralan',
                 'options': [
                     {'text': 'Pumupunta', 'correct': True, 'order_position': 1},
@@ -220,19 +220,19 @@ class Command(BaseCommand):
             # ========== COMPOSE (3 items) ==========
             {
                 'type': 'COMPOSE',
-                'question': 'Write a sentence using: 🌧️ 📚 ☕',
+                'question': '🌧️ 📚 ☕',
                 'correct_answer': 'rain book coffee reading study',  # Keywords for validation
                 'options': []
             },
             {
                 'type': 'COMPOSE',
-                'question': 'Write a sentence using: 👨‍👩‍👧‍👦 🏠 ❤️',
+                'question': '👨‍👩‍👧‍👦 🏠 ❤️',
                 'correct_answer': 'family home love happy together',
                 'options': []
             },
             {
                 'type': 'COMPOSE',
-                'question': 'Write a sentence using: 🎮 👬 😊',
+                'question': '🎮 👬 😊',
                 'correct_answer': 'game play friends happy fun',
                 'options': []
             },

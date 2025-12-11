@@ -3,7 +3,8 @@ import { Card } from "./card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { QuestionBubble } from "./question-bubble";
 
 type ChallengeOption = {
   id: number;
@@ -65,10 +66,21 @@ export const Challenge = ({
   taggedWords,
   onTag,
 }: ChallengeProps) => {
-  // ✅ Move ALL useState hooks to the top (before any conditional returns)
   const [draggedMark, setDraggedMark] = useState<string | null>(null);
   const [selectedWord, setSelectedWord] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<number | null>(null);
+
+  const shuffledWords = useMemo(() => {
+    if (challenge.type === "ARRANGE" && challenge.words) {
+      const words = [...challenge.words];
+      for (let i = words.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [words[i], words[j]] = [words[j], words[i]];
+      }
+      return words;
+    }
+    return challenge.words || [];
+  }, [challenge.id]);
 
   // 👇 SPELL type - Text input with image
   if (challenge.type === "SPELL") {
@@ -94,10 +106,12 @@ export const Challenge = ({
 
   // 👇 ARRANGE type - Drag and drop words
   if (challenge.type === "ARRANGE") {
-    const availableWords = challenge.words || [];
+    const availableWords = shuffledWords;
 
     return (
       <div className="flex flex-col gap-4">
+        <QuestionBubble question={challenge.question} />
+
         <div className="min-h-[100px] rounded-lg border-2 border-dashed border-sky-200 bg-neutral-50 p-4 flex flex-wrap gap-2">
           {arrangedWords?.map((word: string, index: number) => (
             <Button
@@ -133,7 +147,7 @@ export const Challenge = ({
     );
   }
 
-  // 👇 PUNCTUATE type - Click to add punctuation
+  // 👇 PUNCTUATE type
   if (challenge.type === "PUNCTUATE") {
     const sentence: string = challenge.question || "";
     const words: string[] = sentence.split(" ");
@@ -257,13 +271,11 @@ export const Challenge = ({
     const handleWordClick = (wordId: number) => {
       if (disabled) return;
 
-      // If clicking already matched word, deselect it
       if (taggedWords?.[wordId]) {
         removeMatch(wordId);
         return;
       }
 
-      // If this word is already selected, deselect it
       if (selectedWord === wordId) {
         setSelectedWord(null);
         return;
@@ -271,7 +283,6 @@ export const Challenge = ({
 
       setSelectedWord(wordId);
 
-      // If a POS is already selected, create the match
       if (selectedPos !== null) {
         const posText = posOptions.find((p: any) => p.id === selectedPos)?.text;
         if (posText) {
@@ -285,18 +296,15 @@ export const Challenge = ({
     const handlePosClick = (posId: number, posText: string) => {
       if (disabled) return;
 
-      // Check if this POS is already used in a match
       const matchedWordId = Object.entries(taggedWords || {}).find(
         ([_, tag]) => tag === posText
       )?.[0];
 
-      // If clicking already matched POS, remove that match
       if (matchedWordId) {
         removeMatch(Number(matchedWordId));
         return;
       }
 
-      // If this POS is already selected, deselect it
       if (selectedPos === posId) {
         setSelectedPos(null);
         return;
@@ -304,7 +312,6 @@ export const Challenge = ({
 
       setSelectedPos(posId);
 
-      // If a word is already selected, create the match
       if (selectedWord !== null) {
         onTag?.({ ...taggedWords, [selectedWord]: posText });
         setSelectedWord(null);
@@ -322,7 +329,9 @@ export const Challenge = ({
 
     return (
       <div className="flex flex-col gap-6">
-        <div className="grid grid-cols-2 gap-6">
+        <QuestionBubble question={challenge.question} />
+
+        <div className="grid grid-cols-2 gap-6 place-items-center">
           {/* LEFT COLUMN: Words */}
           <div className="space-y-3">
             <p className="text-sm font-semibold text-neutral-700 mb-3">Words</p>
@@ -336,7 +345,7 @@ export const Challenge = ({
                   onClick={() => handleWordClick(word.id)}
                   disabled={disabled}
                   className={cn(
-                    "w-full p-4 rounded-xl border-2 text-left font-medium transition-all",
+                    "w-full min-w-2xs max-w-xs p-4 rounded-xl border-2 text-left font-medium transition-all",
                     isMatched
                       ? "bg-green-50 border-green-500 text-green-700"
                       : isSelected
@@ -357,7 +366,6 @@ export const Challenge = ({
               Parts of Speech
             </p>
             {posOptions.map((pos: any) => {
-              // Check if this POS is matched to any word
               const matchedWordId = Object.entries(taggedWords || {}).find(
                 ([_, tag]) => tag === pos.text
               )?.[0];
@@ -370,7 +378,7 @@ export const Challenge = ({
                   onClick={() => handlePosClick(pos.id, pos.text)}
                   disabled={disabled}
                   className={cn(
-                    "w-full p-4 rounded-xl border-2 text-center font-medium transition-all",
+                    "w-full min-w-2xs max-w-xs p-4 rounded-xl border-2 text-center font-medium transition-all",
                     isMatched
                       ? "bg-green-50 border-green-500 text-green-700"
                       : isSelected
@@ -396,13 +404,17 @@ export const Challenge = ({
   // 👇 COMPOSE type - Textarea
   if (challenge.type === "COMPOSE") {
     return (
-      <Textarea
-        value={textAnswer}
-        onChange={(e) => onTextChange?.(e.target.value)}
-        placeholder="Write your sentence here..."
-        className="max-h-[100px] font-semibold"
-        disabled={disabled}
-      />
+      <div className="flex flex-col gap-4">
+        <QuestionBubble question={challenge.question} challengeType="COMPOSE" />
+
+        <Textarea
+          value={textAnswer}
+          onChange={(e) => onTextChange?.(e.target.value)}
+          placeholder="Write your sentence here..."
+          className="max-h-[100px] font-semibold"
+          disabled={disabled}
+        />
+      </div>
     );
   }
 

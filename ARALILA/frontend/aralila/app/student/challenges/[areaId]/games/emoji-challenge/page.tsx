@@ -226,10 +226,12 @@ const EmojiChallengePage = () => {
     percentScore,
     rawPoints,
     results,
+    timeTaken,
   }: {
     percentScore: number;
     rawPoints: number;
     results: GameResult[];
+    timeTaken: number;
   }) => {
     setFinalScore(percentScore);
     setFinalResults(results);
@@ -249,6 +251,7 @@ const EmojiChallengePage = () => {
             game_type: "emoji-challenge",
             difficulty: currentDifficulty,
             score: percentScore,
+            time_taken: timeTaken,
           }),
         }
       );
@@ -258,6 +261,17 @@ const EmojiChallengePage = () => {
       }
       const data = await response.json().catch(() => ({}));
       setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
+      
+      // Update unlocked difficulties from backend response
+      if (data.difficulty_unlocked) {
+        const du = data.difficulty_unlocked;
+        const mapped: Record<Difficulty, boolean> = {
+          1: true,
+          2: !!(du[2] ?? du["2"]),
+          3: !!(du[3] ?? du["3"]),
+        };
+        setUnlocked(mapped);
+      }
     } catch (error) {
       console.error("Failed to submit score:", error);
     }

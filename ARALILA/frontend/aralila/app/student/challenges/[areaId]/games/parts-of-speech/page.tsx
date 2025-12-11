@@ -266,10 +266,12 @@ const PartsOfSpeechPage = () => {
     percentScore,
     rawPoints,
     results,
+    timeTaken,
   }: {
     percentScore: number;
     rawPoints: number;
     results: PartsOfSpeechResult[];
+    timeTaken?: number;
   }) => {
     setFinalScore(percentScore);
     setFinalResults(results);
@@ -289,6 +291,7 @@ const PartsOfSpeechPage = () => {
             game_type: "parts-of-speech",
             difficulty: currentDifficulty,
             score: percentScore,
+            time_taken: timeTaken,
           }),
         }
       );

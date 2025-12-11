@@ -363,7 +363,7 @@ export const PunctuationChallengeSummary = ({
           </div>
           <div className="md:col-span-1">
             <Leaderboard
-              gameId={7}
+              gameId={3}
               gameType="punctuation-task"
               areaId={4}
               difficulty={difficulty}

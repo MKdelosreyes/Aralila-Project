@@ -244,10 +244,12 @@ const PunctuationChallengePage = () => {
     percentScore,
     rawPoints,
     results,
+    timeTaken,
   }: {
     percentScore: number;
     rawPoints: number;
     results: PunctuationResult[];
+    timeTaken?: number;
   }) => {
     setFinalScore(percentScore);
     setFinalResults(results);
@@ -267,6 +269,7 @@ const PunctuationChallengePage = () => {
             game_type: "punctuation-task",
             difficulty: currentDifficulty,
             score: percentScore,
+            time_taken: timeTaken ?? undefined,
           }),
         }
       );

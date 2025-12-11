@@ -69,6 +69,31 @@ const WordAssociationPage = () => {
 
         const areaJson = await areaResp.json();
         setResolvedAreaId(areaJson.area.id);
+
+        // Fetch difficulty unlocked status from backend
+        const wordAssocGame = (areaJson.games || []).find(
+          (g: any) => g.game_type === "word-association"
+        );
+        if (wordAssocGame) {
+          const du = wordAssocGame.difficulty_unlocked || {};
+          const mapped: Record<Difficulty, boolean> = {
+            1: true,
+            2: !!(du[2] ?? du["2"]),
+            3: !!(du[3] ?? du["3"]),
+          };
+          setUnlocked(mapped);
+
+          // Validate URL difficulty; fallback to highest available or 1
+          const requestedRaw = initialDifficulty;
+          const requested = toDifficulty(requestedRaw);
+
+          const highest: Difficulty = mapped[3] ? 3 : mapped[2] ? 2 : 1;
+          setCurrentDifficulty(mapped[requested] ? requested : highest);
+          setGameData(wordAssocGame);
+        } else {
+          setUnlocked({ 1: true, 2: false, 3: false });
+          setCurrentDifficulty(1);
+        }
       } catch (e: any) {
         setError(e.message || "Failed to load area");
       } finally {
@@ -159,9 +184,11 @@ const WordAssociationPage = () => {
   const handleGameComplete = async ({
     score,
     results,
+    timeTaken,
   }: {
     score: number;
     results: WordAssociationResult[];
+    timeTaken: number;
   }) => {
     // compute percent from results (summary component also computes percent, but backend expects a percent score)
     const total = results.length || 1;
@@ -186,6 +213,7 @@ const WordAssociationPage = () => {
             game_type: "word-association",
             difficulty: currentDifficulty,
             score: percentScore,
+            time_taken: timeTaken,
           }),
         }
       );

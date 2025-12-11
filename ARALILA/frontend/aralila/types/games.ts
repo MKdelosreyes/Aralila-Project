@@ -49,6 +49,7 @@ export interface PunctuationChallengeGameProps {
     percentScore: number;  
     rawPoints: number;     
     results: PunctuationResult[];
+    timeTaken: number;
   }) => void;
   onExit: () => void;
 }
@@ -75,6 +76,7 @@ export interface PartsOfSpeechGameProps {
     percentScore: number;  
     rawPoints: number;
     results: PartsOfSpeechResult[];
+    timeTaken: number;
   }) => void;
   onExit: () => void;
 }

@@ -214,10 +214,12 @@ const SpellingChallengePage = () => {
     percentScore,
     rawPoints,
     results,
+    timeTaken,
   }: {
     percentScore: number;
     rawPoints: number;
     results: SpellingResult[];
+    timeTaken?: number;
   }) => {
     setFinalScore(percentScore);
     setFinalResults(results);
@@ -237,6 +239,7 @@ const SpellingChallengePage = () => {
             game_type: "spelling-challenge",
             difficulty: currentDifficulty,
             score: percentScore,
+            time_taken: timeTaken,
           }),
         }
       );

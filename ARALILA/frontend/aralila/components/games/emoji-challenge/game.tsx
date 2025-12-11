@@ -27,6 +27,7 @@ interface GameProps {
     percentScore: number;
     rawPoints: number;
     results: GameResult[];
+    timeTaken: number;
   }) => void;
   onExit: () => void;
 }
@@ -66,6 +67,7 @@ export const EmojiHulaSalitaGame = ({
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [status, setStatus] = useState<GameStatus>("playing");
   const [results, setResults] = useState<GameResult[]>([]);
+  const [gameStartTime] = useState<number>(Date.now());
 
   const [lilaState, setLilaState] = useState<LilaState>("thinking");
   const [dialogue, setDialogue] = useState(".....");
@@ -114,11 +116,13 @@ export const EmojiHulaSalitaGame = ({
         totalPossiblePoints > 0
           ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
           : 0;
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
 
       onGameComplete({
         percentScore,
         rawPoints: score,
         results,
+        timeTaken,
       });
       return;
     }
@@ -157,11 +161,13 @@ export const EmojiHulaSalitaGame = ({
         totalPossiblePoints > 0
           ? Math.round((totalEarnedPoints / totalPossiblePoints) * 100)
           : 0;
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
 
       onGameComplete({
         percentScore,
         rawPoints: score,
         results,
+        timeTaken,
       });
     } else {
       setStudentAnswer("");

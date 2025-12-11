@@ -15,14 +15,17 @@ class GameProgress(models.Model):
     # Individual difficulty scores
     difficulty_1_score = models.IntegerField(default=0)  # Easy level
     difficulty_1_completed = models.BooleanField(default=False)
+    difficulty_1_time_taken = models.FloatField(default=0.0, null=True, blank=True, help_text="Time in seconds")
     
     difficulty_2_score = models.IntegerField(default=0)  # Medium level
     difficulty_2_completed = models.BooleanField(default=False)
     difficulty_2_unlocked = models.BooleanField(default=False)  # NEW: Track if unlocked
+    difficulty_2_time_taken = models.FloatField(default=0.0, null=True, blank=True, help_text="Time in seconds")
     
     difficulty_3_score = models.IntegerField(default=0)  # Hard level
     difficulty_3_completed = models.BooleanField(default=False)
     difficulty_3_unlocked = models.BooleanField(default=False)  # NEW: Track if unlocked
+    difficulty_3_time_taken = models.FloatField(default=0.0, null=True, blank=True, help_text="Time in seconds")
     
     # Legacy fields
     # score = models.IntegerField(default=0)

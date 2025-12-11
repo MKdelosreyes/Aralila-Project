@@ -11,10 +11,4 @@ urlpatterns = [
     # -----------------------------
     path('me/badges/', views.user_badges_view, name='user-badges'),
     path('me/badges/<str:badge_id>/claim/', views.claim_badge_view, name='claim-badge'),
-<<<<<<< HEAD
 ]
-=======
-
-    
-]
->>>>>>> origin/sullano

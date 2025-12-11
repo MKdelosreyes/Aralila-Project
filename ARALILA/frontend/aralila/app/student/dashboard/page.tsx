@@ -513,12 +513,17 @@ export default function DashboardPage() {
                   className="absolute top-4 right-4 text-gray-400 hover:text-white"
                   onClick={closeBadgePopup}
                 >
-                  <X size={48} />
+                  <X size={40} />
                 </button>
 
                 {/* Title */}
 
-                <h1 className="text-6xl font-extrabold mb-8 text-white text-center">
+                <h1
+                  className="text-7xl font-extrabold mb-8 text-center font-game
+                    bg-gradient-to-b from-yellow-300 to-purple-600 
+                    bg-clip-text text-transparent
+                    drop-shadow-lg animate-[shine_2s_linear_infinite]"
+                >
                   New Badge!
                 </h1>
 
@@ -530,10 +535,15 @@ export default function DashboardPage() {
                       ?.icon
                   }
                   alt={recentBadge.name}
-                  className="w-96 h-96 md:w-[500px] md:h-[500px] mb-8 object-contain"
+                  className="w-85 h-85 md:w-[300px] md:h-[300px] mb-8 object-contain"
                 />
 
-                <p className="text-4xl font-bold text-white mb-8 text-center">
+                <p
+                  className="text-4xl font-bold mb-8 text-center
+                    bg-gradient-to-b from-yellow-300 to-purple-600 
+                    bg-clip-text text-transparent
+                    drop-shadow-lg animate-[shine_2s_linear_infinite]"
+                >
                   {badgeList.find((b) => b.id === recentBadge.id.toString())
                     ?.name || recentBadge.name}
                 </p>
@@ -542,7 +552,26 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => claimBadge(recentBadge.id)}
-                  className="cursor-pointer bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-10 rounded-xl text-2xl"
+                  className="
+                    cursor-pointer 
+                    bg-purple-600 
+                    hover:bg-purple-700 
+                    text-white
+                    font-bold 
+                    py-3 
+                    px-9 
+                    rounded-2xl 
+                    text-3xl 
+                    border-2
+                    border-yellow-600
+                    font-game
+                    [text-shadow:1px_1px_0_#facc15]
+                    [-webkit-text-stroke:1px_#c4ac4b]
+                    shadow-[0_0_15px_3px_rgba(250,204,21,0.6)]
+                    hover:shadow-[0_0_20px_5px_rgba(250,204,21,0.9)]
+                    transition-all 
+                    duration-300
+                  "
                 >
                   Claim
                 </button>

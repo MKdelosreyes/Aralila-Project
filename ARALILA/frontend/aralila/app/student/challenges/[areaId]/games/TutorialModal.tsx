@@ -40,7 +40,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
   const { videoSrc, description } = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
       <motion.div
         className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] overflow-hidden relative flex flex-col"
         initial={{ scale: 0.8, opacity: 0 }}

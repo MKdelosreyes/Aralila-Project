@@ -154,6 +154,12 @@
   animation: slide-in 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 
+@keyframes shine {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.4); }
+    100% { filter: brightness(1); }
+  }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

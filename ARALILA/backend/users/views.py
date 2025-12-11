@@ -59,8 +59,4 @@ def claim_badge_view(request, badge_id: str):
         user.save()
         return Response({"success": True, "badge_id": badge_id})
     else:
-<<<<<<< HEAD
         return Response({"success": False, "message": "Badge not found or already claimed"}, status=400)
-=======
-        return Response({"success": False, "message": "Badge not found or already claimed"}, status=400)
->>>>>>> origin/sullano

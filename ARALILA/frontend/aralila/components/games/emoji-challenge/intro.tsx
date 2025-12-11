@@ -13,6 +13,7 @@ interface EmojiChallengeIntroProps {
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
+  onHelp?: () => void;
 }
 
 export const EmojiChallengeIntro = ({
@@ -67,8 +68,8 @@ export const EmojiChallengeIntro = ({
               <Image
                 src="/images/character/lila-normal.png"
                 alt="Lila handa nang maglaro"
-                width={250}
-                height={250}
+                width={300}
+                height={300}
                 className="mx-auto"
                 priority
               />

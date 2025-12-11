@@ -20,6 +20,7 @@ import { QuestionBubble } from "./question-bubble";
 import { ResultCard } from "./result-card";
 import { QuizProps, ChallengeOption } from "@/types/games";
 import { Button } from "@/components/ui/button";
+import { error } from "console";
 
 const MAX_HEARTS = 5;
 
@@ -60,6 +61,7 @@ export const Quiz = ({
   const { open: openPracticeModal } = usePracticeModal();
   const [aiFeedback, setAiFeedback] = useState<string>("");
   const [aiScore, setAiScore] = useState<number>(0);
+  const [isChecking, setIsChecking] = useState(false);
 
   useMount(() => {
     if (initialPercentage === 100) openPracticeModal();
@@ -260,73 +262,81 @@ export const Quiz = ({
   };
 
   const validateAnswer = async () => {
-    // Placeholder for other challenge types
-    let answer;
+    setIsChecking(true);
 
-    switch (challenge.type) {
-      case "SPELL":
-      case "COMPOSE":
-        answer = textAnswer;
-        break;
-      case "ARRANGE":
-        answer = arrangedWords;
-        break;
-      case "PUNCTUATE":
-        answer = selectedPunctuation;
-        break;
-      case "TAG_POS":
-        answer = taggedWords;
-        break;
-    }
+    try {
+      let answer;
 
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const response = await fetch(
-      `${env.backendUrl}/api/games/assessment/validate-answer/`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          challengeId: challenge.id,
-          answer: answer,
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (result.correct) {
-      playCorrectSound();
-      setStatus("correct");
-
-      // ✅ Store AI feedback for COMPOSE challenges
-      if (challenge.type === "COMPOSE" && result.ai_feedback) {
-        setAiFeedback(result.ai_feedback);
-        setAiScore(result.score || 100);
+      switch (challenge.type) {
+        case "SPELL":
+        case "COMPOSE":
+          answer = textAnswer;
+          break;
+        case "ARRANGE":
+          answer = arrangedWords;
+          break;
+        case "PUNCTUATE":
+          answer = selectedPunctuation;
+          break;
+        case "TAG_POS":
+          answer = taggedWords;
+          break;
       }
 
-      // Mark as completed
-      await upsertChallengeProgress(challenge.id);
-      setPercentage((prev) => prev + 100 / challenges.length);
-    } else {
-      setStatus("wrong");
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      // ✅ Show AI feedback even for wrong answers
-      if (challenge.type === "COMPOSE" && result.ai_feedback) {
-        setAiFeedback(result.ai_feedback);
-        setAiScore(result.score || 0);
-      }
+      const response = await fetch(
+        `${env.backendUrl}/api/games/assessment/validate-answer/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            challengeId: challenge.id,
+            answer: answer,
+          }),
+        }
+      );
 
-      if (initialPercentage !== 100) {
-        await reduceHearts();
-        setHearts((prev) => Math.max(prev - 1, 0));
+      const result = await response.json();
+
+      if (result.correct) {
+        playCorrectSound();
+        setStatus("correct");
+
+        // ✅ Store AI feedback for COMPOSE challenges
+        if (challenge.type === "COMPOSE" && result.ai_feedback) {
+          setAiFeedback(result.ai_feedback);
+          setAiScore(result.score || 100);
+        }
+
+        // Mark as completed
+        await upsertChallengeProgress(challenge.id);
+        setPercentage((prev) => prev + 100 / challenges.length);
+      } else {
+        setStatus("wrong");
+
+        // ✅ Show AI feedback even for wrong answers
+        if (challenge.type === "COMPOSE" && result.ai_feedback) {
+          setAiFeedback(result.ai_feedback);
+          setAiScore(result.score || 0);
+        }
+
+        if (initialPercentage !== 100) {
+          await reduceHearts();
+          setHearts((prev) => Math.max(prev - 1, 0));
+        }
       }
+    } catch (error) {
+      console.error("Validation error:", error);
+      toast.error("Failed to validate answer. Please try again.");
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -467,7 +477,7 @@ export const Quiz = ({
         <Footer
           lessonId={lessonId}
           status="completed"
-          onCheck={() => router.push("/student/challenges")}
+          onCheck={() => router.push("/student/dashboard")}
           resetAssessment={resetAssessment}
         />
       </>
@@ -535,6 +545,7 @@ export const Quiz = ({
       <Footer
         disabled={
           pending ||
+          isChecking ||
           (challenge.type === "SELECT" || challenge.type === "ASSIST"
             ? !selectedOption
             : challenge.type === "SPELL" || challenge.type === "COMPOSE"
@@ -550,6 +561,7 @@ export const Quiz = ({
         status={status}
         onCheck={onContinue}
         resetAssessment={resetAssessment}
+        isChecking={isChecking}
       />
     </div>
   );

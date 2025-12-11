@@ -372,7 +372,7 @@ const SpellingChallengePage = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}

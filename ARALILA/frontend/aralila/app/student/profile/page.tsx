@@ -142,7 +142,7 @@ export default function UserProfile() {
         // Transform backend data to frontend format
         setUserData({
           username: data.full_name || data.email.split("@")[0],
-          level: Math.floor(data.ls_points / 10) + 1, // Simple level calculation
+          level: Math.floor(data.ls_points / 10) + 1,
           title: "Forest Explorer",
           xp: (data.ls_points % 10) * 300,
           maxXp: 3000,

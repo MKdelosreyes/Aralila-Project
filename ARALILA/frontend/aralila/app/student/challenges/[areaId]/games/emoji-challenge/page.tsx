@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { EmojiChallengeIntro } from "@/components/games/emoji-challenge/intro";
 import { EmojiHulaSalitaGame } from "@/components/games/emoji-challenge/game";
 import {
   EmojiChallengeSummary,
   GameResult,
 } from "@/components/games/emoji-challenge/summary";
-import { emojiSentenceChallenges } from "@/data/EmojiData";
 import { env } from "@/lib/env";
-import { percent } from "framer-motion";
+import { TutorialModal } from "../TutorialModal"; // <-- added
+import { emojiSentenceChallenges } from "@/data/EmojiData";
 
 type GameState = "intro" | "playing" | "summary";
 type Difficulty = 1 | 2 | 3;
@@ -22,6 +22,25 @@ interface Question {
   keywords: string[];
   translation: string;
 }
+
+/* -------------------------------------------
+   Tutorial Steps
+--------------------------------------------*/
+
+const tutorialSteps = [
+  {
+    videoSrc: "/videos/KWENTO_NG_MGA_EMOJI/1.mp4",
+    description: "Basahin ang palatandaan na pangungusap.",
+  },
+  {
+    videoSrc: "/videos/KWENTO_NG_MGA_EMOJI/2.mp4",
+    description: " Suriing mabuti ang mga emoji na konektado sa pangungusap.",
+  },
+  {
+    videoSrc: "/videos/KWENTO_NG_MGA_EMOJI/3.mp4",
+    description: "I-type ang buong pangungusap ayon sa iyong hula.",
+  },
+];
 
 const EmojiChallengePage = () => {
   const router = useRouter();
@@ -43,6 +62,10 @@ const EmojiChallengePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedAreaId, setResolvedAreaId] = useState<number | null>(null);
+  /* -------------------------------------------
+      Tutorial state
+  --------------------------------------------*/
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const toDifficulty = (n: number): Difficulty => {
     if (n === 2) return 2;
@@ -50,6 +73,9 @@ const EmojiChallengePage = () => {
     return 1;
   };
 
+  /* -------------------------------------------
+      Initialization
+  --------------------------------------------*/
   useEffect(() => {
     const init = async () => {
       try {
@@ -61,9 +87,7 @@ const EmojiChallengePage = () => {
         const orderIndex = parseInt(areaId, 10);
         const areaResp = await fetch(
           `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!areaResp.ok) throw new Error("Failed to load area");
         const areaJson = await areaResp.json();
@@ -81,10 +105,7 @@ const EmojiChallengePage = () => {
           };
           setUnlocked(mapped);
 
-          // Validate URL difficulty; fallback to highest available or 1
-          const requestedRaw = initialDifficulty;
-          const requested = toDifficulty(requestedRaw);
-
+          const requested = toDifficulty(initialDifficulty);
           const highest: Difficulty = mapped[3] ? 3 : mapped[2] ? 2 : 1;
           setCurrentDifficulty(mapped[requested] ? requested : highest);
           setGameData(emojiChallenge);
@@ -101,104 +122,69 @@ const EmojiChallengePage = () => {
     init();
   }, [areaId]);
 
+  /* -------------------------------------------
+      Fetch Questions
+  --------------------------------------------*/
   const fetchQuestions = async (rawAreaParam: string, difficulty: number) => {
     setLoading(true);
     setError(null);
-
     try {
       const token = localStorage.getItem("access_token");
       if (!token) {
-        setError("Not authenticated. Please log in.");
+        setError("Not authenticated");
         router.push("/login");
         return;
       }
 
-      const orderIndex = parseInt(rawAreaParam, 10);
-      let actualAreaId = orderIndex;
-
-      try {
-        const areaResp = await fetch(
-          `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (areaResp.ok) {
-          const areaData = await areaResp.json();
-          actualAreaId = areaData.area.id;
-          setResolvedAreaId(actualAreaId);
-        } else {
-          console.warn("Area-by-order lookup failed, using raw param as id.");
-        }
-      } catch (e) {
-        console.warn("Area-by-order request error, using raw param as id.");
+      let actualAreaId = parseInt(rawAreaParam, 10);
+      const areaResp = await fetch(
+        `${env.backendUrl}/api/games/area/order/${actualAreaId}/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (areaResp.ok) {
+        const areaData = await areaResp.json();
+        actualAreaId = areaData.area.id;
+        setResolvedAreaId(actualAreaId);
       }
 
       const response = await fetch(
         `${env.backendUrl}/api/games/questions/${actualAreaId}/emoji-challenge/${difficulty}/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (response.status === 403) {
-        const data = await response.json();
-        setError(data.error || "Access denied");
-        alert(data.error);
-        router.back();
-        return;
-      }
-
-      if (response.status === 500) {
-        let errorDetails = "Internal server error. Please try again later.";
-        try {
-          const errorData = await response.json();
-          errorDetails = errorData.error || errorDetails;
-        } catch {}
-        setError(errorDetails);
-        return;
-      }
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {}
-        throw new Error(errorMessage);
-      }
+      if (!response.ok) throw new Error("Failed to load questions");
 
       const data = await response.json();
-
-      if (!data.questions || data.questions.length === 0) {
+      if (!data.questions?.length) {
         setError("No questions available for this difficulty level.");
         return;
       }
 
       const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, 10);
-
       setQuestions(selected);
-      console.log("First question: ", questions[0]);
       setGameData({
         ...data,
         total_pool: data.questions.length,
         used_count: selected.length,
       });
-      if (data.skip_message) {
-        console.log("Skip message:", data.skip_message);
-      }
-    } catch (error) {
-      console.error("Failed to fetch questions:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load questions"
-      );
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  /* -------------------------------------------
+      Start Game
+  --------------------------------------------*/
   const handleStart = () => {
     setGameState("playing");
     fetchQuestions(areaId, currentDifficulty);
   };
 
+  /* -------------------------------------------
+      Game Complete
+  --------------------------------------------*/
   const handleGameComplete = async ({
     percentScore,
     rawPoints,
@@ -229,14 +215,10 @@ const EmojiChallengePage = () => {
           }),
         }
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        console.error("submit-score failed", response.status, err);
-      }
       const data = await response.json().catch(() => ({}));
       setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
-    } catch (error) {
-      console.error("Failed to submit score:", error);
+    } catch (err) {
+      console.error("Failed to submit score:", err);
     }
 
     setGameState("summary");
@@ -250,14 +232,26 @@ const EmojiChallengePage = () => {
   };
 
   const handleBack = () => {
-    // Go back to area challenges page
     router.push(`/student/challenges?area=${areaId}`);
+  };
+
+  const getAreaBGImage = () => {
+    if (resolvedAreaId === null) {
+      return "/images/bg/forestbg-learn.jpg";
+    }
+
+    if (resolvedAreaId === 4) return "/images/bg/Playground.png";
+    else if (resolvedAreaId === 5) return "/images/bg/Classroom.png";
+    else if (resolvedAreaId === 6) return "/images/bg/Home.png";
+    else if (resolvedAreaId === 7) return "/images/bg/Town.png";
+    else if (resolvedAreaId === 8) return "/images/bg/Mountainside.png";
+    else return "/images/bg/Playground.png";
   };
 
   if (loading) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
+        <AnimatedBackground imagePath={getAreaBGImage()} />
         <div className="relative z-20 rounded-3xl p-8 max-w-md w-full">
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
@@ -271,7 +265,7 @@ const EmojiChallengePage = () => {
   if (error) {
     return (
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-        <AnimatedBackground />
+        <AnimatedBackground imagePath={getAreaBGImage()} />
         <div className="relative z-20 bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <div className="text-6xl">😕</div>
@@ -323,17 +317,28 @@ const EmojiChallengePage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            onHelp={() => setShowTutorial(true)} // <-- tutorial trigger
           />
         );
     }
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-      <AnimatedBackground />
+    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+      <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center">
         {renderGameState()}
       </div>
+
+      {/* -----------------------------
+           Tutorial Modal
+      ------------------------------ */}
+      {showTutorial && (
+        <TutorialModal
+          steps={tutorialSteps}
+          onClose={() => setShowTutorial(false)}
+        />
+      )}
     </div>
   );
 };

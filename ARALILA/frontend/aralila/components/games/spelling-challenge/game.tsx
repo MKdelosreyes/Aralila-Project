@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Star, Zap, Volume2, HandHelping } from "lucide-react";
+import { X, Star, Zap, Volume2, HandHelping, Undo, Undo2 } from "lucide-react";
 import { ConfirmationModal } from "../confirmation-modal";
 import { SpellingResult } from "@/types/games";
 
 // Constants
-const TIME_LIMIT = 300;
-const BONUS_TIME = 10;
+const TIME_LIMIT = 180; //300
+const BONUS_TIME = 10; // 10
 const BASE_POINTS = 20;
 const FALL_SPEED = 1;
 const LETTER_SPAWN_INTERVAL = 2000;
@@ -18,8 +18,10 @@ const MIN_X_SPACING = 100;
 const LETTER_SIZE = 56;
 const CATCHER_HEIGHT = 96;
 const MAX_ACTIVE_LETTERS = 3;
-const CORRECT_LETTER_PROBABILITY = 0.85;
+const CORRECT_LETTER_PROBABILITY = 0.75;
 const MAX_ASSISTS = 3;
+const SOFT_DROP_EXTRA = 4; // added ni para madali
+const SOFT_NUDGE = 30; // kani too
 
 // Move these outside component to prevent recreation on every render
 const HAPPY_STATES: LilaState[] = ["happy", "thumbsup"];
@@ -71,6 +73,8 @@ export const SpellingChallengeGame = ({
   // Assists system
   const [assists, setAssists] = useState(MAX_ASSISTS);
   const [showAssistAnimation, setShowAssistAnimation] = useState(false);
+  const [showUndoAnimation, setShowUndoAnimation] = useState(false);
+  const [softDropActive, setSoftDropActive] = useState(false);
 
   const nextId = useRef<number>(0);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -107,7 +111,7 @@ export const SpellingChallengeGame = ({
       <div className="z-10 max-w-[950px] w-full mx-auto p-4">
         <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-2xl font-bold text-orange-600 mb-4">
+            <p className="text-2xl font-bold text-red-600 mb-4">
               Error Loading Question
             </p>
             <p className="text-gray-600 mb-6">
@@ -177,6 +181,16 @@ export const SpellingChallengeGame = ({
     }
   };
 
+  const handleUndo = () => {
+    if (feedback || builtWord.length === 0) return;
+
+    setBuiltWord((prev) => prev.slice(0, -1));
+
+    setShowUndoAnimation(true);
+    setTimeout(() => setShowUndoAnimation(false), 500);
+    setFallingLetters([]);
+  };
+
   // Spawn falling letters
   useEffect(() => {
     if (feedback) return;
@@ -226,17 +240,46 @@ export const SpellingChallengeGame = ({
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent page scroll on space
+      if (e.code === "Space") e.preventDefault();
+
       if (e.key === "ArrowLeft") {
         setCatcherPosition((prev) => Math.max(CATCHER_WIDTH / 2, prev - 20));
       } else if (e.key === "ArrowRight") {
         setCatcherPosition((prev) =>
           Math.min(gameWidth - CATCHER_WIDTH / 2, prev + 20)
         );
+      } else if (e.key === "ArrowDown") {
+        // single-press nudge
+        if (!e.repeat) {
+          setFallingLetters((prev) =>
+            prev.map((l) => ({
+              ...l,
+              y: Math.min(l.y + SOFT_NUDGE, GAME_AREA_HEIGHT - LETTER_SIZE),
+            }))
+          );
+        }
+        // start soft drop while held
+        setSoftDropActive(true);
+      } else if (e.code === "Space") {
+        // Hard drop: send all falling letters to catcher area so they get caught quickly
+        const catcherTop = GAME_AREA_HEIGHT - CATCHER_HEIGHT;
+        setFallingLetters((prev) => prev.map((l) => ({ ...l, y: catcherTop })));
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        setSoftDropActive(false);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [gameWidth]);
 
   // Timer logic
@@ -395,7 +438,8 @@ export const SpellingChallengeGame = ({
           const catcherLeft = catcherPosition - CATCHER_WIDTH / 2;
           const catcherRight = catcherLeft + CATCHER_WIDTH;
 
-          const moved = prev.map((l) => ({ ...l, y: l.y + l.speed }));
+          const extra = softDropActive ? SOFT_DROP_EXTRA : 0;
+          const moved = prev.map((l) => ({ ...l, y: l.y + l.speed + extra }));
           const kept: FallingLetter[] = [];
           let caughtLetter: string | null = null;
 
@@ -429,7 +473,7 @@ export const SpellingChallengeGame = ({
 
     animationId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationId);
-  }, [feedback, timeLeft, catcherPosition, handleCatch]);
+  }, [feedback, timeLeft, catcherPosition, handleCatch, softDropActive]);
 
   // Skip word
   const handleSkip = () => {
@@ -466,7 +510,7 @@ export const SpellingChallengeGame = ({
   const lilaImage = `/images/character/lila-${lilaState}.png`;
 
   return (
-    <div className="z-10 max-w-[950px] w-full mx-auto p-4">
+    <div className="z-10 max-w-[1050px] w-full mx-auto p-4">
       <ConfirmationModal
         isOpen={isExitModalOpen}
         onClose={() => setIsExitModalOpen(false)}
@@ -500,7 +544,7 @@ export const SpellingChallengeGame = ({
             </div>
             {streak > 1 && (
               <motion.div
-                className="flex items-center gap-1 text-orange-500"
+                className="flex items-center gap-1 text-purple-600"
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
               >
@@ -525,7 +569,7 @@ export const SpellingChallengeGame = ({
           id="mainGameArea"
           className="flex-grow w-full flex flex-col items-center justify-center mb-4 px-15"
         >
-          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
+          <div className="w-full flex flex-row md:flex-row items-center justify-between gap-6 mb-4">
             <div className="flex flex-row gap-6 items-center">
               <motion.div
                 key={animationKey}
@@ -548,38 +592,59 @@ export const SpellingChallengeGame = ({
               </button>
             </div>
 
-            <div className="text-2xl font-bold text-purple-800 self-end tracking-widest">
-              {currentWordData.word
-                .split("")
-                .map((char, idx) =>
-                  idx < builtWord.length ? (
-                    <motion.span
-                      key={idx}
-                      initial={
-                        showAssistAnimation && idx === builtWord.length - 1
-                          ? { scale: 0, color: "#10b981" }
-                          : {}
-                      }
-                      animate={
-                        showAssistAnimation && idx === builtWord.length - 1
-                          ? { scale: [1.5, 1], color: ["#10b981", "#6b21a8"] }
-                          : {}
-                      }
-                      transition={{ duration: 0.5 }}
-                    >
-                      {builtWord[idx]}
-                    </motion.span>
-                  ) : (
-                    <span key={idx}>_</span>
+            <div className="relative">
+              <div className="text-4xl text-purple-800 tracking-widest font-bold">
+                {currentWordData.word
+                  .split("")
+                  .map((char, idx) =>
+                    idx < builtWord.length ? (
+                      <motion.span
+                        key={idx}
+                        initial={
+                          showAssistAnimation && idx === builtWord.length - 1
+                            ? { scale: 0, color: "#10b981" }
+                            : {}
+                        }
+                        animate={
+                          showAssistAnimation && idx === builtWord.length - 1
+                            ? { scale: [1.5, 1], color: ["#10b981", "#6b21a8"] }
+                            : {}
+                        }
+                        exit={
+                          showUndoAnimation && idx === builtWord.length
+                            ? { scale: 0, opacity: 0, color: "#ef4444" }
+                            : {}
+                        }
+                        transition={{ duration: 0.5 }}
+                      >
+                        {builtWord[idx]}
+                      </motion.span>
+                    ) : (
+                      <span key={idx}>_</span>
+                    )
                   )
-                )
-                .reduce((prev, curr, idx) => (
-                  <>
-                    {prev}
-                    {idx > 0 && " "}
-                    {curr}
-                  </>
-                ))}
+                  .reduce((prev, curr, idx) => (
+                    <>
+                      {prev}
+                      {idx > 0 && " "}
+                      {curr}
+                    </>
+                  ))}
+              </div>
+
+              <AnimatePresence>
+                {showUndoAnimation && (
+                  <motion.div
+                    className="absolute -top-16 left-1/2 transform -translate-x-1/2 pointer-events-none"
+                    initial={{ opacity: 0, y: 0, scale: 1 }}
+                    animate={{ opacity: [0, 1, 0], y: -20, scale: 1.5 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Undo2 className="w-12 h-12 text-red-500" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -587,13 +652,13 @@ export const SpellingChallengeGame = ({
           <div
             ref={gameAreaRef}
             id="gameArea"
-            className="relative w-full h-[400px] bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-200"
+            className="relative w-full h-[400px] bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-400"
           >
             <AnimatePresence>
               {fallingLetters.map(({ id, letter, x, y }) => (
                 <motion.div
                   key={id}
-                  className="absolute bg-gradient-to-br from-purple-400 to-fuchsia-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center text-2xl"
+                  className="absolute border-2 border-purple-400 bg-white text-purple-800 font-bold rounded-full shadow-lg flex items-center justify-center text-2xl"
                   style={{
                     width: LETTER_SIZE,
                     height: LETTER_SIZE,
@@ -635,14 +700,14 @@ export const SpellingChallengeGame = ({
               {feedback && (
                 <motion.div
                   key={feedback.type + currentWordIndex}
-                  className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+                  className="absolute inset-0 flex items-center justify-center backdrop-blur-xs z-50"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
                   <motion.div
-                    className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md mx-4"
+                    className="rounded-2xl p-8  text-center max-w-md mx-4"
                     initial={{ scale: 0.8, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.8, y: -20 }}
@@ -650,10 +715,10 @@ export const SpellingChallengeGame = ({
                   >
                     {feedback.type === "success" && (
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                        {/* <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">✓</span>
-                        </div>
-                        <div className="text-green-600 font-bold text-2xl">
+                        </div> */}
+                        <div className="text-green-600 font-bold text-6xl">
                           Tama!
                         </div>
                         <div className="text-green-700 text-lg">
@@ -663,10 +728,10 @@ export const SpellingChallengeGame = ({
                     )}
                     {feedback.type === "error" && (
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        {/* <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">✗</span>
-                        </div>
-                        <div className="text-red-600 font-bold text-2xl">
+                        </div> */}
+                        <div className="text-red-600 font-bold text-6xl">
                           Mali!
                         </div>
                         <div className="text-red-700 text-lg">
@@ -679,13 +744,13 @@ export const SpellingChallengeGame = ({
                     )}
                     {feedback.type === "skipped" && (
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                        {/* <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">⊘</span>
-                        </div>
-                        <div className="text-orange-600 font-bold text-2xl">
+                        </div> */}
+                        <div className="text-purple-800 text-6xl font-bold">
                           Nilaktawan!
                         </div>
-                        <div className="text-orange-700 text-lg">
+                        <div className="text-purple-700 text-lg">
                           Ang sagot:{" "}
                           <span className="font-bold">
                             {currentWordData.word}
@@ -714,26 +779,39 @@ export const SpellingChallengeGame = ({
         </div>
         {/* Buttons */}
         <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
-          <button
-            onClick={handleSkip}
-            disabled={!!feedback}
-            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
-          >
-            SKIP
-          </button>
+          <div>
+            <button
+              onClick={handleSkip}
+              disabled={!!feedback}
+              className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
+            >
+              SKIP
+            </button>
+          </div>
 
-          <button
-            onClick={handleUseAssist}
-            disabled={
-              assists <= 0 ||
-              !!feedback ||
-              builtWord.length >= currentWordData.word.length
-            }
-            className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
-          >
-            <HandHelping className="w-5 h-5" />
-            <span>Gamitin Assist</span>
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleUndo}
+              disabled={builtWord.length === 0 || !!feedback}
+              className="flex items-center gap-2 px-6 py-2 bg-slate-200 border-2 border-slate-300 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+            >
+              <Undo2 className="w-5 h-5" />
+              <span>I-undo</span>
+            </button>
+
+            <button
+              onClick={handleUseAssist}
+              disabled={
+                assists <= 0 ||
+                !!feedback ||
+                builtWord.length >= currentWordData.word.length
+              }
+              className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+            >
+              <HandHelping className="w-5 h-5" />
+              <span>Gamitin ang Assist</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

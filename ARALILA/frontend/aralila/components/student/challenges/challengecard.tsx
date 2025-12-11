@@ -142,7 +142,7 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
                   disabled={isNavigating}
                   className={`w-full font-bold py-3 px-6 rounded-xl text-base flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 ${
                     replayMode
-                      ? "bg-gradient-to-r from-green-600 to-emerald-700 text-white"
+                      ? "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white"
                       : "bg-gradient-to-r from-purple-600 to-purple-700 text-white"
                   }`}
                 >

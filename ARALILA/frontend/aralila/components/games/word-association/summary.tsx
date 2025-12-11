@@ -1,152 +1,247 @@
 "use client";
 
-import React, { useState, useEffect, ReactNode } from "react";
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { motion, AnimatePresence } from "framer-motion";
-import Confetti from 'react-confetti';
-import { Target, Trophy, CheckCircle2, XCircle } from "lucide-react";
-import { WordAssociationQuestion } from "./game";
-
-export interface WordAssociationResult {
-  questionData: WordAssociationQuestion;
-  userAnswer: string;
-  isCorrect: boolean;
-}
+import React from "react";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import { RotateCcw } from "lucide-react";
+import { Trophy, CheckCircle2, XCircle } from "lucide-react";
+import { WordAssociationResult } from "./game";
+import Leaderboard from "@/components/games/common/leaderboard";
 
 interface SummaryProps {
   score: number;
   results: WordAssociationResult[];
+  difficulty: number;
+  starsEarned: number;
+  nextDifficulty?: number;
+  difficultyUnlocked?: { [k: number]: boolean };
+  replayMode?: boolean;
+  rawPoints?: number;
   onRestart: () => void;
+  areaId?: number;
 }
 
-interface ReviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  children: ReactNode;
-}
+export const WordAssociationSummary = ({
+  score,
+  results,
+  difficulty,
+  starsEarned,
+  onRestart,
+  areaId,
+}: SummaryProps) => {
+  const correct = results.filter((r) => r.isCorrect).length;
+  const wrong = results.length - correct;
+  const percent =
+    results.length > 0 ? Math.round((correct / results.length) * 100) : 0;
 
-interface StatCardProps {
-  icon: ReactNode;
-  label: string;
-  value: string | number;
-  colorClass?: string;
-  borderClass?: string;
-}
+  const perfect = percent === 100 && wrong === 0;
+  const passed = percent >= 80;
 
-const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, children }) => {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className="bg-white rounded-3xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-4 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-slate-800">Answer Review</h2>
-              <button onClick={onClose} className="text-slate-400 hover:text-slate-800">
-                <XCircle size={28} />
-              </button>
-            </div>
-            {children}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+  const [showReview, setShowReview] = React.useState(false);
 
-const StatCard: React.FC<StatCardProps> = ({ icon, label, value, colorClass = "", borderClass = "" }) => (
-  <motion.div
-    className={`bg-slate-50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border-2 ${borderClass}`}
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${colorClass}`}>
-      {icon}
-    </div>
-    <div className="text-2xl font-bold text-slate-800">{value}</div>
-    <div className="text-sm text-slate-500 mt-1">{label}</div>
-  </motion.div>
-);
-
-export const WordAssociationSummary = ({ score, results}: SummaryProps) => {
-  const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-
-  const totalWords = results.length;
-  const correctWords = results.filter((r) => r.isCorrect).length;
-  const accuracy = totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
-
-  useEffect(() => {
-    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const getSummaryContent = () => {
-    if (accuracy === 100) return { title: "Perfect Score!", imageSrc: "/images/character/lila-happy.png", showConfetti: true };
-    if (accuracy >= 80) return { title: "Excellent Work!", imageSrc: "/images/character/lila-happy.png", showConfetti: true };
-    if (accuracy < 20) return { title: "Keep Practicing!", imageSrc: "/images/character/lila-crying.png", showConfetti: false };
-    if (accuracy < 40) return { title: "Try Again!", imageSrc: "/images/character/lila-sad.png", showConfetti: false };
-    return { title: "Good Effort!", imageSrc: "/images/character/lila-normal.png", showConfetti: false };
+  const getTitle = () => {
+    if (perfect) return "Perfect! 🎉";
+    if (passed) return "Excellent Work! 👏";
+    if (percent < 20) return "Keep Practicing! 💪";
+    return "Good Effort!";
   };
 
-  const summaryContent = getSummaryContent();
+  // determine max stars allowed by difficulty (easy=1, medium=2, hard=3)
+  const maxStars = difficulty
+    ? Math.min(3, Math.max(1, Math.floor(difficulty)))
+    : 3;
+
+  const calculateStars = (pct: number, max: number) => {
+    if (max === 3) {
+      if (pct === 100) return 3;
+      if (pct >= 80) return 2;
+      if (pct >= 50) return 1;
+      return 0;
+    }
+    if (max === 2) {
+      if (pct === 100) return 2;
+      if (pct >= 70) return 1;
+      return 0;
+    }
+    // max === 1
+    return pct >= 50 ? 1 : 0;
+  };
+
+  const earnedStars =
+    typeof starsEarned === "number"
+      ? starsEarned
+      : calculateStars(percent, maxStars);
+
+  // Persisting stars is handled by the page (submit-score) — no client-side POST here to avoid duplicates.
 
   return (
-    <>
-      <motion.div className="relative z-10 bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 max-w-3xl w-full text-center shadow-2xl" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-        {summaryContent.showConfetti && windowSize.width > 0 && <Confetti width={windowSize.width} height={windowSize.height} recycle={false} />}
-        <Image src={summaryContent.imageSrc} alt="Lila" width={150} height={150} className="mx-auto mb-4" />
-        <h1 className="text-4xl font-bold text-purple-700 mb-2">{summaryContent.title}</h1>
-        <p className="text-slate-500 mb-8">Here is a summary of your performance.</p>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10">
-          <StatCard icon={<Trophy className="w-6 h-6 text-yellow-600" />} label="Final Score" value={score} colorClass="bg-yellow-100" borderClass="border-yellow-400" />
-          <StatCard icon={<Target className="w-6 h-6 text-green-600" />} label="Accuracy" value={`${accuracy}%`} colorClass="bg-green-100" borderClass="border-green-400" />
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-2">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative z-20 bg-white rounded-3xl p-8 w-full shadow-2xl"
+        >
+          {/* Header */}
+          <div className="text-center mb-6">
+            <motion.h2
+              initial={{ y: -20 }}
+              animate={{ y: 0 }}
+              className="text-4xl font-bold text-gray-800 mb-2"
+            >
+              {getTitle()}
+            </motion.h2>
 
-        <div className="flex flex-col sm:flex-row-reverse items-center justify-center gap-4">
-          <button onClick={() => router.push('/student/challenges')} className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg">CONTINUE</button>
-          <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto bg-transparent hover:bg-slate-100 text-slate-700 font-bold py-3 px-8 rounded-xl border-2 border-slate-300 transition-all">REVIEW ANSWERS</button>
-        </div>
-      </motion.div>
+            <div className="flex items-center justify-center gap-2 text-gray-600 mb-4">
+              <span className="text-sm font-medium">Word Association</span>
+              <span className="text-2xl">•</span>
+              <span className="text-3xl font-bold text-purple-600">
+                {percent}%
+              </span>
+            </div>
 
-      <ReviewModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="overflow-y-auto pr-2 -mr-2">
-            <div className="space-y-4">
-              {results.map((result, index) => (
-                <motion.div key={index} className={`p-4 rounded-xl border ${result.isCorrect ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-                  <div className="flex items-start gap-4">
-                      <div className={`mt-1 flex-shrink-0 ${result.isCorrect ? "text-green-500" : "text-red-500"}`}>{result.isCorrect ? <CheckCircle2 /> : <XCircle />}</div>
-                      <div className="flex-1">
-                        <p className="text-xl font-bold text-slate-800">{result.questionData.answer}</p>
-                        {!result.isCorrect && (<p className="text-md text-red-700 bg-red-100 px-2 py-1 rounded-md mt-1">You wrote: <span className="font-mono font-bold">{result.userAnswer || '""'}</span></p>)}
-                        <p className="text-slate-600 mt-1">{result.questionData.hint}</p>
-                      </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-4 gap-2">
-                      {result.questionData.images.map((src, imgIdx) => <Image key={imgIdx} src={src} alt="" width={100} height={100} className="rounded-md object-cover aspect-square"/>)}
-                  </div>
+            {/* Stars */}
+            <div className="flex justify-center gap-2 mb-4">
+              {[1, 2, 3].map((s) => (
+                <motion.div
+                  key={s}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: s * 0.2, type: "spring" }}
+                >
+                  <Image
+                    src={
+                      s <= earnedStars
+                        ? "/images/art/Active-Star.png"
+                        : "/images/art/Inactive-Star.png"
+                    }
+                    alt={`star-${s}`}
+                    width={60}
+                    height={60}
+                    className={
+                      s <= earnedStars ? "animate-pulse" : "opacity-50"
+                    }
+                  />
                 </motion.div>
               ))}
             </div>
-        </div>
-      </ReviewModal>
-    </>
+          </div>
+
+          {/* Results Summary */}
+          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-gray-500 text-sm">Correct</p>
+                <p className="text-2xl font-bold text-green-600">{correct}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Wrong</p>
+                <p className="text-2xl font-bold text-red-600">{wrong}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Total</p>
+                <p className="text-2xl font-bold text-gray-700">
+                  {results.length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={onRestart}
+              className="w-full bg-white border-2 border-gray-300 text-gray-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+            >
+              <RotateCcw size={20} />
+              {passed ? "Retry for Better Score" : "Try Again"}
+            </button>
+
+            <button
+              onClick={() => setShowReview((p) => !p)}
+              className="w-full bg-white border-2 border-purple-200 text-purple-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-all"
+            >
+              {showReview ? "Hide Review" : "Review Answers"}
+            </button>
+
+            <button
+              onClick={() => window.history.back()}
+              className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 transition-colors"
+            >
+              Back to Challenges
+            </button>
+          </div>
+
+          {/* Review Section */}
+          {showReview && (
+            <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
+              <h3 className="font-semibold text-gray-700 mb-2 text-sm">
+                Answer Review
+              </h3>
+              <ul className="space-y-3 text-sm">
+                {results.map((r, i) => (
+                  <li
+                    key={i}
+                    className={`p-3 rounded-lg ${
+                      r.isCorrect
+                        ? "bg-green-100 border border-green-200"
+                        : "bg-red-100 border border-red-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-medium mb-1">
+                      {r.isCorrect ? (
+                        <CheckCircle2 className="text-green-600" />
+                      ) : (
+                        <XCircle className="text-red-600" />
+                      )}
+                      <span>
+                        {i + 1}. {r.questionData.answer}
+                      </span>
+                    </div>
+
+                    {!r.isCorrect && (
+                      <p className="text-red-700 mb-1 text-sm">
+                        Your answer:{" "}
+                        <span className="font-semibold">
+                          {r.userAnswer || "(blank)"}
+                        </span>
+                      </p>
+                    )}
+
+                    <p className="text-gray-600 text-xs">
+                      {r.questionData.hint}
+                    </p>
+
+                    <div className="mt-3 grid grid-cols-4 gap-2">
+                      {r.questionData.images.map((src, idx) => (
+                        <Image
+                          key={idx}
+                          src={src}
+                          alt=""
+                          width={100}
+                          height={100}
+                          className="rounded-md object-cover"
+                        />
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      <div className="md:col-span-1">
+        <Leaderboard
+          gameId={5}
+          gameType="word-association"
+          areaId={4}
+          difficulty={difficulty}
+          limit={10}
+          variant="light"
+        />
+      </div>
+    </div>
   );
 };

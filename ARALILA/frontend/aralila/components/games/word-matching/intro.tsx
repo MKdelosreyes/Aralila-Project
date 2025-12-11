@@ -14,7 +14,7 @@ export const WordMatchingIntro = ({
   onStartChallenge,
 }: WordMatchingIntroProps) => {
   return (
-    <div className="relative z-10 flex flex-col items-center justify-center h-screen overflow-hidden">
+    <div className="relative z-10 flex flex-col items-center justify-center h-screen overflow-visible">
       {/* Header */}
       <motion.div
         className="text-center mb-8"

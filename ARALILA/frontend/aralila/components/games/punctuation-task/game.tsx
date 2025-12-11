@@ -7,7 +7,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { motion, LayoutGroup } from "framer-motion";
+import { motion, LayoutGroup, AnimatePresence } from "framer-motion";
 import { X, Star, Zap, HandHelping } from "lucide-react";
 import {
   PunctuationChallengeGameProps,
@@ -21,8 +21,9 @@ import {
   splitIntoWords,
 } from "@/data/games/punctuation-task";
 import { ConfirmationModal } from "../confirmation-modal";
+import { MarioBridge } from "../../ui/marioBridge";
 
-const TIME_LIMIT = 120;
+const TIME_LIMIT = 120; //120
 const MAX_ASSISTS = 3;
 type LilaState = "normal" | "happy" | "sad" | "worried";
 
@@ -36,7 +37,7 @@ const buildPlatforms = (
   sentence: string,
   correctPunctuation: { position: number; mark: string }[]
 ): PlatformUnit[] => {
-  const cps = Array.isArray(correctPunctuation) ? correctPunctuation : []; // ✅
+  const cps = Array.isArray(correctPunctuation) ? correctPunctuation : [];
   const words = splitIntoWords(sentence || "");
   const sorted = [...cps].sort((a, b) => {
     const aPos = a.position === -1 ? Number.MAX_SAFE_INTEGER : a.position;
@@ -66,16 +67,6 @@ const buildPlatforms = (
   return units;
 };
 
-const DialogueBubble = ({ children }: { children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="relative bg-purple-100 text-purple-800 p-3 rounded-xl shadow-sm min-w-[220px] text-center"
-  >
-    {children}
-  </motion.div>
-);
-
 type NormalizedSentence = {
   sentence: string;
   correctPunctuation: { position: number; mark: string }[];
@@ -84,21 +75,15 @@ type NormalizedSentence = {
 };
 
 const normalizeSentence = (s: any): NormalizedSentence => {
-  console.log("Normalizing sentence:", s);
   const sentence = s?.sentence ?? "";
-
   let arr: any =
     s?.answers ?? s?.correctPunctuation ?? s?.correct_punctuation ?? [];
-
-  console.log("Initial correctPunctuation:", arr);
 
   if (!Array.isArray(arr) && typeof arr === "object" && arr !== null) {
     arr = Object.entries(arr).map(([k, v]) => ({
       position: Number(k),
       mark: String(v),
     }));
-
-    console.log("Converted object to array:", arr);
   }
 
   if (Array.isArray(arr)) {
@@ -117,7 +102,6 @@ const normalizeSentence = (s: any): NormalizedSentence => {
         it?.mark ?? it?.symbol ?? it?.punctuation ?? it?.answer ?? ""
       ),
     }));
-    console.log("Normalized array items:", arr);
   } else {
     arr = [];
   }
@@ -125,12 +109,10 @@ const normalizeSentence = (s: any): NormalizedSentence => {
   const filtered = arr.filter(
     (x: any) =>
       typeof x.position === "number" &&
-      x.position >= -1 && // Allow -1 for end-of-sentence
+      x.position >= -1 &&
       typeof x.mark === "string" &&
       x.mark !== ""
   );
-
-  console.log("Filtered correctPunctuation:", filtered);
 
   return {
     sentence,
@@ -167,26 +149,13 @@ export const PunctuationChallengeGame = ({
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [autoSlideToEnd, setAutoSlideToEnd] = useState(false);
 
-  // Assists system
   const [assists, setAssists] = useState(MAX_ASSISTS);
-  const [showAssistPrompt, setShowAssistPrompt] = useState(false);
-  const [pendingWrongAnswer, setPendingWrongAnswer] = useState<string | null>(
-    null
-  );
+  const [showAssistAnimation, setShowAssistAnimation] = useState(false);
 
   const currentSentenceData = normalized[currentQIndex] ?? {
     sentence: "",
     correctPunctuation: [],
   };
-
-  useEffect(() => {
-    console.log("Current sentence data:", {
-      index: currentQIndex,
-      sentence: currentSentenceData.sentence,
-      correctPunctuation: currentSentenceData.correctPunctuation,
-      normalized,
-    });
-  }, [currentQIndex, currentSentenceData, normalized]);
 
   const resultsRef = useRef<PunctuationResult[]>([]);
   useEffect(() => {
@@ -200,14 +169,12 @@ export const PunctuationChallengeGame = ({
   };
 
   const platforms = useMemo(() => {
-    const result = buildPlatforms(
+    return buildPlatforms(
       currentSentenceData.sentence ?? "",
       Array.isArray(currentSentenceData.correctPunctuation)
         ? currentSentenceData.correctPunctuation
         : []
     );
-    console.log("Built platforms:", result);
-    return result;
   }, [currentSentenceData]);
 
   const platformUnits = useMemo(
@@ -216,25 +183,22 @@ export const PunctuationChallengeGame = ({
   );
 
   const gaps = useMemo(() => {
-    const result = platforms.filter((p) => p.type === "gap") as Extract<
+    return platforms.filter((p) => p.type === "gap") as Extract<
       PlatformUnit,
       { type: "gap" }
     >[];
-    console.log("Gaps extracted:", result); // ✅ Debug
-    return result;
   }, [platforms]);
 
   const currentGap = gaps[currentGapIndex] || null;
   const totalGaps = gaps.length;
 
-  // Lila index = cleared gaps + optional extra slide to end
   const lilaPlatformIndex = currentGapIndex + (autoSlideToEnd ? 1 : 0);
-
   const lilaImage = `/images/character/lila-${lilaState}.png`;
 
-  // Horizontal scrolling camera
   const trackRef = useRef<HTMLDivElement | null>(null);
   const platformRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [isFalling, setIsFalling] = useState(false);
+  const [lilaAtGap, setLilaAtGap] = useState(false);
 
   const centerPlatformInView = (index: number) => {
     const container = trackRef.current;
@@ -254,7 +218,53 @@ export const PunctuationChallengeGame = ({
     container.scrollTo({ left: offset, behavior: "smooth" });
   };
 
-  // Keep camera centered on Lila’s current platform
+  const centerGapInView = (gapIndex: number) => {
+    const container = trackRef.current;
+    if (!container) return;
+
+    // platformRefs holds platform DOM nodes in order:
+    // gapIndex sits BETWEEN platformRefs[gapIndex] and platformRefs[gapIndex + 1]
+    const leftPlat = platformRefs.current[gapIndex];
+    const rightPlat = platformRefs.current[gapIndex + 1];
+
+    // If one of the platforms is missing fallback to centering nearest platform
+    const cRect = container.getBoundingClientRect();
+    const currentLeft = container.scrollLeft;
+
+    try {
+      if (leftPlat && rightPlat) {
+        const lRect = leftPlat.getBoundingClientRect();
+        const rRect = rightPlat.getBoundingClientRect();
+
+        const midpoint =
+          (lRect.left + lRect.width / 2 + (rRect.left + rRect.width / 2)) / 2;
+
+        const offset = midpoint - cRect.left + currentLeft - cRect.width / 2;
+        container.scrollTo({ left: offset, behavior: "smooth" });
+      } else if (leftPlat) {
+        // center left platform
+        const eRect = leftPlat.getBoundingClientRect();
+        const offset =
+          eRect.left -
+          cRect.left +
+          currentLeft -
+          (cRect.width / 2 - eRect.width / 2);
+        container.scrollTo({ left: offset, behavior: "smooth" });
+      } else if (rightPlat) {
+        const eRect = rightPlat.getBoundingClientRect();
+        const offset =
+          eRect.left -
+          cRect.left +
+          currentLeft -
+          (cRect.width / 2 - eRect.width / 2);
+        container.scrollTo({ left: offset, behavior: "smooth" });
+      }
+    } catch (err) {
+      // fallback: center current visible scroll
+      container.scrollTo({ left: currentLeft, behavior: "smooth" });
+    }
+  };
+
   useEffect(() => {
     centerPlatformInView(lilaPlatformIndex);
   }, [lilaPlatformIndex, platforms.length]);
@@ -321,6 +331,8 @@ export const PunctuationChallengeGame = ({
     setFilledGaps([]);
     setLilaState("normal");
     setAutoSlideToEnd(false);
+    setLilaAtGap(false);
+    setIsFalling(false);
 
     if (currentQIndex + 1 < normalized.length) {
       setCurrentQIndex((i) => i + 1);
@@ -339,21 +351,9 @@ export const PunctuationChallengeGame = ({
   const slideDur = 800;
 
   const handlePickPunctuation = (mark: string) => {
-    console.log("Pick punctuation:", {
-      mark,
-      currentGap,
-      currentGapIndex,
-      totalGaps,
-      gaps,
-    });
-
-    if (!currentGap) {
-      console.warn("No current gap available");
-      return;
-    }
+    if (!currentGap) return;
 
     const isCorrect = currentGap.correctMark === mark;
-    console.log("Is correct?", isCorrect, "Expected:", currentGap.correctMark);
 
     if (isCorrect) {
       const nextAnswers = [
@@ -389,52 +389,102 @@ export const PunctuationChallengeGame = ({
         }
       }
     } else {
-      // Wrong answer - check if assists available
-      if (assists > 0) {
-        setPendingWrongAnswer(mark);
-        setShowAssistPrompt(true);
-        setLilaState("worried");
-      } else {
-        // No assists - proceed to next item
-        proceedAfterWrongAnswer();
-      }
+      const answers = [
+        ...filledGaps,
+        { position: currentGap.position, mark, isCorrect: false },
+      ];
+
+      setFilledGaps(answers);
+      setLilaState("sad");
+      setStreak(0);
+      setScore((s) => Math.max(0, s - 2));
+      setTimeLeft((t) => Math.max(0, t - 3));
+
+      // Move Lila to the gap (visual) and center it, then trigger fall
+      setLilaAtGap(true);
+      // ensure we center AFTER DOM updates
+      requestAnimationFrame(() => centerGapInView(currentGapIndex));
+
+      // Wait for Lila to move to gap, then trigger fall animation
+      setTimeout(() => {
+        setIsFalling(true);
+        // hide the "standing at gap" image before/during the fall (optional)
+        setLilaAtGap(false);
+
+        setTimeout(() => {
+          setIsFalling(false);
+
+          const finalAnswers = [...answers];
+          for (let i = currentGapIndex + 1; i < totalGaps; i++) {
+            finalAnswers.push({
+              position: gaps[i].position,
+              mark: "",
+              isCorrect: false,
+            });
+          }
+
+          setCurrentGapIndex(totalGaps);
+          finalizeSentence(finalAnswers, answers.length - filledGaps.length);
+          setTimeout(goNext, 300);
+        }, 800); // Duration of fall animation
+      }, slideDur);
     }
   };
 
   const handleUseAssist = () => {
+    if (assists <= 0 || !currentGap) return;
+
     setAssists((a) => a - 1);
-    setShowAssistPrompt(false);
-    setPendingWrongAnswer(null);
-    setLilaState("normal");
+    setShowAssistAnimation(true);
+    setTimeout(() => setShowAssistAnimation(false), 500);
 
-    // Player can try again - gap remains the same
+    // Auto-fill with correct answer
+    const correctMark = currentGap.correctMark;
+    const nextAnswers = [
+      ...filledGaps,
+      { position: currentGap.position, mark: correctMark, isCorrect: true },
+    ];
+
+    setFilledGaps(nextAnswers);
+    setLilaState("happy");
+
+    const nextIndex = currentGapIndex + 1;
+    setCurrentGapIndex(nextIndex);
+
+    if (nextIndex >= totalGaps) {
+      const nextPlatform = platformUnits[nextIndex];
+      const hasTrailingText = nextPlatform && !nextPlatform.isEnd;
+
+      if (hasTrailingText) {
+        setTimeout(() => {
+          setAutoSlideToEnd(true);
+        }, slideDur);
+
+        setTimeout(() => {
+          setAutoSlideToEnd(false);
+          finalizeSentence(nextAnswers, nextIndex);
+          setTimeout(goNext, 300);
+        }, slideDur * 2 + 50);
+      } else {
+        setTimeout(() => {
+          finalizeSentence(nextAnswers, nextIndex);
+          setTimeout(goNext, 300);
+        }, slideDur);
+      }
+    }
   };
 
-  const handleDeclineAssist = () => {
-    setShowAssistPrompt(false);
-    setPendingWrongAnswer(null);
-    proceedAfterWrongAnswer();
-  };
-
-  const proceedAfterWrongAnswer = () => {
-    setLilaState("sad");
-    setStreak(0);
-    setScore((s) => Math.max(0, s - 2));
-    setTimeLeft((t) => Math.max(0, t - 3));
-
-    // Record wrong answer and skip to next item
+  const handleSkip = () => {
     const answers = [...filledGaps];
 
-    // Fill remaining gaps with blank/incorrect marks
     for (let i = currentGapIndex; i < totalGaps; i++) {
       answers.push({
         position: gaps[i].position,
-        mark: i === currentGapIndex ? pendingWrongAnswer || "" : "",
+        mark: "",
         isCorrect: false,
       });
     }
 
-    // Slide to end
     const nextPlatform = platformUnits[totalGaps];
     const hasTrailingText = nextPlatform && !nextPlatform.isEnd;
 
@@ -454,47 +504,10 @@ export const PunctuationChallengeGame = ({
         setTimeout(goNext, 300);
       }, slideDur);
     }
-  };
-
-  const handleSkip = () => {
-    const answers = [...filledGaps];
-
-    // Fill remaining gaps with blank/incorrect marks
-    for (let i = currentGapIndex; i < totalGaps; i++) {
-      answers.push({
-        position: gaps[i].position,
-        mark: "",
-        isCorrect: false,
-      });
-    }
-
-    // Animate: move to trailing platform (if any), then to end, then finalize
-    const nextPlatform = platformUnits[totalGaps]; // platform after last gap
-    const hasTrailingText = nextPlatform && !nextPlatform.isEnd;
-
-    // First slide to platform after last gap (trailing text or end)
-    setCurrentGapIndex(totalGaps);
-
-    if (hasTrailingText) {
-      // Then second slide to end
-      setTimeout(() => setAutoSlideToEnd(true), slideDur);
-
-      setTimeout(() => {
-        setAutoSlideToEnd(false);
-        finalizeSentence(answers, filledGaps.length); // completedGaps = answered count only
-        setTimeout(goNext, 300);
-      }, slideDur * 2 + 50);
-    } else {
-      // Already at end platform
-      setTimeout(() => {
-        finalizeSentence(answers, filledGaps.length);
-        setTimeout(goNext, 300);
-      }, slideDur);
-    }
 
     setStreak(0);
     setLilaState("worried");
-    setScore((s) => Math.max(0, s - 5)); // optional small penalty
+    setScore((s) => Math.max(0, s - 5));
   };
 
   const setPlatformRef = useCallback(
@@ -509,7 +522,7 @@ export const PunctuationChallengeGame = ({
     let platformCounter = 0;
 
     const calculatePlatformWidth = (text: string, isEnd?: boolean): number => {
-      if (isEnd) return 112; // w-28 = 112px
+      if (isEnd) return 112;
       if (!text) return 112;
 
       const charWidth = 14;
@@ -529,12 +542,11 @@ export const PunctuationChallengeGame = ({
         className="w-full overflow-x-auto scrollbar-hide mx-5"
       >
         <LayoutGroup>
-          {/* Inline flex row wider than viewport; scroll horizontally */}
           <div className="inline-flex items-start justify-center gap-6 select-none relative min-w-full px-6">
             {platforms.map((unit, idx) => {
               if (unit.type === "platform") {
                 const index = platformCounter++;
-                const isLilaHere = index === lilaPlatformIndex;
+                const isLilaHere = index === lilaPlatformIndex && !lilaAtGap;
 
                 const platformWidth = calculatePlatformWidth(
                   unit.text,
@@ -564,40 +576,24 @@ export const PunctuationChallengeGame = ({
                       )}
                     </div>
 
-                    {/* Platform bar with dynamic width */}
-                    {/* <div
-                      className={`h-3 rounded-md bg-slate-700 ${platformWidth}`}
-                      style={
-                        !unit.isEnd && unit.text
-                          ? {
-                              width: `${Math.min(
-                                Math.max(unit.text.length * 14 + 40, 80),
-                                400
-                              )}px`,
-                            }
-                          : undefined
-                      }
-                    /> */}
-
-                    <div
-                      className="h-3 rounded-md bg-slate-700"
-                      style={{ width: `${platformWidth}px` }}
-                    />
-
-                    {/* Label BELOW the platform */}
-                    {/* {unit.text && (
-                      <div
-                        className="mt-2 min-h-8 text-xl text-slate-700 font-semibold whitespace-pre-wrap text-center px-2"
+                    {unit.isEnd ? (
+                      <img
+                        src="/images/art/finish-platform.png"
+                        alt="Finish Platform"
                         style={{
-                          maxWidth: `${Math.min(
-                            Math.max(unit.text.length * 14 + 40, 80),
-                            400
-                          )}px`,
+                          width: `200px`,
+                          height: "auto",
                         }}
-                      >
-                        {unit.text}
-                      </div>
-                    )} */}
+                        className="pointer-events-none select-none self-start mt-[-15%]"
+                      />
+                    ) : (
+                      <MarioBridge
+                        width={platformWidth}
+                        height={16}
+                        variant="platform"
+                      />
+                    )}
+
                     {unit.text && (
                       <div
                         className="mt-2 min-h-8 text-xl text-slate-700 font-semibold whitespace-pre-wrap text-center px-2"
@@ -610,20 +606,72 @@ export const PunctuationChallengeGame = ({
                 );
               }
 
-              // Gap unit: platform bar + answer tile below
               const gapIndex = gapCounter++;
               const wasAnswered = gapIndex < filledGaps.length;
               const answered = filledGaps[gapIndex];
               const showing = wasAnswered ? answered?.mark : "";
               const isActive = gapIndex === currentGapIndex;
+              const isCorrect = answered?.isCorrect || false;
+              const isLilaAtGap = gapIndex === currentGapIndex && isFalling;
 
               return (
                 <div key={`g-${idx}`} className="flex flex-col items-center">
-                  <div className="h-28" />
-                  <div className="h-3 w-20 bg-slate-700 rounded-md" />
+                  <div className="h-28 flex items-end justify-center">
+                    {/* Standing at gap BEFORE fall */}
+                    {lilaAtGap && !isFalling && (
+                      <motion.img
+                        layoutId="lila"
+                        src={lilaImage}
+                        alt="Lila at gap"
+                        initial={false}
+                        transition={{
+                          type: "tween",
+                          ease: "easeInOut",
+                          duration: 0.8,
+                        }}
+                        className="w-24 h-24 mb-2 pointer-events-none absolute"
+                      />
+                    )}
+
+                    {/* Falling animation (only during the fall) */}
+                    {isFalling && gapIndex === currentGapIndex && (
+                      <motion.img
+                        layoutId="lila"
+                        src="/images/character/lila-sad.png"
+                        alt="Lila falling"
+                        initial={{ y: 0, opacity: 1, scale: 1 }}
+                        animate={{
+                          y: [0, 10, 150],
+                          opacity: [1, 1, 0],
+                          scale: [1, 0.9, 0.5],
+                          rotate: [0, -15, -30],
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          ease: "easeIn",
+                        }}
+                        className="w-24 h-24 mb-2 pointer-events-none absolute"
+                      />
+                    )}
+                  </div>
+
+                  {wasAnswered && isCorrect ? (
+                    <MarioBridge width={80} height={16} variant="gap" />
+                  ) : (
+                    <div className="h-4 w-20" />
+                  )}
+
                   <div
-                    className={`mt-2 h-10 w-12 rounded-lg border-2 flex items-center justify-center bg-slate-100 text-xl
-                      ${isActive ? "border-purple-500" : "border-slate-400"}`}
+                    className={`mt-2 h-10 w-12 rounded-lg border-2 flex items-center justify-center text-xl
+                      ${
+                        isActive
+                          ? "border-purple-500 bg-purple-50"
+                          : wasAnswered && isCorrect
+                          ? "border-green-500 bg-green-50"
+                          : wasAnswered
+                          ? "border-red-500 bg-red-50"
+                          : "border-slate-400 bg-slate-100"
+                      }`}
                   >
                     {showing || (isActive ? "?" : "")}
                   </div>
@@ -645,44 +693,7 @@ export const PunctuationChallengeGame = ({
         title={"Lumabas sa Laro?"}
         description="Sigurado ka ba na gusto mong umalis? Hindi mase-save ang iyong score."
       />
-      {/* Assist Prompt Modal */}
-      {showAssistPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
-          >
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                <HandHelping className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-800">Mali!</h3>
-              <p className="text-slate-600 text-center">
-                Gusto mo bang gumamit ng assist para subukan ulit?
-              </p>
-              <div className="flex items-center gap-2 text-purple-600">
-                <HandHelping className="w-5 h-5" />
-                <span className="font-bold">{assists} assists natitira</span>
-              </div>
-              <div className="flex gap-3 w-full mt-4">
-                <button
-                  onClick={handleDeclineAssist}
-                  className="flex-1 px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all"
-                >
-                  Hindi
-                </button>
-                <button
-                  onClick={handleUseAssist}
-                  className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all"
-                >
-                  Oo, gamitin
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+
       <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col w-full">
         <div className="w-full flex items-center gap-4 mb-2">
           <button
@@ -718,12 +729,29 @@ export const PunctuationChallengeGame = ({
                 <span className="text-lg font-bold">x{streak}</span>
               </motion.div>
             )}
-            {/* Assists counter */}
-            <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full">
+            {/* Assists counter with animation */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 rounded-full relative">
               <HandHelping className="w-5 h-5 text-purple-600" />
               <span className="text-lg font-bold text-purple-600">
                 {assists}
               </span>
+
+              <AnimatePresence>
+                {showAssistAnimation && (
+                  <motion.div
+                    className="absolute -top-12 left-1/2 transform -translate-x-1/2 pointer-events-none"
+                    initial={{ opacity: 0, y: 0, scale: 1 }}
+                    animate={{ opacity: [0, 1, 0], y: -20, scale: 1.5 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <HandHelping className="w-12 h-12 text-green-500" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <div className="text-slate-500 text-lg font-mono whitespace-nowrap">
+              {currentQIndex + 1} / {sentences.length}
             </div>
           </div>
         </div>
@@ -739,15 +767,13 @@ export const PunctuationChallengeGame = ({
                 <button
                   key={m}
                   onClick={() => handlePickPunctuation(m)}
-                  disabled={showAssistPrompt}
                   className={`h-12 w-12 rounded-xl border-2 text-xl font-bold
                     ${
                       currentGap && currentGap.correctMark === m
                         ? "border-purple-500/60"
                         : "border-slate-400"
                     }
-                    bg-slate-100 hover:bg-slate-200 active:scale-95 transition
-                    disabled:opacity-50 disabled:cursor-not-allowed`}
+                    bg-slate-100 hover:bg-slate-200 active:scale-95 transition`}
                 >
                   {m}
                 </button>
@@ -760,10 +786,18 @@ export const PunctuationChallengeGame = ({
         <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
           <button
             onClick={handleSkip}
-            disabled={showAssistPrompt}
-            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-7 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
           >
             SKIP
+          </button>
+
+          <button
+            onClick={handleUseAssist}
+            disabled={assists <= 0 || !currentGap}
+            className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:bg-purple-400 disabled:bg-slate-300 disabled:border-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+          >
+            <HandHelping className="w-5 h-5" />
+            <span>Gamitin ang Assist</span>
           </button>
         </div>
       </div>

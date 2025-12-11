@@ -12,9 +12,10 @@ class LeaderboardEntrySerializer(serializers.Serializer):
     score = serializers.IntegerField()
     stars_earned = serializers.IntegerField()
     difficulty = serializers.IntegerField()
+    time_taken = serializers.FloatField()
 
     class Meta:
-        fields = ["user_id", "name", "profile_pic", "score", "stars_earned", "difficulty"]
+        fields = ["user_id", "name", "profile_pic", "score", "stars_earned", "difficulty", "time_taken"]
 
 
 def progress_to_entry(progress: GameProgress, difficulty: int) -> dict:
@@ -27,7 +28,9 @@ def progress_to_entry(progress: GameProgress, difficulty: int) -> dict:
     profile_pic = getattr(user, "profile_pic", None) or ""
 
     score_field = f"difficulty_{difficulty}_score"
+    time_field = f"difficulty_{difficulty}_time_taken"
     score = getattr(progress, score_field, 0)
+    time_taken = getattr(progress, time_field, 0.0)
 
     return {
         "user_id": user.id,
@@ -36,4 +39,5 @@ def progress_to_entry(progress: GameProgress, difficulty: int) -> dict:
         "score": score,
         "stars_earned": progress.stars_earned,
         "difficulty": difficulty,
+        "time_taken": time_taken,
     }

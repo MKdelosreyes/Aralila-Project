@@ -137,12 +137,18 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
   const [results, setResults] = useState<PartsOfSpeechResult[]>([]);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
+  const [gameStartTime] = useState<number>(Date.now());
 
   // Assists system
   const [assists, setAssists] = useState(MAX_ASSISTS);
   const [showAssistHighlight, setShowAssistHighlight] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const resultsRef = useRef<PartsOfSpeechResult[]>([]);
+  
+  useEffect(() => {
+    resultsRef.current = results;
+  }, [results]);
 
   const currentQ: PartsOfSpeechQuestion = questions[currentQuestionIndex];
 
@@ -165,7 +171,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
-    const finalResults = [...results];
+    const finalResults = [...resultsRef.current];
 
     for (let i = currentQuestionIndex; i < questions.length; i++) {
       if (!finalResults.some((r) => r.question.id === questions[i].id)) {
@@ -178,12 +184,14 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
         });
       }
     }
+    const timeTaken = (Date.now() - gameStartTime) / 1000;
     onGameComplete({
       percentScore: computePercent(finalResults),
       rawPoints: score,
       results: finalResults,
+      timeTaken,
     });
-  }, [score, results, onGameComplete, currentQuestionIndex, questions]);
+  }, [score, onGameComplete, currentQuestionIndex, questions, gameStartTime]);
 
   useEffect(() => {
     if (timeLeft <= 15 && lilaState === "normal") setLilaState("worried");

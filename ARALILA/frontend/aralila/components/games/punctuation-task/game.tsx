@@ -128,12 +128,13 @@ export const PunctuationChallengeGame = ({
   onGameComplete,
   onExit,
 }: PunctuationChallengeGameProps) => {
+  const completedRef = useRef(false);
   const normalized = useMemo(
     () => (Array.isArray(sentences) ? sentences.map(normalizeSentence) : []),
     [sentences]
   );
-  const completedRef = useRef(false);
   const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [gameStartTime] = useState<number>(Date.now());
 
   const [results, setResults] = useState<PunctuationResult[]>([]);
   const [currentGapIndex, setCurrentGapIndex] = useState(0);
@@ -285,10 +286,12 @@ export const PunctuationChallengeGame = ({
           completedGaps: 0,
         });
       }
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
       onGameComplete({
         percentScore: computePercent(finalResults),
         rawPoints: score,
         results: finalResults,
+        timeTaken,
       });
       return;
     }
@@ -340,10 +343,12 @@ export const PunctuationChallengeGame = ({
       if (completedRef.current) return;
       completedRef.current = true;
       const final = resultsRef.current;
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
       onGameComplete({
         percentScore: computePercent(final),
         rawPoints: score,
         results: [...final],
+        timeTaken,
       });
     }
   };

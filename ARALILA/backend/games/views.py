@@ -412,6 +412,7 @@ def submit_game_score(request):
         game_type = request.data.get('game_type')
         difficulty = request.data.get('difficulty')
         score = request.data.get('score')
+        time_taken = request.data.get('time_taken')  # Time in seconds
         
         # Validation
         if not all([area_id, game_type, difficulty is not None, score is not None]):
@@ -436,18 +437,33 @@ def submit_game_score(request):
         if difficulty == 1:
             if score > progress.difficulty_1_score:
                 progress.difficulty_1_score = score
+                progress.difficulty_1_time_taken = time_taken
+            elif score == progress.difficulty_1_score:
+                # Update time if it's better (lower) or if no time was recorded yet
+                if not progress.difficulty_1_time_taken or (time_taken and time_taken < progress.difficulty_1_time_taken):
+                    progress.difficulty_1_time_taken = time_taken
             if passed and not progress.difficulty_1_completed:
                 progress.difficulty_1_completed = True
                 unlocked_message = "✅ Medium difficulty unlocked!"
         elif difficulty == 2:
             if score > progress.difficulty_2_score:
                 progress.difficulty_2_score = score
+                progress.difficulty_2_time_taken = time_taken
+            elif score == progress.difficulty_2_score:
+                # Update time if it's better (lower) or if no time was recorded yet
+                if not progress.difficulty_2_time_taken or (time_taken and time_taken < progress.difficulty_2_time_taken):
+                    progress.difficulty_2_time_taken = time_taken
             if passed and not progress.difficulty_2_completed:
                 progress.difficulty_2_completed = True
                 unlocked_message = "✅ Hard difficulty unlocked!"
         elif difficulty == 3:
             if score > progress.difficulty_3_score:
                 progress.difficulty_3_score = score
+                progress.difficulty_3_time_taken = time_taken
+            elif score == progress.difficulty_3_score:
+                # Update time if it's better (lower) or if no time was recorded yet
+                if not progress.difficulty_3_time_taken or (time_taken and time_taken < progress.difficulty_3_time_taken):
+                    progress.difficulty_3_time_taken = time_taken
             if passed and not progress.difficulty_3_completed:
                 progress.difficulty_3_completed = True
                 unlocked_message = "🏆 Mastered! All difficulties completed."
@@ -495,6 +511,8 @@ def submit_game_score(request):
         return Response({'error': 'Game not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+
 
 
 @api_view(['GET'])

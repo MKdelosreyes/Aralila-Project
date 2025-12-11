@@ -24,8 +24,9 @@ interface GameProps {
   difficulty?: number;
   onGameComplete: (summary: {
     score: number;
-    rawPoints: number;
+    rawPoints?: number;
     results: WordAssociationResult[];
+    timeTaken: number;
   }) => void;
   onExit: () => void;
 }
@@ -56,6 +57,7 @@ export const WordAssociationGame = ({
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
+  const [startTime] = useState<number>(Date.now());
   const [feedback, setFeedback] = useState<{
     type: "success" | "error" | "skipped";
   } | null>(null);
@@ -96,12 +98,14 @@ export const WordAssociationGame = ({
         isCorrect: false,
       });
     }
+    const timeTaken = (Date.now() - startTime) / 1000; // Convert to seconds
     onGameComplete({
       score,
       rawPoints: score,
       results: finalResults,
+      timeTaken,
     });
-  }, [score, results, currentIndex, shuffledQuestions, onGameComplete]);
+  }, [score, results, currentIndex, shuffledQuestions, onGameComplete, startTime]);
 
   useEffect(() => {
     if (timeLeft <= 15 && lilaState === "normal") {
@@ -171,10 +175,12 @@ export const WordAssociationGame = ({
           const finalScore = isCorrect
             ? score + (streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS)
             : score;
+          const timeTaken = (Date.now() - startTime) / 1000;
           onGameComplete({
             score: finalScore,
             rawPoints: finalScore,
             results: updatedResults,
+            timeTaken,
           });
         }, 50); // small delay ensures it runs after render
       } else {
@@ -185,6 +191,7 @@ export const WordAssociationGame = ({
       return updatedResults;
     });
   };
+
 
   const handleUseAssist = () => {
     if (assists <= 0 || feedback) return;

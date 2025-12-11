@@ -44,6 +44,7 @@ interface SpellingChallengeGameProps {
     percentScore: number;
     rawPoints: number;
     results: SpellingResult[];
+    timeTaken: number;
   }) => void;
   onExit: () => void;
 }
@@ -60,6 +61,7 @@ export const SpellingChallengeGame = ({
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [rawPoints, setRawPoints] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [gameStartTime] = useState<number>(Date.now());
   const [feedback, setFeedback] = useState<{
     type: "success" | "error" | "skipped";
   } | null>(null);
@@ -297,10 +299,12 @@ export const SpellingChallengeGame = ({
           isCorrect: false,
         });
       }
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
       onGameComplete({
         percentScore: calculatePercent(finalResults),
         rawPoints,
         results: finalResults,
+        timeTaken,
       });
     }
   }, [
@@ -328,7 +332,8 @@ export const SpellingChallengeGame = ({
       const percent = calculatePercent(results);
       completedRef.current = true;
       setIsCompleting(true);
-      onGameComplete({ percentScore: percent, rawPoints, results });
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
+      onGameComplete({ percentScore: percent, rawPoints, results, timeTaken });
     }
   }, [currentWordIndex, words.length, onGameComplete, rawPoints, results]);
 
@@ -381,10 +386,12 @@ export const SpellingChallengeGame = ({
         if (isLast && !completedRef.current) {
           completedRef.current = true;
           setIsCompleting(true);
+          const timeTaken = (Date.now() - gameStartTime) / 1000;
           onGameComplete({
             percentScore: calculatePercent(updatedResults),
             rawPoints,
             results: updatedResults,
+            timeTaken,
           });
         } else {
           advanceToNext();

@@ -220,7 +220,7 @@ export const EmojiChallengeSummary = ({
           </div>
           <div className="md:col-span-1">
             <Leaderboard
-              gameId={2}
+              gameId={7}
               gameType="emoji-challenge"
               areaId={4}
               difficulty={difficulty}

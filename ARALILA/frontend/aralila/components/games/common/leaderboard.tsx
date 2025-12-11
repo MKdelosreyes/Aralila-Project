@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   score: number;
   stars_earned: number;
   difficulty: number;
+  time_taken: number;
 }
 
 interface LeaderboardProps {
@@ -33,6 +34,14 @@ const Leaderboard = ({
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Helper function to format time in seconds to MM:SS
+  const formatTime = (seconds: number): string => {
+    if (!seconds || seconds === 0) return "--:--";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     if (!gameId && !gameType && !areaId) return;
@@ -165,15 +174,26 @@ const Leaderboard = ({
 
                 <div className="ml-2 flex items-center gap-2 whitespace-nowrap">
                   {e ? (
-                    <div
-                      className={
-                        isLight
-                          ? "text-xs text-slate-700"
-                          : "text-xs text-gray-300"
-                      }
-                    >
-                      Score: {e.score}
-                    </div>
+                    <>
+                      <div
+                        className={
+                          isLight
+                            ? "text-xs text-slate-700"
+                            : "text-xs text-gray-300"
+                        }
+                      >
+                        {e.score}pts
+                      </div>
+                      <div
+                        className={
+                          isLight
+                            ? "text-xs text-slate-500"
+                            : "text-xs text-gray-400"
+                        }
+                      >
+                        {formatTime(e.time_taken)}
+                      </div>
+                    </>
                   ) : (
                     <div className="text-xs text-gray-400">—</div>
                   )}

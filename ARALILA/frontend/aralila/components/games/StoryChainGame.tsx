@@ -13,6 +13,11 @@ import {
   Trophy,
   Star,
   Edit3,
+  Users,
+  Wifi,
+  WifiOff,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
 export default function StoryChainGame() {
@@ -34,19 +39,17 @@ export default function StoryChainGame() {
       turnOrder,
     });
 
-  // ✅ Calculate current sentence parts (only for current image)
+  // Calculate current sentence parts (only for current image)
   const currentSentenceParts = useMemo(() => {
-    // Filter only player inputs (not SYSTEM or AI messages)
     const playerInputs = gameState.story.filter(
       (s) => s.player !== "SYSTEM" && s.player !== "AI"
     );
 
-    // Get only inputs after the last AI evaluation
     const lastAIIndex = gameState.story.findLastIndex((s) => s.player === "AI");
 
     const currentInputs =
       lastAIIndex === -1
-        ? playerInputs // No AI evaluation yet, take all inputs
+        ? playerInputs
         : gameState.story
             .slice(lastAIIndex + 1)
             .filter((s) => s.player !== "SYSTEM" && s.player !== "AI");
@@ -54,15 +57,15 @@ export default function StoryChainGame() {
     return currentInputs;
   }, [gameState.story]);
 
-  // ✅ Reset input when image changes
+  // Reset input when image changes
   useEffect(() => {
     if (gameState.imageIndex !== previousImageIndexRef.current) {
-      setSentence(""); // Clear input for new image
+      setSentence("");
       previousImageIndexRef.current = gameState.imageIndex;
     }
   }, [gameState.imageIndex]);
 
-  // ✅ Calculate completed sentences (only AI evaluations)
+  // Calculate completed sentences (only AI evaluations)
   const completedSentences = useMemo(() => {
     return gameState.story.filter(
       (s) => s.player === "AI" || s.player === "SYSTEM"
@@ -72,7 +75,6 @@ export default function StoryChainGame() {
   const handleSubmit = () => {
     if (!sentence.trim() || !isMyTurn) return;
 
-    // Auto-capitalize first letter if this is the first word
     let finalText = sentence.trim();
     if (currentSentenceParts.length === 0) {
       finalText = finalText.charAt(0).toUpperCase() + finalText.slice(1);
@@ -93,17 +95,20 @@ export default function StoryChainGame() {
   if (connectionError) {
     return (
       <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="max-w-md w-full bg-white/95 text-black rounded-xl p-6 shadow-md text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">
-            Connection Lost
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">{connectionError}</p>
-          <button
-            onClick={() => router.push("/student/playground")}
-            className="w-full font-bold py-3 px-6 rounded-xl text-base flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 bg-gradient-to-r from-purple-600 to-purple-700 text-white"
-          >
-            Back to Playground
-          </button>
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-lg border border-purple-200">
+          <div className="text-center">
+            <WifiOff className="w-16 h-16 text-purple-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Connection Lost
+            </h2>
+            <p className="text-gray-600 mb-6">{connectionError}</p>
+            <button
+              onClick={() => router.push("/student/playground")}
+              className="w-full font-semibold py-3 px-6 rounded-xl text-base shadow-md hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800"
+            >
+              Back to Playground
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -117,64 +122,70 @@ export default function StoryChainGame() {
     const winner = sortedScores[0];
 
     return (
-      <div className="p-6 md:p-8 max-w-2xl mx-auto">
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-3">
-            <Trophy className="text-yellow-400" />
-            <h2 className="text-3xl md:text-4xl font-bold mb-1 text-gray-900">
-              Game Over
+      <div className="p-6 md:p-8 max-w-4xl mx-auto">
+        {/* Winner Announcement */}
+        <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-3xl p-8 mb-6 text-white shadow-2xl">
+          <div className="text-center">
+            <Trophy className="w-20 h-20 mx-auto mb-4 text-purple-200" />
+            <h2 className="text-4xl md:text-5xl font-bold mb-3">
+              Game Over!
             </h2>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 inline-block">
+              <p className="text-2xl md:text-3xl font-bold">
+                {winner?.[0] || "N/A"}
+              </p>
+              <p className="text-lg opacity-90">{winner?.[1] || 0} points</p>
+            </div>
           </div>
-          <p className="text-base md:text-xl text-purple-600 font-semibold mt-2">
-            Winner: {winner?.[0] || "N/A"} ({winner?.[1] || 0} pts)
-          </p>
         </div>
 
-        {/* Scores */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
-          <h3 className="text-lg md:text-xl font-bold mb-4 text-center flex items-center justify-center gap-2 text-gray-900">
-            <Star className="text-purple-500" />
+        {/* Final Scores */}
+        <div className="bg-white border-2 border-purple-200 rounded-2xl p-6 mb-6 shadow-lg">
+          <h3 className="text-2xl font-bold mb-4 text-gray-900 flex items-center gap-3">
+            <Star className="text-purple-600 w-7 h-7" />
             Final Scores
           </h3>
-          <ul className="space-y-2">
+          <div className="space-y-3">
             {sortedScores.map(([p, s], i) => (
-              <li
+              <div
                 key={p}
-                className={`flex justify-between items-center p-3 rounded-xl ${
+                className={`flex justify-between items-center p-4 rounded-xl transition-all ${
                   i === 0
-                    ? "bg-purple-50 border-2 border-purple-400"
-                    : "bg-gray-50 border border-gray-200"
+                    ? "bg-gradient-to-r from-purple-100 to-purple-200 border-2 border-purple-400 shadow-md"
+                    : "bg-purple-50 border-2 border-purple-200"
                 }`}
               >
-                <span className="font-semibold flex items-center gap-2">
-                  {i === 0 && <Trophy className="text-yellow-500" />}
-                  {i === 1 && <Star className="text-gray-400" />}
-                  {i === 2 && <Star className="text-yellow-300" />}
-                  {p}
+                <span className="font-bold text-lg text-gray-900 flex items-center gap-3">
+                  {i === 0 && <Trophy className="text-purple-600 w-6 h-6" />}
+                  {i === 1 && <Star className="text-purple-500 w-5 h-5" />}
+                  {i === 2 && <Star className="text-purple-400 w-5 h-5" />}
+                  <span>{p}</span>
                 </span>
-                <span className="font-bold text-lg">{s} pts</span>
-              </li>
+                <span className="font-bold text-2xl text-purple-700">{s}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
 
-        {/* Full Story */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
-          <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
-            <FileText className="text-purple-500" /> Complete Story
+        {/* Complete Story */}
+        <div className="bg-white border-2 border-purple-200 rounded-2xl p-6 mb-6 shadow-lg">
+          <h3 className="text-2xl font-bold mb-4 text-gray-900 flex items-center gap-3">
+            <FileText className="text-purple-600 w-7 h-7" />
+            Complete Story
           </h3>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <div className="bg-purple-50 rounded-xl p-4 max-h-96 overflow-y-auto space-y-3">
             {gameState.story.map((line, i) => (
-              <p key={i} className="text-gray-700">
-                <strong>{line.player}:</strong> {line.text}
-              </p>
+              <div key={i} className="text-gray-800 leading-relaxed">
+                <span className="font-bold text-purple-700">{line.player}:</span>{" "}
+                <span>{line.text}</span>
+              </div>
             ))}
           </div>
         </div>
 
         <button
           onClick={() => router.push("/student/playground")}
-          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl hover:from-purple-500 hover:to-purple-600 font-semibold shadow-md hover:shadow-lg transition-all"
+          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-4 rounded-xl hover:from-purple-700 hover:to-purple-800 font-bold text-lg shadow-lg hover:shadow-xl transition-all"
         >
           Back to Playground
         </button>
@@ -186,22 +197,25 @@ export default function StoryChainGame() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex flex-col gap-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen className="text-purple-600" />
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-3">
+              <BookOpen className="text-purple-600 w-8 h-8" />
               Story Chain
             </h2>
-            <p className="text-sm text-gray-600">
-              Room
-              <span className="ml-1 font-semibold text-purple-600">{room}</span>
-            </p>
-            <div className="flex items-center gap-2 mt-1">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
-                }`}
-              />
+            <div className="flex items-center gap-2 text-gray-700">
+              <Users className="w-4 h-4 text-purple-600" />
+              <span className="text-sm">
+                Room:{" "}
+                <span className="font-bold text-purple-700">{room}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {isConnected ? (
+                <Wifi className="w-4 h-4 text-purple-600" />
+              ) : (
+                <WifiOff className="w-4 h-4 text-purple-400" />
+              )}
               <span className="text-xs font-medium text-gray-600">
                 {isConnected ? "Connected" : "Reconnecting..."}
               </span>
@@ -209,46 +223,47 @@ export default function StoryChainGame() {
           </div>
 
           {/* Game Stats */}
-          <div className="flex flex-wrap justify-center gap-3 text-xs md:text-sm">
-            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full inline-flex items-center gap-2">
-              <ImageIcon size={14} /> Image {gameState.imageIndex + 1}/
-              {gameState.totalImages}
+          <div className="flex flex-wrap gap-3 text-sm">
+            <span className="bg-purple-100 text-purple-800 px-4 py-2 rounded-xl font-semibold inline-flex items-center gap-2 border border-purple-300">
+              <ImageIcon className="w-4 h-4" />
+              Image {gameState.imageIndex + 1}/{gameState.totalImages}
             </span>
 
             <span
-              className={`px-3 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
+              className={`px-4 py-2 rounded-xl font-bold inline-flex items-center gap-2 border ${
                 isMyTurn
-                  ? "bg-purple-200 text-purple-800 animate-pulse"
-                  : "bg-gray-200 text-gray-700"
+                  ? "bg-purple-200 text-purple-900 border-purple-400 animate-pulse"
+                  : "bg-purple-50 text-purple-700 border-purple-300"
               }`}
             >
-              <Zap size={14} />
-              {isMyTurn ? "Your turn" : `Turn: ${gameState.currentTurn}`}
+              <Zap className="w-4 h-4" />
+              {isMyTurn ? "Your Turn!" : `${gameState.currentTurn}'s Turn`}
             </span>
 
             <span
-              className={`px-3 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
+              className={`px-4 py-2 rounded-xl font-bold inline-flex items-center gap-2 border ${
                 gameState.timeLeft <= 5
-                  ? "bg-red-100 text-red-700 animate-pulse"
-                  : "bg-orange-100 text-orange-800"
+                  ? "bg-purple-200 text-purple-900 border-purple-400 animate-pulse"
+                  : "bg-purple-100 text-purple-800 border-purple-300"
               }`}
             >
-              <Clock size={14} /> {gameState.timeLeft}s
+              <Clock className="w-4 h-4" />
+              {gameState.timeLeft}s
             </span>
           </div>
         </div>
 
         {/* Player Order */}
-        <div className="flex flex-wrap justify-center gap-2 mt-3">
+        <div className="flex flex-wrap gap-2 mt-4">
           {gameState.players.map((p, idx) => (
             <div
               key={p}
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${
                 p === gameState.currentTurn
-                  ? "bg-green-500 text-white"
+                  ? "bg-purple-600 text-white border-purple-700 shadow-md"
                   : p === player
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700"
+                  ? "bg-purple-500 text-white border-purple-600"
+                  : "bg-purple-50 text-purple-900 border-purple-300"
               }`}
             >
               {idx + 1}. {p}
@@ -257,64 +272,60 @@ export default function StoryChainGame() {
         </div>
       </div>
 
-      {/* ✅ MAIN LAYOUT: Image + Previous Sentences Side-by-Side */}
+      {/* MAIN LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Current Image (2/3 width on large screens) */}
+        {/* Current Image */}
         <div className="lg:col-span-2">
-          <div className="bg-white border border-gray-200 rounded-2xl p-4 h-full shadow-sm">
+          <div className="bg-gradient-to-br from-purple-50 to-white border-2 border-purple-200 rounded-2xl p-6 h-full shadow-lg">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <ImageIcon className="text-purple-600 w-6 h-6" />
+              Current Image
+            </h3>
             {gameState.imageUrl ? (
-              <div>
-                <div className="relative">
-                  <Image
-                    src={gameState.imageUrl}
-                    alt="Story scene"
-                    width={150}
-                    height={150}
-                    className="rounded-lg w-full shadow-xl object-contain border-4 border-purple-200"
-                    style={{ maxHeight: "350px" }}
-                  />
-                  <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-md">
-                    Image {gameState.imageIndex + 1}
-                  </div>
+              <div className="relative">
+                <Image
+                  src={gameState.imageUrl}
+                  alt="Story scene"
+                  width={150}
+                  height={150}
+                  className="rounded-xl w-full shadow-2xl object-contain border-4 border-purple-300"
+                  style={{ maxHeight: "400px" }}
+                />
+                <div className="absolute top-3 right-3 bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">
+                  Image {gameState.imageIndex + 1}
                 </div>
-              {/* {gameState.imageDescription && (
-                <p className="mt-3 text-sm text-gray-600 text-center italic bg-gray-50 p-3 rounded-lg flex items-start gap-2">
-                  <ImageIcon size={16} className="text-purple-500" />
-                  <span>{gameState.imageDescription}</span>
-                </p>
-              )} */}
               </div>
             ) : (
-              <div className="bg-gray-50 rounded-xl p-10 text-center border border-dashed border-gray-200">
-                <p className="text-gray-400 text-sm md:text-base">Loading image...</p>
+              <div className="bg-purple-50 rounded-xl p-12 text-center border-2 border-dashed border-purple-300">
+                <ImageIcon className="w-16 h-16 text-purple-400 mx-auto mb-3" />
+                <p className="text-purple-600 font-medium">Loading image...</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* ✅ Previous Sentences (1/3 width on large screens) */}
+        {/* Previous Sentences */}
         <div className="lg:col-span-1">
-          <div className="bg-white border border-gray-200 rounded-2xl p-4 h-full shadow-sm">
-            <h3 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
-              <FileText className="text-purple-600" />
-              <span>Previous Sentences</span>
+          <div className="bg-gradient-to-br from-purple-100 to-purple-50 border-2 border-purple-300 rounded-2xl p-6 h-full shadow-lg">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <CheckCircle className="text-purple-600 w-6 h-6" />
+              Completed
             </h3>
             {completedSentences.length === 0 ? (
-              <p className="text-gray-400 italic text-sm text-center py-8">
-                No completed sentences yet...
-              </p>
+              <div className="text-center py-12">
+                <AlertCircle className="w-12 h-12 text-purple-300 mx-auto mb-3" />
+                <p className="text-purple-500 font-medium">
+                  No completed sentences yet
+                </p>
+              </div>
             ) : (
-              <div className="space-y-2 max-h-[450px] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[450px] overflow-y-auto pr-2">
                 {completedSentences.map((line, i) => (
                   <div
                     key={i}
-                    className={`text-sm p-3 rounded-lg ${
-                      line.player === "AI"
-                        ? "bg-green-50 border-l-4 border-green-400"
-                        : "bg-gray-50 border-l-4 border-gray-300"
-                    }`}
+                    className="bg-white p-4 rounded-xl shadow-sm border-2 border-purple-200 text-gray-800"
                   >
-                    {line.text}
+                    <p className="text-sm leading-relaxed">{line.text}</p>
                   </div>
                 ))}
               </div>
@@ -323,54 +334,57 @@ export default function StoryChainGame() {
         </div>
       </div>
 
-      {/* ✅ Current Sentence Being Formed - RESETS PER IMAGE */}
-      <div className="bg-gradient-to-r from-purple-50 to-white border border-purple-200 rounded-2xl p-4 mb-4">
-        <h3 className="font-bold text-sm text-gray-700 mb-2 flex items-center gap-2">
-          <Edit3 className="text-purple-600" />
-          Current Sentence (Image {gameState.imageIndex + 1}):
+      {/* Current Sentence Being Formed */}
+      <div className="bg-gradient-to-r from-purple-100 to-purple-50 border-2 border-purple-300 rounded-2xl p-6 mb-6 shadow-lg">
+        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Edit3 className="text-purple-600 w-6 h-6" />
+          Building Sentence (Image {gameState.imageIndex + 1})
         </h3>
-        <div className="flex flex-wrap items-center gap-2 min-h-[40px]">
-          {currentSentenceParts.length === 0 ? (
-            <span className="text-gray-400 italic">
-              Waiting for first word...
-            </span>
-          ) : (
-            currentSentenceParts.map((part, idx) => (
-              <span
-                key={idx}
-                className={`px-3 py-1 rounded-lg font-medium ${
-                  part.player === player
-                    ? "bg-blue-500 text-white"
-                    : "bg-white border-2 border-gray-200"
-                }`}
-              >
-                {part.text}
+        <div className="bg-white rounded-xl p-4 min-h-[80px] border-2 border-purple-200">
+          <div className="flex flex-wrap items-center gap-3">
+            {currentSentenceParts.length === 0 ? (
+              <div className="flex items-center gap-2 text-purple-400">
+                <AlertCircle className="w-5 h-5" />
+                <span className="font-medium">Waiting for first word...</span>
+              </div>
+            ) : (
+              currentSentenceParts.map((part, idx) => (
+                <span
+                  key={idx}
+                  className={`px-4 py-2 rounded-lg font-semibold text-base shadow-sm border-2 ${
+                    part.player === player
+                      ? "bg-purple-600 text-white border-purple-700"
+                      : "bg-purple-50 text-purple-900 border-purple-300"
+                  }`}
+                >
+                  {part.text}
+                </span>
+              ))
+            )}
+            {isMyTurn && currentSentenceParts.length < turnOrder.length && (
+              <span className="px-4 py-2 rounded-lg bg-purple-200 border-2 border-purple-400 text-purple-900 font-semibold animate-pulse flex items-center gap-2">
+                <Edit3 className="w-4 h-4" />
+                Your word here...
               </span>
-            ))
-          )}
-          {isMyTurn && currentSentenceParts.length < turnOrder.length && (
-            <span className="px-3 py-1 rounded-lg bg-purple-200 border-2 border-purple-400 animate-pulse">
-              <Edit3 className="inline-block mr-1" size={14} /> Your word
-              here...
-            </span>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      <div className="bg-white border-2 border-purple-200 rounded-2xl p-6 shadow-lg">
         {isMyTurn ? (
           <>
-            <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <Edit3 className="text-purple-600" /> Add your word/phrase to the
-              sentence:
+            <label className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Edit3 className="text-purple-600 w-5 h-5" />
+              Add Your Word/Phrase:
             </label>
             <input
               type="text"
               value={sentence}
               onChange={(e) => setSentence(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="border-2 border-gray-300 bg-gray-50 p-3 rounded-lg w-full focus:border-purple-500 focus:outline-none text-base md:text-lg"
+              className="border-2 border-purple-300 bg-purple-50 p-4 rounded-xl w-full focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 text-lg text-gray-900 font-medium"
               placeholder={
                 currentSentenceParts.length === 0
                   ? "Start the sentence (will auto-capitalize)..."
@@ -379,17 +393,17 @@ export default function StoryChainGame() {
               maxLength={50}
               autoFocus
             />
-            <div className="flex justify-between items-center mt-3">
-              <span className="text-sm text-gray-500">
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-sm text-purple-700 font-medium">
                 {sentence.length}/50 characters
               </span>
               <button
                 onClick={handleSubmit}
                 disabled={!sentence.trim()}
-                className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                className={`px-8 py-3 rounded-xl font-bold text-base transition-all shadow-md ${
                   sentence.trim()
-                    ? "bg-purple-600 text-white hover:bg-purple-700 hover:scale-105"
-                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 hover:shadow-lg hover:scale-105"
+                    : "bg-purple-200 text-purple-400 cursor-not-allowed"
                 }`}
               >
                 Submit Word
@@ -397,15 +411,16 @@ export default function StoryChainGame() {
             </div>
           </>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-gray-500 text-lg mb-2 flex items-center justify-center gap-2">
-              <Clock /> Waiting for{" "}
-              <strong className="text-purple-600">
+          <div className="text-center py-12">
+            <Clock className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+            <p className="text-gray-700 text-xl mb-2">
+              Waiting for{" "}
+              <span className="font-bold text-purple-700">
                 {gameState.currentTurn}
-              </strong>
-              {"'s turn..."}
+              </span>
+              's turn...
             </p>
-            <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
+            <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mt-4"></div>
           </div>
         )}
       </div>

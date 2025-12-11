@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { SpellingChallengeIntro } from "@/components/games/spelling-challenge/intro";
 import { SpellingChallengeGame } from "@/components/games/spelling-challenge/game";
 import { SpellingChallengeSummary } from "@/components/games/spelling-challenge/summary";
@@ -372,7 +372,7 @@ const SpellingChallengePage = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}

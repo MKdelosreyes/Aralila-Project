@@ -25,4 +25,5 @@ urlpatterns = [
     path('assessment/complete/', views.complete_assessment, name='complete_assessment'),
     path('assessment/validate-answer/', views.validate_challenge_answer, name='validate_answer'),
     path('assessment/reset/', views.reset_assessment, name='assessment-reset'),
+    path('evaluate-compose/', views.evaluate_compose_answer, name='evaluate_compose'),
 ]

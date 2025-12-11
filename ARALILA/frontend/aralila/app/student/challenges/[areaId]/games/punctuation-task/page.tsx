@@ -9,7 +9,7 @@ import { PunctuationChallengeSummary } from "@/components/games/punctuation-task
 import { punctuationChallengeData } from "@/data/games/punctuation-task";
 import { PunctuationResult } from "@/types/games";
 import { PunctuationData } from "@/types/games";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { TutorialModal } from "../TutorialModal";
 
 type GameState = "intro" | "playing" | "summary";
@@ -404,7 +404,7 @@ const PunctuationChallengePage = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-slate-800">
+    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-slate-800">
       <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}

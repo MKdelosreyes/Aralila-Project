@@ -229,6 +229,7 @@ export const SentenceConstructionSummary = ({
               areaId={4}
               difficulty={1}
               limit={10}
+              variant="light"
             />
           </div>
         </div>

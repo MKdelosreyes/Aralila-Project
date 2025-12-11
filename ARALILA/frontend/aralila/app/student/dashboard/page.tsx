@@ -15,7 +15,7 @@ import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
 import Sidebar from "@/components/student/sidebar";
 import Header from "@/components/student/header";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { useAreaUnlocks } from "@/hooks/useAreaUnlocks";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -428,7 +428,7 @@ export default function DashboardPage() {
                               </div> */}
 
                               {/* Practice Button */}
-                              <button
+                              {/* <button
                                 onClick={() =>
                                   router.push(
                                     `/student/challenges?area=${area.order_index}`
@@ -438,7 +438,7 @@ export default function DashboardPage() {
                               >
                                 <BookOpen size={10} />
                                 Practice Games
-                              </button>
+                              </button> */}
 
                               {/* NEW: Assessment Button */}
                               {/* {canAssess && !progress.assessmentPassed && (

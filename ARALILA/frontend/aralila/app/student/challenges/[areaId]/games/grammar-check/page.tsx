@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { GrammarCheckIntro } from "@/components/games/grammar-check/intro";
 import { GrammarCheckGame } from "@/components/games/grammar-check/game";
 import {
@@ -375,7 +375,7 @@ const GrammarCheckPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       {/* Background */}
       <AnimatedBackground imagePath={getAreaBGImage()} />
 

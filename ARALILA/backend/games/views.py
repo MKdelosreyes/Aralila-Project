@@ -1181,11 +1181,45 @@ def validate_challenge_answer(request):
             print(f"   Is correct: {is_correct}")
         
         elif challenge.type == 'COMPOSE':
-            # Use AI validation (similar to emoji evaluation)
-            # For now, simple keyword check
-            keywords = challenge.correct_answer.lower().split()
-            user_answer = answer.lower()
-            is_correct = all(kw in user_answer for kw in keywords)
+            # ✅ Use AI validation instead of keyword matching
+            try:
+                # Extract emojis from question (e.g., "Write a sentence using: 🌧️ 📚 ☕")
+                import re
+                emoji_pattern = re.compile("[\U0001F300-\U0001F9FF]+")
+                emojis_in_question = emoji_pattern.findall(challenge.question)
+                
+                # Call AI evaluation
+                from django.test import RequestFactory
+                factory = RequestFactory()
+                ai_request = factory.post(
+                    '/evaluate-compose/',
+                    data=json.dumps({
+                        'answer': answer,
+                        'emojis': emojis_in_question
+                    }),
+                    content_type='application/json'
+                )
+                
+                ai_response = evaluate_compose_answer(ai_request)
+                ai_result = json.loads(ai_response.content)
+                
+                # Consider valid if score >= 70%
+                is_correct = ai_result.get('valid', False) and ai_result.get('score', 0) >= 70
+                
+                return Response({
+                    'correct': is_correct,
+                    'correctAnswer': None,  # No single correct answer for COMPOSE
+                    'ai_feedback': ai_result.get('explanation'),
+                    'score': ai_result.get('score'),
+                    'suggestions': ai_result.get('filipino_equivalents', {})
+                })
+        
+            except Exception as e:
+                print(f"AI validation error: {e}")
+                # Fallback to keyword check
+                keywords = challenge.correct_answer.lower().split()
+                user_answer = answer.lower()
+                is_correct = all(kw in user_answer for kw in keywords)
         
         return Response({
             'correct': is_correct,
@@ -1346,3 +1380,93 @@ def reset_assessment(request):
     ).delete()
 
     return Response({'ok': True})
+
+
+
+@csrf_exempt
+def evaluate_compose_answer(request):
+    try:
+        data = json.loads(request.body)
+        student_answer = data.get("answer", "")
+        emojis = data.get("emojis", [])  # Get emojis from question
+        
+        prompt = f"""You are a Filipino language teacher. Evaluate this student's composed sentence.
+
+Emojis to use: {emojis}
+Student's sentence: "{student_answer}"
+
+Evaluation criteria:
+1. Check if the sentence uses ALL Filipino (Tagalog) words. Note any English words.
+2. Check grammar correctness in Filipino.
+3. Check if the sentence relates to ALL the given emojis.
+4. Check sentence structure and coherence.
+
+Scoring rules:
+- All Filipino + correct grammar + uses all emojis + coherent = 100% (valid: true)
+- 1-2 English words but otherwise good = 80% (valid: true)
+- Missing 1 emoji or minor grammar issues = 70% (valid: true)
+- 3+ English words or major grammar issues = 50% (valid: false)
+- Nonsensical or unrelated to emojis = 0% (valid: false)
+
+Respond ONLY in valid JSON:
+{{
+  "valid": true/false,
+  "score": 0-100,
+  "explanation": "Filipino text explaining what's good/wrong. If English words found, give Filipino equivalents.",
+  "english_words_found": ["word1", "word2"] or [],
+  "filipino_equivalents": {{"english_word": "Filipino_word"}} or {{}},
+  "missing_emojis": ["emoji1", "emoji2"] or []
+}}
+
+Example response:
+{{
+  "valid": true,
+  "score": 80,
+  "explanation": "Maganda ang pangungusap mo! Pero may English word: 'play' (dapat 'maglaro'). Ginamit mo nang tama ang lahat ng emoji. Subukan: 'Masayang naglalaro ang pamilya sa bahay.'",
+  "english_words_found": ["play"],
+  "filipino_equivalents": {{"play": "maglaro"}},
+  "missing_emojis": []
+}}
+
+Use Filipino only in explanations.
+"""
+
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=[
+                {"role": "system", "content": "Respond ONLY in valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            max_output_tokens=150,
+        )
+
+        ai_msg = response.output_text.strip()
+        cleaned = ai_msg.replace("```json", "").replace("```", "").strip()
+        result = json.loads(cleaned)
+        
+        # Ensure all fields exist
+        if "score" not in result:
+            result["score"] = 100 if result.get("valid") else 0
+        if "english_words_found" not in result:
+            result["english_words_found"] = []
+        if "filipino_equivalents" not in result:
+            result["filipino_equivalents"] = {}
+        if "missing_emojis" not in result:
+            result["missing_emojis"] = []
+            
+        return JsonResponse(result)
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON returned by AI."},
+            status=500
+        )
+    except Exception as e:
+        if "429" in str(e):
+            return JsonResponse(
+                {"error": "Rate limit exceeded. Please try again."},
+                status=429
+            )
+        return JsonResponse({"error": str(e)}, status=500)
+
+

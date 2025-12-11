@@ -78,14 +78,14 @@ export const Challenge = ({
           <img
             src={challenge.imagePrompt}
             alt="Spell this"
-            className="mx-auto max-h-[200px] rounded-lg"
+            className="mx-auto max-h-[200px] rounded-lg mb-5"
           />
         )}
         <Input
           value={textAnswer}
           onChange={(e) => onTextChange?.(e.target.value)}
           placeholder="Type your answer here..."
-          className="text-lg"
+          className="text-3xl font-semibold px-3 py-6"
           disabled={disabled}
         />
       </div>
@@ -98,7 +98,7 @@ export const Challenge = ({
 
     return (
       <div className="flex flex-col gap-4">
-        <div className="min-h-[100px] rounded-lg border-2 border-dashed p-4 flex flex-wrap gap-2">
+        <div className="min-h-[100px] rounded-lg border-2 border-dashed border-sky-200 bg-neutral-50 p-4 flex flex-wrap gap-2">
           {arrangedWords?.map((word: string, index: number) => (
             <Button
               key={index}
@@ -107,8 +107,9 @@ export const Challenge = ({
                 const newArranged = arrangedWords.filter((_, i) => i !== index);
                 onArrange?.(newArranged);
               }}
+              className="text-lg py-5 font-semibold border-2 border-b-3 border-sky-400 bg-sky-50"
             >
-              {word} ✕
+              {word}
             </Button>
           ))}
         </div>
@@ -122,6 +123,7 @@ export const Challenge = ({
                   onArrange?.([...(arrangedWords || []), word.text]);
                 }}
                 disabled={disabled}
+                className="text-lg font-semibold py-5 border-2 border-b-3 border-purple-300 bg-purple-50 text-black hover:bg-sky-50"
               >
                 {word.text}
               </Button>
@@ -168,7 +170,7 @@ export const Challenge = ({
 
     return (
       <div className="flex flex-col gap-6">
-        <div className="text-xl p-6 bg-neutral-50 rounded-lg border border-neutral-200 min-h-[120px]">
+        <div className="flex text-xl p-6 bg-sky-50 rounded-lg border border-sky-300 min-h-[100px] mb-6">
           <div className="flex flex-wrap items-center gap-2">
             {words.map((word, i) => {
               const hasGap = correctWordPositions.includes(i);
@@ -184,7 +186,7 @@ export const Challenge = ({
                   {hasGap && (
                     <span
                       className={cn(
-                        "inline-flex items-center justify-center min-w-[32px] h-[32px] rounded-md border-2 transition-all",
+                        "inline-flex items-center justify-center min-w-[36px] h-[36px] rounded-md border-2 border-b-3 transition-all",
                         placedPunctuation
                           ? "border-green-500 bg-green-50 text-green-700"
                           : isNextGap
@@ -215,7 +217,7 @@ export const Challenge = ({
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm text-neutral-600 font-medium text-center">
+          <p className="text-base text-gray-400 font-medium text-center">
             Click a punctuation mark to fill the highlighted gap:
           </p>
           <div className="flex items-center justify-center gap-3">
@@ -225,9 +227,9 @@ export const Challenge = ({
                 onClick={() => handlePunctuationClick(mark)}
                 disabled={disabled || typeof nextGapWordIndex !== "number"}
                 className={cn(
-                  "flex items-center justify-center w-14 h-14 text-2xl font-bold rounded-lg border-2 transition-all",
+                  "flex items-center justify-center px-5 py-2 text-xl font-bold rounded-xl border-2 border-b-4 hover:bg-black/5 cursor-pointer active:border-b-2 transition-all",
                   typeof nextGapWordIndex === "number" && !disabled
-                    ? "bg-white border-purple-500 text-purple-600 hover:bg-purple-50 hover:scale-105 active:scale-95 shadow-md"
+                    ? "bg-white border-purple-400 text-purple-600 hover:bg-purple-50 hover:scale-105 active:scale-95 shadow-md"
                     : "bg-neutral-100 border-neutral-300 text-neutral-400 cursor-not-allowed",
                   disabled && "opacity-50"
                 )}
@@ -398,7 +400,7 @@ export const Challenge = ({
         value={textAnswer}
         onChange={(e) => onTextChange?.(e.target.value)}
         placeholder="Write your sentence here..."
-        className="min-h-[120px]"
+        className="max-h-[100px] font-semibold"
         disabled={disabled}
       />
     );

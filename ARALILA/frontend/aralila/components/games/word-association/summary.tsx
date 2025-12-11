@@ -159,7 +159,7 @@ export const WordAssociationSummary = ({
 
             <button
               onClick={() => setShowReview((p) => !p)}
-              className="w-full bg-white border-2 border-blue-300 text-blue-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-all"
+              className="w-full bg-white border-2 border-purple-200 text-purple-700 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-all"
             >
               {showReview ? "Hide Review" : "Review Answers"}
             </button>
@@ -239,6 +239,7 @@ export const WordAssociationSummary = ({
           areaId={4}
           difficulty={difficulty}
           limit={10}
+          variant="light"
         />
       </div>
     </div>

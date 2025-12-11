@@ -88,7 +88,7 @@ const FullscreenMenu: React.FC<FullscreenMenuProps> = ({
               </motion.a>
               <motion.a
                 variants={menuItemVariants}
-                href="#"
+                href="/student/profile"
                 onClick={() => setMenuOpen(false)}
                 className="text-slate-700 hover:text-purple-700 font-bold text-5xl"
               >

@@ -7,8 +7,8 @@ import { ConfirmationModal } from "../confirmation-modal";
 import { SpellingResult } from "@/types/games";
 
 // Constants
-const TIME_LIMIT = 600; //300
-const BONUS_TIME = 50; // 10
+const TIME_LIMIT = 180; //300
+const BONUS_TIME = 10; // 10
 const BASE_POINTS = 20;
 const FALL_SPEED = 1;
 const LETTER_SPAWN_INTERVAL = 2000;
@@ -18,8 +18,10 @@ const MIN_X_SPACING = 100;
 const LETTER_SIZE = 56;
 const CATCHER_HEIGHT = 96;
 const MAX_ACTIVE_LETTERS = 3;
-const CORRECT_LETTER_PROBABILITY = 0.85;
+const CORRECT_LETTER_PROBABILITY = 0.75;
 const MAX_ASSISTS = 3;
+const SOFT_DROP_EXTRA = 4; // added ni para madali
+const SOFT_NUDGE = 30; // kani too
 
 // Move these outside component to prevent recreation on every render
 const HAPPY_STATES: LilaState[] = ["happy", "thumbsup"];
@@ -72,6 +74,7 @@ export const SpellingChallengeGame = ({
   const [assists, setAssists] = useState(MAX_ASSISTS);
   const [showAssistAnimation, setShowAssistAnimation] = useState(false);
   const [showUndoAnimation, setShowUndoAnimation] = useState(false);
+  const [softDropActive, setSoftDropActive] = useState(false);
 
   const nextId = useRef<number>(0);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -108,7 +111,7 @@ export const SpellingChallengeGame = ({
       <div className="z-10 max-w-[950px] w-full mx-auto p-4">
         <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-2xl font-bold text-orange-600 mb-4">
+            <p className="text-2xl font-bold text-red-600 mb-4">
               Error Loading Question
             </p>
             <p className="text-gray-600 mb-6">
@@ -237,17 +240,46 @@ export const SpellingChallengeGame = ({
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent page scroll on space
+      if (e.code === "Space") e.preventDefault();
+
       if (e.key === "ArrowLeft") {
         setCatcherPosition((prev) => Math.max(CATCHER_WIDTH / 2, prev - 20));
       } else if (e.key === "ArrowRight") {
         setCatcherPosition((prev) =>
           Math.min(gameWidth - CATCHER_WIDTH / 2, prev + 20)
         );
+      } else if (e.key === "ArrowDown") {
+        // single-press nudge
+        if (!e.repeat) {
+          setFallingLetters((prev) =>
+            prev.map((l) => ({
+              ...l,
+              y: Math.min(l.y + SOFT_NUDGE, GAME_AREA_HEIGHT - LETTER_SIZE),
+            }))
+          );
+        }
+        // start soft drop while held
+        setSoftDropActive(true);
+      } else if (e.code === "Space") {
+        // Hard drop: send all falling letters to catcher area so they get caught quickly
+        const catcherTop = GAME_AREA_HEIGHT - CATCHER_HEIGHT;
+        setFallingLetters((prev) => prev.map((l) => ({ ...l, y: catcherTop })));
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        setSoftDropActive(false);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [gameWidth]);
 
   // Timer logic
@@ -406,7 +438,8 @@ export const SpellingChallengeGame = ({
           const catcherLeft = catcherPosition - CATCHER_WIDTH / 2;
           const catcherRight = catcherLeft + CATCHER_WIDTH;
 
-          const moved = prev.map((l) => ({ ...l, y: l.y + l.speed }));
+          const extra = softDropActive ? SOFT_DROP_EXTRA : 0;
+          const moved = prev.map((l) => ({ ...l, y: l.y + l.speed + extra }));
           const kept: FallingLetter[] = [];
           let caughtLetter: string | null = null;
 
@@ -440,7 +473,7 @@ export const SpellingChallengeGame = ({
 
     animationId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationId);
-  }, [feedback, timeLeft, catcherPosition, handleCatch]);
+  }, [feedback, timeLeft, catcherPosition, handleCatch, softDropActive]);
 
   // Skip word
   const handleSkip = () => {
@@ -511,7 +544,7 @@ export const SpellingChallengeGame = ({
             </div>
             {streak > 1 && (
               <motion.div
-                className="flex items-center gap-1 text-orange-500"
+                className="flex items-center gap-1 text-purple-600"
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
               >
@@ -560,7 +593,7 @@ export const SpellingChallengeGame = ({
             </div>
 
             <div className="relative">
-              <div className="text-4xl text-orange-500 tracking-widest font-game">
+              <div className="text-4xl text-purple-800 tracking-widest font-bold">
                 {currentWordData.word
                   .split("")
                   .map((char, idx) =>
@@ -625,7 +658,7 @@ export const SpellingChallengeGame = ({
               {fallingLetters.map(({ id, letter, x, y }) => (
                 <motion.div
                   key={id}
-                  className="absolute border-3 border-purple-400 text-purple-950 font-bold rounded-full shadow-lg flex items-center justify-center text-2xl"
+                  className="absolute border-2 border-purple-400 bg-white text-purple-800 font-bold rounded-full shadow-lg flex items-center justify-center text-2xl"
                   style={{
                     width: LETTER_SIZE,
                     height: LETTER_SIZE,
@@ -685,12 +718,12 @@ export const SpellingChallengeGame = ({
                         {/* <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">✓</span>
                         </div> */}
-                        <div className="text-green-900 font-game text-7xl">
+                        <div className="text-green-600 font-bold text-6xl">
                           Tama!
                         </div>
-                        {/* <div className="text-green-700 text-lg">
+                        <div className="text-green-700 text-lg">
                           +{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos
-                        </div> */}
+                        </div>
                       </div>
                     )}
                     {feedback.type === "error" && (
@@ -698,7 +731,7 @@ export const SpellingChallengeGame = ({
                         {/* <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">✗</span>
                         </div> */}
-                        <div className="text-red-600 font-game text-7xl">
+                        <div className="text-red-600 font-bold text-6xl">
                           Mali!
                         </div>
                         <div className="text-red-700 text-lg">
@@ -714,10 +747,10 @@ export const SpellingChallengeGame = ({
                         {/* <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
                           <span className="text-4xl">⊘</span>
                         </div> */}
-                        <div className="text-red-950 font-game text-7xl">
+                        <div className="text-purple-800 text-6xl font-bold">
                           Nilaktawan!
                         </div>
-                        <div className="text-orange-700 text-lg">
+                        <div className="text-purple-700 text-lg">
                           Ang sagot:{" "}
                           <span className="font-bold">
                             {currentWordData.word}
@@ -746,7 +779,7 @@ export const SpellingChallengeGame = ({
         </div>
         {/* Buttons */}
         <div className="w-full flex justify-between items-center pt-5 border-t border-slate-200">
-          <div className="flex gap-3">
+          <div>
             <button
               onClick={handleSkip}
               disabled={!!feedback}
@@ -754,29 +787,31 @@ export const SpellingChallengeGame = ({
             >
               SKIP
             </button>
+          </div>
 
+          <div className="flex gap-3">
             <button
               onClick={handleUndo}
               disabled={builtWord.length === 0 || !!feedback}
-              className="flex items-center gap-2 px-6 py-2 bg-orange-200 border-2 border-orange-400 hover:bg-orange-300 disabled:opacity-40 disabled:cursor-not-allowed text-orange-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+              className="flex items-center gap-2 px-6 py-2 bg-slate-200 border-2 border-slate-300 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
             >
               <Undo2 className="w-5 h-5" />
               <span>I-undo</span>
             </button>
-          </div>
 
-          <button
-            onClick={handleUseAssist}
-            disabled={
-              assists <= 0 ||
-              !!feedback ||
-              builtWord.length >= currentWordData.word.length
-            }
-            className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
-          >
-            <HandHelping className="w-5 h-5" />
-            <span>Gamitin ang Assist</span>
-          </button>
+            <button
+              onClick={handleUseAssist}
+              disabled={
+                assists <= 0 ||
+                !!feedback ||
+                builtWord.length >= currentWordData.word.length
+              }
+              className="flex items-center gap-2 px-6 py-2 bg-purple-300 border-2 border-purple-400 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-purple-950 font-bold rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg disabled:shadow-none"
+            >
+              <HandHelping className="w-5 h-5" />
+              <span>Gamitin ang Assist</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

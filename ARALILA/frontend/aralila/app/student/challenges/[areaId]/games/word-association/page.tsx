@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { env } from "@/lib/env";
-import AnimatedBackground from "@/components/bg/animatedforest-bg";
+import AnimatedBackground from "@/components/bg/animated-bg";
 import { WordAssociationIntro } from "@/components/games/word-association/intro";
 import { WordAssociationGame } from "@/components/games/word-association/game";
 import { WordAssociationSummary } from "@/components/games/word-association/summary";
@@ -319,7 +319,7 @@ const WordAssociationPage = () => {
   // 10. Final Page Layout
   //
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}

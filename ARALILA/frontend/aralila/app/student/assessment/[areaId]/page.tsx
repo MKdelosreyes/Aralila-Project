@@ -92,7 +92,7 @@ export default function AssessmentPage() {
     100;
 
   return (
-    <div className="h-full">
+    <div className="h-screen">
       <Quiz
         initialLessonId={lessonData.id}
         initialAreaId={lessonData.areaId}

@@ -4,10 +4,14 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 interface AnimatedBackgroundProps {
-  imagePath: string;
+  imagePath?: string;
 }
 
-const AnimatedBackground = ({ imagePath }: AnimatedBackgroundProps) => {
+//DEFAULT bg. 
+const AnimatedBackground = ({ 
+  imagePath = "/images/bg/forestbg-learn.jpg" 
+}: AnimatedBackgroundProps) => {
+
   if (!imagePath || imagePath.trim() === "") {
     return (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -30,7 +34,7 @@ const AnimatedBackground = ({ imagePath }: AnimatedBackgroundProps) => {
       >
         <Image
           src={imagePath}
-          alt="Forest Background"
+          alt="Animated Background"
           fill
           priority
           sizes="100vw"

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/api/auth";
 import { createClient } from "@/lib/supabase/client";
 import { env } from "@/lib/env";
+import { ExitModal } from "@/components/layout/ExitModal";
 
 interface User {
   id: string;
@@ -183,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{ user, isLoading, login, logout, refreshUser }}
     >
+      <ExitModal />
       {children}
     </AuthContext.Provider>
   );

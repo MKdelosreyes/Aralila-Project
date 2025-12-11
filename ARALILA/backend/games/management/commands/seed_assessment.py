@@ -73,7 +73,7 @@ class Command(BaseCommand):
             {
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
-                'image_prompt': '/images/dog.png',  # You'll replace with actual image path
+                'image_prompt': '/images/chicken.png',  # You'll replace with actual image path
                 'correct_answer': 'Aso',
                 'options': []  # No options needed for SPELL
             },
@@ -87,21 +87,21 @@ class Command(BaseCommand):
             {
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
-                'image_prompt': '/images/house.png',
+                'image_prompt': '/images/panda.png',
                 'correct_answer': 'Bahay',
                 'options': []
             },
             {
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
-                'image_prompt': '/images/tree.png',
+                'image_prompt': '/images/watermelon.png',
                 'correct_answer': 'Puno',
                 'options': []
             },
             {
                 'type': 'SPELL',
                 'question': 'Spell the word shown in the image',
-                'image_prompt': '/images/water.png',
+                'image_prompt': '/images/owl.png',
                 'correct_answer': 'Tubig',
                 'options': []
             },

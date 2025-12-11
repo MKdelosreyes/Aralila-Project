@@ -114,4 +114,8 @@ class SupabaseAuthentication(BaseAuthentication):
         except jwt.InvalidTokenError:
             raise AuthenticationFailed('Invalid token')
         except Exception as e:
+<<<<<<< HEAD
             raise AuthenticationFailed(f'Authentication failed: {str(e)}')
+=======
+            raise AuthenticationFailed(f'Authentication failed: {str(e)}')
+>>>>>>> origin/sullano

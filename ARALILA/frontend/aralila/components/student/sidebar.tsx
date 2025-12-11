@@ -8,6 +8,8 @@ const sidebarItems = [
   { icon: Swords, text: "Challenges", href: "/student/challenges" },
   { icon: BookOpen, text: "Flashcards", href: "/student/review" },
   { icon: Settings, text: "Settings", href: "#" },
+  //{ icon: BookOpen, text: "Classroom", href: "/student/classroom" },
+  //{ icon: ListTodo, text: "Assignments", href: "#" },
 ];
 
 const Sidebar = () => (

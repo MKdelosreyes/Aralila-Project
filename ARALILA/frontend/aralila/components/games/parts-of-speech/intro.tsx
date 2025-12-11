@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { PlayCircle, ArrowLeft } from "lucide-react";
+import { PlayCircle, ArrowLeft, HelpCircle } from "lucide-react";
 import { PartsOfSpeechDifficulty } from "@/types/games";
 import Leaderboard from "@/components/games/common/leaderboard";
 
@@ -14,6 +14,7 @@ interface PartsOfSpeechIntroProps {
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
+  onHelp?: () => void; // ✅ Added
 }
 
 export const PartsOfSpeechIntro = ({
@@ -22,6 +23,7 @@ export const PartsOfSpeechIntro = ({
   onSelectDifficulty,
   onStartChallenge,
   onBack,
+  onHelp, // ✅ Added
 }: PartsOfSpeechIntroProps) => {
   return (
     <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-center py-12">
@@ -152,15 +154,36 @@ export const PartsOfSpeechIntro = ({
                   whileTap={{ scale: 0.95 }}
                 >
                   <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
-                  {/* Start tooltip */}
-                  <div
+                      <div
                     className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
                     style={{ pointerEvents: "none" }}
                   >
                     Start
                   </div>
                 </motion.button>
-              </motion.div>
+              </div>
+
+          {/* Help Button (NEW) */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+            </div>
+
+            <motion.button
+              onClick={onHelp}
+              className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <HelpCircle className="w-36 h-36 text-white cursor-pointer" />
+              <div
+                className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                style={{ pointerEvents: "none" }}
+              >
+                Help
+              </div>
+            </motion.button>
+          </div>
             </motion.div>
           </div>
         </div>

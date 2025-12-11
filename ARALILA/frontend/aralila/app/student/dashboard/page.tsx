@@ -63,7 +63,6 @@ export default function DashboardPage() {
   const [recentBadge, setRecentBadge] = useState<any | null>(null);
   const [showBadgePopup, setShowBadgePopup] = useState(false);
   const router = useRouter();
-
   const {
     unlockedAreas,
     isAreaLocked,
@@ -71,6 +70,9 @@ export default function DashboardPage() {
     loading: progressLoading,
   } = useAreaUnlocks();
 
+  // -------------------------
+  // FETCH AREAS
+  // -------------------------
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -79,43 +81,28 @@ export default function DashboardPage() {
 
     if (user) {
       fetchAreas();
+      fetchBadges();
     }
   }, [user, authLoading]);
 
   const fetchAreas = async () => {
     try {
       const token = localStorage.getItem("access_token");
+      if (!token) return router.push("/login");
 
-      if (!token) {
-        console.error("No authentication token found");
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch(`${env.backendUrl}/api/games/areas/`, {
+      const res = await fetch(`${env.backendUrl}/api/games/areas/`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      if (response.status === 401) {
-        console.error("Token is invalid or expired");
-        localStorage.removeItem("access_token");
-        router.push("/login");
-        return;
-      }
+      if (!res.ok) throw new Error("Failed to fetch areas");
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch areas: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await res.json();
       setAreas(data.areas);
-    } catch (error) {
-      console.error("Error fetching areas:", error);
-
-      // Fallback data
+    } catch (err) {
+      console.error(err);
       setAreas([
         {
           id: 1,
@@ -274,6 +261,9 @@ export default function DashboardPage() {
     );
   }
 
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
@@ -307,9 +297,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Level Map Container */}
+          {/* Level Map */}
           <div className="relative w-full py-12">
-            {/* Glowing Connection Line */}
+            {/* Connection Line */}
             <svg
               className="absolute top-1/2 left-0 w-full h-1 -translate-y-1/2"
               style={{ zIndex: 0 }}
@@ -360,7 +350,6 @@ export default function DashboardPage() {
                     }}
                     className="flex flex-col items-center w-40"
                   >
-                    {/* Node Display */}
                     <motion.div
                       whileHover={!locked ? { scale: 1.1 } : {}}
                       className={`relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-4 shadow-xl transition-all ${
@@ -371,10 +360,7 @@ export default function DashboardPage() {
                           : "bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-600 shadow-blue-500/50 cursor-pointer"
                       }`}
                     >
-                      {/* Lock Icon */}
                       {locked && <Lock className="text-gray-300" size={32} />}
-
-                      {/* Completion Badge */}
                       {!locked && isComplete && (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
@@ -384,8 +370,6 @@ export default function DashboardPage() {
                           <CheckCircle className="text-white" size={16} />
                         </motion.div>
                       )}
-
-                      {/* Area Number */}
                       {!locked && (
                         <span className="text-2xl font-bold text-white">
                           {area.id}
@@ -403,7 +387,6 @@ export default function DashboardPage() {
                       <p className="text-sm md:text-base font-bold">
                         {area.name}
                       </p>
-
                       {locked ? (
                         <p className="text-xs text-gray-500 mt-1">🔒 Locked</p>
                       ) : (

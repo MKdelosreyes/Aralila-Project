@@ -52,7 +52,6 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'aralila-backend.onrender.com',
     '.onrender.com',
     '.vercel.app',
 ] + [host.strip() for host in os.getenv('ALLOWED_HOSTS', '').split(',') if host.strip()]
@@ -199,7 +198,7 @@ CHANNEL_LAYERS = {
 #             'NAME': BASE_DIR / 'db.sqlite3',
 #         }
 #     }
-
+# not my database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -216,6 +215,23 @@ DATABASES = {
     }
 }
 
+
+# my database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',  
+#         'USER': 'postgres.sovnysawenldkipowbia',  
+#         'PASSWORD': 'Aralila12325',
+#         'HOST': 'aws-1-ap-southeast-2.pooler.supabase.com',
+#         'PORT': '6543',
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#             'connect_timeout': 10,
+#         },
+#         'CONN_MAX_AGE': 0,
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -275,7 +291,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     os.getenv('FRONTEND_URL', 'http://localhost:3000'),
     "https://aralila.vercel.app", 
-    "https://aralila-backend.onrender.com",
     "https://aralila-project.vercel.app",
 ]
 

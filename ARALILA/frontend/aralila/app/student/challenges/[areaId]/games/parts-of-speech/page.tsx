@@ -402,6 +402,7 @@ const PartsOfSpeechPage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            onHelp={() => setShowTutorial(true)} // <-- added help handler
           />
         );
     }

@@ -117,7 +117,7 @@ export const EmojiChallengeIntro = ({
 
             {/* Start + Help Buttons */}
             <motion.div
-              className="relative flex items-center justify-center gap-10"
+              className="relative group flex items-center justify-center gap-10"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{
@@ -127,10 +127,10 @@ export const EmojiChallengeIntro = ({
                 delay: 0.5,
               }}
             >
-              {/* Start Button */}
+              {/* Start Button Wrapper */}
               <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse opacity-50"></div>
+                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
                 </div>
 
                 <motion.button
@@ -139,20 +139,20 @@ export const EmojiChallengeIntro = ({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <PlayCircle className="w-32 h-32 text-white cursor-pointer" />
+                  <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
                   <div
-                    className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
                     style={{ pointerEvents: "none" }}
                   >
-                    Simulan
+                    Start
                   </div>
                 </motion.button>
               </div>
 
-              {/* Help Button — NEW */}
+              {/* Help Button Wrapper */}
               <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse opacity-50"></div>
+                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
                 </div>
 
                 <motion.button
@@ -161,9 +161,9 @@ export const EmojiChallengeIntro = ({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <HelpCircle className="w-32 h-32 text-white cursor-pointer" />
+                  <HelpCircle className="w-36 h-36 text-white cursor-pointer" />
                   <div
-                    className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
                     style={{ pointerEvents: "none" }}
                   >
                     Help

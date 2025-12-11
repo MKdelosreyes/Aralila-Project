@@ -116,7 +116,7 @@ export const PunctuationChallengeIntro = ({
             </motion.div>
 
             <motion.div
-              className="relative group flex items-center justify-center"
+              className="relative group flex items-center justify-center gap-10"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{
@@ -126,19 +126,20 @@ export const PunctuationChallengeIntro = ({
                 delay: 0.5,
               }}
             >
-              {/* Pulsing circle animation */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
-              </div>
+              {/* Start Button Wrapper */}
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+                </div>
 
                 <motion.button
                   onClick={onStartChallenge}
-                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-pink-500/40 transition-shadow duration-300"
+                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
-                      <div
+                  <div
                     className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
                     style={{ pointerEvents: "none" }}
                   >
@@ -147,28 +148,28 @@ export const PunctuationChallengeIntro = ({
                 </motion.button>
               </div>
 
-          {/* Help Button Wrapper */}
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-32 h-32 bg-pink-400 rounded-full animate-pulse-24-7 opacity-50"></div>
-            </div>
+              {/* Help Button Wrapper */}
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+                </div>
 
-            <motion.button
-              onClick={onHelp}
-              className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-pink-500/40 transition-shadow duration-300"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <HelpCircle className="w-36 h-36 text-white cursor-pointer" />
-              <div
-                className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-                style={{ pointerEvents: "none" }}
-              >
-                Help
+                <motion.button
+                  onClick={onHelp}
+                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <HelpCircle className="w-36 h-36 text-white cursor-pointer" />
+                  <div
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    Help
+                  </div>
+                </motion.button>
               </div>
-            </motion.button>
-          </div>
-        </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>

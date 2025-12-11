@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["images.unsplash.com"],
+    domains: ["images.unsplash.com",'dnrwenixinuxocwdlmwk.supabase.co'],
     remotePatterns: [
       {
         protocol: "http",
@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "dnrwenixinuxocwdlmwk.supabase.co",
         pathname: "/storage/v1/object/public/**", // ← required for Supabase images
+      },
+      {
+        protocol: 'https',
+        hostname: 'dnrwenixinuxocwdlmwk.supabase.co',
+        pathname: '/storage/v1/object/public/story_chain/**',
       },
     ],
   },

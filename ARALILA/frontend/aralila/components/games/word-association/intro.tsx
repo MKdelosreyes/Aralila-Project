@@ -44,12 +44,12 @@ export const WordAssociationIntro = ({
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div className="relative group flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-16 h-16 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50 pointer-events-none"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 bg-slate-400 rounded-full animate-pulse-24-7 opacity-50"></div>
                 </div>
                 <motion.button
-                  onClick={() => (onBack ? onBack() : window.history.back())}
-                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-slate-500/40 transition-shadow duration-300 pointer-events-auto"
+                  onClick={onBack}
+                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-slate-500/40 transition-shadow duration-300"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -90,7 +90,7 @@ export const WordAssociationIntro = ({
 
             {/* ✅ Difficulty selector */}
             <motion.div
-              className="mb-5 flex gap-3"
+              className="mb-5 flex gap-3 relative z-50"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.35 }}

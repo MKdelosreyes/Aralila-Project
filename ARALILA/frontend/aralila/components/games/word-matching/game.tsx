@@ -27,7 +27,7 @@ interface MatchingResult {
 
 interface WordMatchingGameProps {
   wordPairs: WordPair[];
-  onGameComplete: (results: { score: number; results: MatchingResult[] }) => void;
+  onGameComplete: (results: { score: number; results: MatchingResult[]; timeTaken: number }) => void;
   onExit: () => void;
 }
 
@@ -44,6 +44,7 @@ export const WordMatchingGame = ({
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [gameStartTime] = useState<number>(Date.now());
   const [startTime, setStartTime] = useState(Date.now());
 
   const [feedback, setFeedback] = useState<{
@@ -87,9 +88,10 @@ export const WordMatchingGame = ({
       setLilaState("normal");
       setAnimationKey((prev) => prev + 1);
     } else {
-      onGameComplete({ score, results });
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
+      onGameComplete({ score, results, timeTaken });
     }
-  }, [currentPairIndex, wordPairs.length, onGameComplete, score, results]);
+  }, [currentPairIndex, wordPairs.length, onGameComplete, score, results, gameStartTime]);
 
   useEffect(() => {
     if (timeLeft <= 30 && lilaState === "normal") setLilaState("worried");
@@ -106,7 +108,8 @@ export const WordMatchingGame = ({
           timeSpent: 0,
         });
       }
-      onGameComplete({ score, results: finalResults });
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
+      onGameComplete({ score, results: finalResults, timeTaken });
     }
   }, [
     timeLeft,

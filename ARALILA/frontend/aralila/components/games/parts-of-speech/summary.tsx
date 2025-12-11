@@ -314,7 +314,7 @@ export const PartsOfSpeechSummary = ({
 
       <div className="md:col-span-1">
         <Leaderboard
-          gameId={3}
+          gameId={4}
           gameType="parts-of-speech"
           areaId={4}
           difficulty={difficulty}

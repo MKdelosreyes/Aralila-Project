@@ -19,6 +19,7 @@ interface SentenceConstructionGameProps {
   onGameComplete: (summary: {
     score: number;
     results: SentenceResult[];
+    timeTaken: number;
   }) => void;
   onExit: () => void;
 }
@@ -47,6 +48,7 @@ export const SentenceConstructionGame = ({
 }: SentenceConstructionGameProps) => {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [results, setResults] = useState<SentenceResult[]>([]);
+  const [gameStartTime] = useState<number>(Date.now());
 
   const [draggedFragments, setDraggedFragments] = useState<string[]>([]);
   const [availableFragments, setAvailableFragments] = useState<string[]>([]);
@@ -85,9 +87,10 @@ export const SentenceConstructionGame = ({
       setFeedback(null);
       setLilaState("normal");
     } else {
-      onGameComplete({ score, results });
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
+      onGameComplete({ score, results, timeTaken });
     }
-  }, [currentQIndex, questions.length, onGameComplete, score, results]);
+  }, [currentQIndex, questions.length, onGameComplete, score, results, gameStartTime]);
 
   useEffect(() => {
     if (timeLeft <= 15 && lilaState === "normal") {
@@ -107,7 +110,8 @@ export const SentenceConstructionGame = ({
           isCorrect: false,
         });
       }
-      onGameComplete({ score, results: finalResults });
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
+      onGameComplete({ score, results: finalResults, timeTaken });
     }
   }, [
     timeLeft,

@@ -30,6 +30,7 @@ interface GrammarCheckGameProps {
     percentScore: number;
     rawPoints: number;
     results: GrammarResult[];
+    timeTaken: number;
   }) => void;
   onExit: () => void;
 }
@@ -146,6 +147,7 @@ export const GrammarCheckGame = ({
   const [animationKey, setAnimationKey] = useState(0);
   const [lilaState, setLilaState] = useState<LilaState>("normal");
   const [isFinished, setIsFinished] = useState(false);
+  const [gameStartTime] = useState<number>(Date.now());
 
   const [assists, setAssists] = useState(MAX_ASSISTS);
   const [showAssistAnimation, setShowAssistAnimation] = useState(false);
@@ -198,11 +200,13 @@ export const GrammarCheckGame = ({
     if (isFinished) {
       const correctCount = results.filter((r) => r.isCorrect).length;
       const percentScore = Math.round((correctCount / results.length) * 100);
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
 
       onGameComplete({
         percentScore,
         rawPoints: score,
         results,
+        timeTaken,
       });
     }
   }, [isFinished, score, results, onGameComplete]);
@@ -215,18 +219,20 @@ export const GrammarCheckGame = ({
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0) {
-      const finalResults = [...results];
+      const finalRes = [...results];
       for (let i = currentQIndex; i < questions.length; i++) {
-        finalResults.push({
+        finalRes.push({
           question: questions[i],
           userAnswer: [],
           isCorrect: false,
         });
       }
+      const timeTaken = (Date.now() - gameStartTime) / 1000;
       onGameComplete({
-        percentScore: calculatePercent(finalResults),
+        percentScore: calculatePercent(finalRes),
         rawPoints,
-        results: finalResults,
+        results: finalRes,
+        timeTaken,
       });
     }
   }, [

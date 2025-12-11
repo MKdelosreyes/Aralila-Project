@@ -36,6 +36,7 @@ def leaderboard_view(request):
 		return Response({"error": "difficulty must be 1, 2, or 3"}, status=status.HTTP_400_BAD_REQUEST)
 
 	score_field = f"difficulty_{difficulty}_score"
+	time_field = f"difficulty_{difficulty}_time_taken"
 
 	# Build a combined filter so provided parameters are all respected
 	base_q = Q()
@@ -47,7 +48,8 @@ def leaderboard_view(request):
 		# match either game name or slug case-insensitively
 		base_q &= (Q(game__name__iexact=game_type) | Q(game__slug__iexact=game_type))
 
-	qs = GameProgress.objects.filter(base_q).order_by(f"-{score_field}")
+	# Sort by score DESC, then time ASC (lower time is better for tiebreaker)
+	qs = GameProgress.objects.filter(base_q).order_by(f"-{score_field}", time_field)
 
 	# exclude zeros so leaderboard shows actual scores first
 	qs_nonzero = qs.exclude(**{f"{score_field}": 0})
@@ -63,3 +65,4 @@ def leaderboard_view(request):
 
 	serializer = LeaderboardEntrySerializer(entries, many=True)
 	return Response({"results": serializer.data})
+

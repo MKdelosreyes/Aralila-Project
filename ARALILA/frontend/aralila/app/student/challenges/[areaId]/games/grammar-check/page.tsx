@@ -211,10 +211,12 @@ const GrammarCheckPage = () => {
     percentScore,
     rawPoints,
     results,
+    timeTaken,
   }: {
     percentScore: number;
     rawPoints: number;
     results: GrammarResult[];
+    timeTaken?: number;
   }) => {
     setFinalScore(percentScore);
     setFinalResults(results);
@@ -234,6 +236,7 @@ const GrammarCheckPage = () => {
             game_type: "grammar-check",
             difficulty: currentDifficulty,
             score: percentScore,
+            time_taken: timeTaken,
           }),
         }
       );

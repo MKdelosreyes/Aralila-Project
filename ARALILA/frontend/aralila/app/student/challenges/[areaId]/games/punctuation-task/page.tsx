@@ -198,13 +198,47 @@ const PunctuationChallengePage = () => {
     percentScore,
     rawPoints,
     results,
+    timeTaken,
   }: {
     percentScore: number;
     rawPoints: number;
     results: PunctuationResult[];
+    timeTaken?: number;
   }) => {
     setFinalScore(percentScore);
     setFinalResults(results);
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `${env.backendUrl}/api/games/submit-score/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            area_id: resolvedAreaId ?? parseInt(areaId, 10),
+            game_type: "punctuation-task",
+            difficulty: currentDifficulty,
+            score: percentScore,
+            time_taken: timeTaken ?? undefined,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        console.error("submit-score failed", response.status, err);
+      }
+
+      const data = await response.json().catch(() => ({}));
+      setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
+    } catch (error) {
+      console.error("Failed to submit score:", error);
+    }
+
     setGameState("summary");
   };
 

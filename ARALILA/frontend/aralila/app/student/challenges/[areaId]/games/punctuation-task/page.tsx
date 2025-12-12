@@ -357,7 +357,7 @@ const PunctuationChallengePage = () => {
       Page Render
   --------------------------------------------*/
   return (
-    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-slate-800">
+    <div className="relative max-h-screen min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-slate-800">
       <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}

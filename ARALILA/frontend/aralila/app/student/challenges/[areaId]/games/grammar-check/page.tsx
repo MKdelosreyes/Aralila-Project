@@ -358,7 +358,7 @@ const GrammarCheckPage = () => {
      Page Render
   --------------------------------------------*/
   return (
-    <div className="relative max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative min-h-screen max-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       {/* Background */}
       <AnimatedBackground imagePath={getAreaBGImage()} />
 

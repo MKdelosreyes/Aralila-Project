@@ -87,22 +87,15 @@ export default function PlaygroundHome() {
               </div>
             </div>
 
-            {/* Filipino Wordle Card */}
+            {/* Filipino Wordle Card (Under Maintenance) */}
             <div
-              role="button"
-              tabIndex={0}
-              onClick={() =>
-                handleNavigation(
-                  "/student/playground/modes/filipino-wordle",
-                  "filipino-wordle"
-                )
-              }
-              className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-b from-white/80 to-white/70 p-8 shadow-2xl hover:scale-[1.02] transition"
+              aria-disabled="true"
+              className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-b from-white/80 to-white/70 p-8 shadow-2xl opacity-70 cursor-not-allowed"
             >
               <div className="flex items-start gap-6">
                 <div className="flex-1">
                   <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    Filipino Wordle
+                    Filipino Wordle — Under Maintenance
                   </h3>
                   <p className="text-sm md:text-base text-gray-600 mt-3">
                     Guess the Filipino word — daily puzzles and word practice.
@@ -121,13 +114,10 @@ export default function PlaygroundHome() {
               </div>
 
               <div className="mt-6 flex items-center justify-between">
-                <button
-                  disabled={loading === "filipino-wordle"}
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg hover:brightness-105 transition disabled:opacity-70"
-                >
-                  {loading === "filipino-wordle" ? "Loading..." : "Play"}
-                </button>
-                <div className="text-sm text-gray-500">Solo / Practice</div>
+                <div className="bg-gray-600 text-white px-5 py-3 rounded-lg font-semibold shadow-lg opacity-80">
+                  Under Maintenance
+                </div>
+                <div className="text-sm text-gray-500">—</div>
               </div>
             </div>
 

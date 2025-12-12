@@ -2,14 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Lock,
-  CheckCircle,
-  TrendingUp,
-  BookOpen,
-  Trophy,
-  X,
-} from "lucide-react";
+import { CheckCircle, TrendingUp, BookOpen, Trophy, X } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { env } from "@/lib/env";
 import FullscreenMenu from "@/components/student/fullscreen-menu";
@@ -63,7 +57,6 @@ export default function DashboardPage() {
   const [recentBadge, setRecentBadge] = useState<any | null>(null);
   const [showBadgePopup, setShowBadgePopup] = useState(false);
   const router = useRouter();
-
   const {
     unlockedAreas,
     isAreaLocked,
@@ -71,6 +64,9 @@ export default function DashboardPage() {
     loading: progressLoading,
   } = useAreaUnlocks();
 
+  // -------------------------
+  // FETCH AREAS
+  // -------------------------
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -79,43 +75,28 @@ export default function DashboardPage() {
 
     if (user) {
       fetchAreas();
+      fetchBadges();
     }
   }, [user, authLoading]);
 
   const fetchAreas = async () => {
     try {
       const token = localStorage.getItem("access_token");
+      if (!token) return router.push("/login");
 
-      if (!token) {
-        console.error("No authentication token found");
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch(`${env.backendUrl}/api/games/areas/`, {
+      const res = await fetch(`${env.backendUrl}/api/games/areas/`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      if (response.status === 401) {
-        console.error("Token is invalid or expired");
-        localStorage.removeItem("access_token");
-        router.push("/login");
-        return;
-      }
+      if (!res.ok) throw new Error("Failed to fetch areas");
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch areas: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await res.json();
       setAreas(data.areas);
-    } catch (error) {
-      console.error("Error fetching areas:", error);
-
-      // Fallback data
+    } catch (err) {
+      console.error(err);
       setAreas([
         {
           id: 1,
@@ -181,7 +162,7 @@ export default function DashboardPage() {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) return;
-      const res = await fetch(`${env.backendUrl}/api/users/me/badges/`, {
+      const res = await fetch(`${env.backendUrl}/api/users/badges/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -211,7 +192,7 @@ export default function DashboardPage() {
     try {
       const token = localStorage.getItem("access_token");
       const res = await fetch(
-        `${env.backendUrl}/api/users/me/badges/${badgeId}/claim/`,
+        `${env.backendUrl}/api/users/badges/${badgeId}/claim/`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -274,6 +255,9 @@ export default function DashboardPage() {
     );
   }
 
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
@@ -307,9 +291,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Level Map Container */}
+          {/* Level Map */}
           <div className="relative w-full py-12">
-            {/* Glowing Connection Line */}
+            {/* Connection Line */}
             <svg
               className="absolute top-1/2 left-0 w-full h-1 -translate-y-1/2"
               style={{ zIndex: 0 }}
@@ -339,7 +323,7 @@ export default function DashboardPage() {
 
             {/* Area Nodes */}
             <div
-              className="relative flex justify-between items-center px-12"
+              className="relative flex items-center px-4 md:px-12 overflow-x-auto gap-6 md:gap-10"
               style={{ zIndex: 1 }}
             >
               {areas.map((area, index) => {
@@ -358,38 +342,78 @@ export default function DashboardPage() {
                       type: "spring",
                       stiffness: 200,
                     }}
-                    className="flex flex-col items-center w-40"
+                    className="flex flex-col items-center w-40 flex-shrink-0"
                   >
-                    {/* Node Display */}
                     <motion.div
                       whileHover={!locked ? { scale: 1.1 } : {}}
-                      className={`relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full border-4 shadow-xl transition-all ${
-                        locked
-                          ? "bg-gray-600 border-gray-700 opacity-50 cursor-not-allowed"
-                          : isComplete
-                          ? "bg-gradient-to-br from-yellow-400 to-amber-500 border-yellow-600 shadow-yellow-500/50 cursor-pointer"
-                          : "bg-gradient-to-br from-blue-400 to-indigo-500 border-blue-600 shadow-blue-500/50 cursor-pointer"
+                      className={`relative flex items-center justify-center transition-all overflow-visible ${
+                        locked || area.order_index === 0
+                          ? `w-40 h-40 md:w-52 md:h-52 ${
+                              locked ? "cursor-not-allowed" : "cursor-pointer"
+                            }`
+                          : `w-24 h-24 md:w-28 md:h-28 rounded-full border-4 shadow-xl cursor-pointer ${
+                              isComplete
+                                ? "bg-gradient-to-br from-purple-400 to-fuchsia-500 border-purple-500 shadow-purple-500/50"
+                                : "bg-gradient-to-br from-indigo-400 to-purple-600 border-purple-600 shadow-purple-500/50"
+                            }`
                       }`}
                     >
-                      {/* Lock Icon */}
-                      {locked && <Lock className="text-gray-300" size={32} />}
-
-                      {/* Completion Badge */}
-                      {!locked && isComplete && (
+                      {locked ? (
                         <motion.div
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1.5 border-2 border-white"
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                            ease: "easeInOut",
+                          }}
+                          className="relative flex items-center justify-center"
                         >
-                          <CheckCircle className="text-white" size={16} />
+                          <Image
+                            src="/images/overlays/book-closed.png"
+                            alt="Locked area"
+                            width={192}
+                            height={192}
+                            className="relative w-32 h-32 md:w-44 md:h-44 object-contain"
+                            priority
+                          />
                         </motion.div>
-                      )}
-
-                      {/* Area Number */}
-                      {!locked && (
-                        <span className="text-2xl font-bold text-white">
-                          {area.id}
-                        </span>
+                      ) : area.order_index === 0 ? (
+                        <motion.div
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                            ease: "easeInOut",
+                          }}
+                          className="relative flex items-center justify-center"
+                        >
+                          <div className="absolute inset-0 rounded-3xl" />
+                          <Image
+                            src="/images/overlays/assessment-area-book-1.png"
+                            alt="Assessment area 1"
+                            width={192}
+                            height={192}
+                            className="relative w-32 h-32 md:w-44 md:h-44 object-contain"
+                            priority
+                          />
+                        </motion.div>
+                      ) : (
+                        <>
+                          {isComplete && (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1.5 border-2 border-white"
+                            >
+                              <CheckCircle className="text-white" size={16} />
+                            </motion.div>
+                          )}
+                          <span className="text-2xl font-bold text-white">
+                            {area.id}
+                          </span>
+                        </>
                       )}
                     </motion.div>
 
@@ -403,7 +427,6 @@ export default function DashboardPage() {
                       <p className="text-sm md:text-base font-bold">
                         {area.name}
                       </p>
-
                       {locked ? (
                         <p className="text-xs text-gray-500 mt-1">🔒 Locked</p>
                       ) : (
@@ -530,27 +553,39 @@ export default function DashboardPage() {
                   className="absolute top-4 right-4 text-gray-400 hover:text-white"
                   onClick={closeBadgePopup}
                 >
-                  <X size={48} />
+                  <X size={40} />
                 </button>
 
                 {/* Title */}
 
-                <h1 className="text-6xl font-extrabold mb-8 text-white text-center">
+                <h1
+                  className="text-7xl font-extrabold mb-8 text-center font-game
+                    bg-gradient-to-b from-yellow-300 to-purple-600 
+                    bg-clip-text text-transparent
+                    drop-shadow-lg animate-[shine_2s_linear_infinite]"
+                >
                   New Badge!
                 </h1>
 
                 {/* Badge Image */}
-
-                <img
+                <Image
                   src={
                     badgeList.find((b) => b.id === recentBadge.id.toString())
-                      ?.icon
+                      ?.icon || "/images/badges/3days.png"
                   }
                   alt={recentBadge.name}
-                  className="w-96 h-96 md:w-[500px] md:h-[500px] mb-8 object-contain"
+                  width={300}
+                  height={300}
+                  className="w-72 h-72 md:w-[300px] md:h-[300px] mb-8 object-contain"
+                  priority
                 />
 
-                <p className="text-4xl font-bold text-white mb-8 text-center">
+                <p
+                  className="text-4xl font-bold mb-8 text-center
+                    bg-gradient-to-b from-yellow-300 to-purple-600 
+                    bg-clip-text text-transparent
+                    drop-shadow-lg animate-[shine_2s_linear_infinite]"
+                >
                   {badgeList.find((b) => b.id === recentBadge.id.toString())
                     ?.name || recentBadge.name}
                 </p>
@@ -559,7 +594,26 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => claimBadge(recentBadge.id)}
-                  className="cursor-pointer bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-10 rounded-xl text-2xl"
+                  className="
+                    cursor-pointer 
+                    bg-purple-600 
+                    hover:bg-purple-700 
+                    text-white
+                    font-bold 
+                    py-3 
+                    px-9 
+                    rounded-2xl 
+                    text-3xl 
+                    border-2
+                    border-yellow-600
+                    font-game
+                    [text-shadow:1px_1px_0_#facc15]
+                    [-webkit-text-stroke:1px_#c4ac4b]
+                    shadow-[0_0_15px_3px_rgba(250,204,21,0.6)]
+                    hover:shadow-[0_0_20px_5px_rgba(250,204,21,0.9)]
+                    transition-all 
+                    duration-300
+                  "
                 >
                   Claim
                 </button>

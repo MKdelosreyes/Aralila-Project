@@ -1,6 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.utils import timezone
+from datetime import timedelta
 from .models import CustomUser
 from .serializers import CustomUserSerializer
 
@@ -11,7 +13,8 @@ from .serializers import CustomUserSerializer
 @permission_classes([IsAuthenticated])
 def profile_view(request):
     """Get current user profile"""
-    user = request.user  
+    user = request.user
+    user.refill_hearts_if_needed()  # Auto-refill before returning data
     serializer = CustomUserSerializer(user)
     return Response(serializer.data)
 
@@ -27,6 +30,45 @@ def update_profile_view(request):
     user.save()
     serializer = CustomUserSerializer(user)
     return Response(serializer.data)
+
+# -----------------------------
+# Heart endpoints
+# -----------------------------
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def hearts_status_view(request):
+    """Get current hearts and refill timer"""
+    user: CustomUser = request.user
+    user.refill_hearts_if_needed()
+    
+    return Response({
+        "current_hearts": user.current_hearts,
+        "next_refill_at": user.next_refill_at.isoformat() if user.next_refill_at else None,
+        "max_hearts": 3
+    })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reduce_heart_view(request):
+    """Reduce one heart after wrong answer"""
+    user: CustomUser = request.user
+    user.refill_hearts_if_needed()
+    
+    if user.current_hearts <= 0:
+        return Response({"error": "No hearts available"}, status=400)
+    
+    user.current_hearts -= 1
+    
+    # Schedule refill if this is the first heart loss
+    if user.current_hearts < 3 and not user.next_refill_at:
+        user.next_refill_at = timezone.now() + timedelta(minutes=5)
+    
+    user.save()
+    
+    return Response({
+        "current_hearts": user.current_hearts,
+        "next_refill_at": user.next_refill_at.isoformat() if user.next_refill_at else None
+    })
 
 # -----------------------------
 # Badges endpoints

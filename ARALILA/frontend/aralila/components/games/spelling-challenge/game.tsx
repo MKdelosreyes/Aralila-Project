@@ -7,8 +7,8 @@ import { ConfirmationModal } from "../confirmation-modal";
 import { SpellingResult } from "@/types/games";
 
 // Constants
-const TIME_LIMIT = 600; //300
-const BONUS_TIME = 50; // 10
+const TIME_LIMIT = 180; //300
+const BONUS_TIME = 10; // 10
 const BASE_POINTS = 20;
 const FALL_SPEED = 1;
 const LETTER_SPAWN_INTERVAL = 2000;
@@ -18,7 +18,7 @@ const MIN_X_SPACING = 100;
 const LETTER_SIZE = 56;
 const CATCHER_HEIGHT = 96;
 const MAX_ACTIVE_LETTERS = 3;
-const CORRECT_LETTER_PROBABILITY = 0.85;
+const CORRECT_LETTER_PROBABILITY = 0.75;
 const MAX_ASSISTS = 3;
 const SOFT_DROP_EXTRA = 4; // added ni para madali
 const SOFT_NUDGE = 30; // kani too
@@ -266,9 +266,7 @@ export const SpellingChallengeGame = ({
       } else if (e.code === "Space") {
         // Hard drop: send all falling letters to catcher area so they get caught quickly
         const catcherTop = GAME_AREA_HEIGHT - CATCHER_HEIGHT;
-        setFallingLetters((prev) =>
-          prev.map((l) => ({ ...l, y: catcherTop }))
-        );
+        setFallingLetters((prev) => prev.map((l) => ({ ...l, y: catcherTop })));
       }
     };
 
@@ -664,7 +662,7 @@ export const SpellingChallengeGame = ({
             className="relative w-full h-[400px] bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl overflow-hidden border-4 border-dashed border-purple-400"
           >
             <AnimatePresence>
-                  {fallingLetters.map(({ id, letter, x, y }) => (
+              {fallingLetters.map(({ id, letter, x, y }) => (
                 <motion.div
                   key={id}
                   className="absolute border-2 border-purple-400 bg-white text-purple-800 font-bold rounded-full shadow-lg flex items-center justify-center text-2xl"

@@ -9,9 +9,9 @@ import {
   EmojiChallengeSummary,
   GameResult,
 } from "@/components/games/emoji-challenge/summary";
-import { emojiSentenceChallenges } from "@/data/EmojiData";
 import { env } from "@/lib/env";
-import { TutorialModal } from "../TutorialModal";
+import { TutorialModal } from "../TutorialModal"; // <-- added
+import { emojiSentenceChallenges } from "@/data/EmojiData";
 
 type GameState = "intro" | "playing" | "summary";
 type Difficulty = 1 | 2 | 3;
@@ -73,6 +73,9 @@ const EmojiChallengePage = () => {
     return 1;
   };
 
+  /* -------------------------------------------
+      Initialization
+  --------------------------------------------*/
   useEffect(() => {
     const init = async () => {
       try {
@@ -84,9 +87,7 @@ const EmojiChallengePage = () => {
         const orderIndex = parseInt(areaId, 10);
         const areaResp = await fetch(
           `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!areaResp.ok) throw new Error("Failed to load area");
         const areaJson = await areaResp.json();
@@ -104,10 +105,7 @@ const EmojiChallengePage = () => {
           };
           setUnlocked(mapped);
 
-          // Validate URL difficulty; fallback to highest available or 1
-          const requestedRaw = initialDifficulty;
-          const requested = toDifficulty(requestedRaw);
-
+          const requested = toDifficulty(initialDifficulty);
           const highest: Difficulty = mapped[3] ? 3 : mapped[2] ? 2 : 1;
           setCurrentDifficulty(mapped[requested] ? requested : highest);
           setGameData(emojiChallenge);
@@ -124,104 +122,69 @@ const EmojiChallengePage = () => {
     init();
   }, [areaId]);
 
+  /* -------------------------------------------
+      Fetch Questions
+  --------------------------------------------*/
   const fetchQuestions = async (rawAreaParam: string, difficulty: number) => {
     setLoading(true);
     setError(null);
-
     try {
       const token = localStorage.getItem("access_token");
       if (!token) {
-        setError("Not authenticated. Please log in.");
+        setError("Not authenticated");
         router.push("/login");
         return;
       }
 
-      const orderIndex = parseInt(rawAreaParam, 10);
-      let actualAreaId = orderIndex;
-
-      try {
-        const areaResp = await fetch(
-          `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (areaResp.ok) {
-          const areaData = await areaResp.json();
-          actualAreaId = areaData.area.id;
-          setResolvedAreaId(actualAreaId);
-        } else {
-          console.warn("Area-by-order lookup failed, using raw param as id.");
-        }
-      } catch (e) {
-        console.warn("Area-by-order request error, using raw param as id.");
+      let actualAreaId = parseInt(rawAreaParam, 10);
+      const areaResp = await fetch(
+        `${env.backendUrl}/api/games/area/order/${actualAreaId}/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (areaResp.ok) {
+        const areaData = await areaResp.json();
+        actualAreaId = areaData.area.id;
+        setResolvedAreaId(actualAreaId);
       }
 
       const response = await fetch(
         `${env.backendUrl}/api/games/questions/${actualAreaId}/emoji-challenge/${difficulty}/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (response.status === 403) {
-        const data = await response.json();
-        setError(data.error || "Access denied");
-        alert(data.error);
-        router.back();
-        return;
-      }
-
-      if (response.status === 500) {
-        let errorDetails = "Internal server error. Please try again later.";
-        try {
-          const errorData = await response.json();
-          errorDetails = errorData.error || errorDetails;
-        } catch {}
-        setError(errorDetails);
-        return;
-      }
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {}
-        throw new Error(errorMessage);
-      }
+      if (!response.ok) throw new Error("Failed to load questions");
 
       const data = await response.json();
-
-      if (!data.questions || data.questions.length === 0) {
+      if (!data.questions?.length) {
         setError("No questions available for this difficulty level.");
         return;
       }
 
       const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, 10);
-
       setQuestions(selected);
-      console.log("First question: ", questions[0]);
       setGameData({
         ...data,
         total_pool: data.questions.length,
         used_count: selected.length,
       });
-      if (data.skip_message) {
-        console.log("Skip message:", data.skip_message);
-      }
-    } catch (error) {
-      console.error("Failed to fetch questions:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load questions"
-      );
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  /* -------------------------------------------
+      Start Game
+  --------------------------------------------*/
   const handleStart = () => {
     setGameState("playing");
     fetchQuestions(areaId, currentDifficulty);
   };
 
+  /* -------------------------------------------
+      Game Complete
+  --------------------------------------------*/
   const handleGameComplete = async ({
     percentScore,
     rawPoints,
@@ -255,13 +218,9 @@ const EmojiChallengePage = () => {
           }),
         }
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        console.error("submit-score failed", response.status, err);
-      }
       const data = await response.json().catch(() => ({}));
       setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
-      
+
       // Update unlocked difficulties from backend response
       if (data.difficulty_unlocked) {
         const du = data.difficulty_unlocked;
@@ -287,7 +246,6 @@ const EmojiChallengePage = () => {
   };
 
   const handleBack = () => {
-    // Go back to area challenges page
     router.push(`/student/challenges?area=${areaId}`);
   };
 
@@ -373,13 +331,14 @@ const EmojiChallengePage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            onHelp={() => setShowTutorial(true)} // <-- tutorial trigger
           />
         );
     }
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative max-h-screen min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center">
         {renderGameState()}

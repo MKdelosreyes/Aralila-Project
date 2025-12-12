@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,8 @@ import { QuestionBubble } from "./question-bubble";
 import { ResultCard } from "./result-card";
 import { QuizProps, ChallengeOption } from "@/types/games";
 import { Button } from "@/components/ui/button";
+import { error } from "console";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MAX_HEARTS = 5;
 
@@ -60,6 +62,7 @@ export const Quiz = ({
   const { open: openPracticeModal } = usePracticeModal();
   const [aiFeedback, setAiFeedback] = useState<string>("");
   const [aiScore, setAiScore] = useState<number>(0);
+  const [isChecking, setIsChecking] = useState(false);
 
   useMount(() => {
     if (initialPercentage === 100) openPracticeModal();
@@ -67,7 +70,9 @@ export const Quiz = ({
 
   const [lessonId] = useState(initialLessonId);
   const [areaId] = useState(initialAreaId);
+  const { user, refreshUser } = useAuth();
   const [hearts, setHearts] = useState(initialHearts);
+  const [overlayTimeLeft, setOverlayTimeLeft] = useState<number>(0);
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
   });
@@ -91,6 +96,62 @@ export const Quiz = ({
     Array<{ mark: string; position: number }>
   >([]);
   const [taggedWords, setTaggedWords] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    if (user?.current_hearts !== undefined) {
+      setHearts(user.current_hearts);
+    }
+  }, [user?.current_hearts]);
+
+  useEffect(() => {
+    const checkHeartRefill = () => {
+      const savedRefillTime = localStorage.getItem("heartRefillTime");
+
+      if (savedRefillTime) {
+        const refillTimestamp = parseInt(savedRefillTime, 10);
+        const now = Date.now();
+
+        if (now >= refillTimestamp) {
+          // Time expired, refill hearts
+          localStorage.removeItem("heartRefillTime");
+          // localStorage.setItem("currentHearts", "3");
+          setHearts(3);
+          toast.success("Your hearts have been refilled! 💖");
+        } else if (hearts === 0) {
+          // Still waiting for refill
+          openHeartsModal();
+        }
+      }
+    };
+
+    checkHeartRefill();
+  }, []);
+
+  useEffect(() => {
+    if (hearts !== 0) return;
+
+    const updateOverlayTime = () => {
+      const savedRefillTime = localStorage.getItem("heartRefillTime");
+      if (savedRefillTime) {
+        const refillTimestamp = parseInt(savedRefillTime, 10);
+        const now = Date.now();
+        const remaining = Math.max(0, refillTimestamp - now);
+        setOverlayTimeLeft(remaining);
+      }
+    };
+
+    updateOverlayTime();
+    const interval = setInterval(updateOverlayTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [hearts]);
+
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   // Play audio functions using native Audio API
   const playCorrectSound = () => {
@@ -151,24 +212,30 @@ export const Quiz = ({
       data: { session },
     } = await supabase.auth.getSession();
 
-    const response = await fetch(
-      `${env.backendUrl}/api/games/assessment/reduce-hearts/`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      }
-    );
+    const response = await fetch(`${env.backendUrl}/api/users/hearts/reduce/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    });
 
     if (!response.ok) {
       throw new Error("Failed to reduce hearts");
     }
 
-    return response.json();
+    const data = await response.json();
+    setHearts(data.current_hearts);
+    await refreshUser();
+
+    return data;
   };
 
   const onContinue = () => {
+    if (hearts === 0 && initialPercentage !== 100) {
+      openHeartsModal();
+      return;
+    }
+
     if (challenge.type === "SELECT" || challenge.type === "ASSIST") {
       if (!selectedOption) return;
 
@@ -185,11 +252,16 @@ export const Quiz = ({
         return;
       }
 
+      setIsChecking(true);
+
       const correctOption = options.find(
         (option: ChallengeOption) => option.correct
       );
 
-      if (!correctOption) return;
+      if (!correctOption) {
+        setIsChecking(false);
+        return;
+      }
 
       if (correctOption.id === selectedOption) {
         startTransition(() => {
@@ -204,17 +276,16 @@ export const Quiz = ({
               setStatus("correct");
               setPercentage((prev) => prev + 100 / challenges.length);
 
-              // This is a practice
               if (initialPercentage === 100) {
                 setHearts((prev) => Math.min(prev + 1, MAX_HEARTS));
               }
             })
-            .catch(() =>
-              toast.error("Something went wrong. Please try again.")
-            );
+            .catch(() => toast.error("Something went wrong. Please try again."))
+            .finally(() => {
+              setIsChecking(false);
+            });
         });
       } else {
-        // playIncorrectSound();
         setStatus("wrong");
 
         if (initialPercentage !== 100) {
@@ -227,13 +298,31 @@ export const Quiz = ({
                 }
 
                 if (!response?.error) {
-                  setHearts((prev) => Math.max(prev - 1, 0));
+                  const newHearts = Math.max(hearts - 1, 0);
+                  setHearts(newHearts);
+                  // localStorage.setItem("currentHearts", newHearts.toString());
+
+                  if (newHearts === 0) {
+                    const HEART_REFILL_TIME = 5 * 60 * 1000;
+                    const refillTime = Date.now() + HEART_REFILL_TIME;
+                    // localStorage.setItem(
+                    //   "heartRefillTime",
+                    //   refillTime.toString()
+                    // );
+
+                    openHeartsModal();
+                  }
                 }
               })
               .catch(() =>
                 toast.error("Something went wrong. Please try again.")
-              );
+              )
+              .finally(() => {
+                setIsChecking(false);
+              });
           });
+        } else {
+          setIsChecking(false);
         }
       }
     } else {
@@ -253,6 +342,8 @@ export const Quiz = ({
         setArrangedWords([]);
         setSelectedPunctuation([]);
         setTaggedWords({});
+        setAiFeedback("");
+        setAiScore(0);
         return;
       }
       validateAnswer();
@@ -260,73 +351,89 @@ export const Quiz = ({
   };
 
   const validateAnswer = async () => {
-    // Placeholder for other challenge types
-    let answer;
+    setIsChecking(true);
 
-    switch (challenge.type) {
-      case "SPELL":
-      case "COMPOSE":
-        answer = textAnswer;
-        break;
-      case "ARRANGE":
-        answer = arrangedWords;
-        break;
-      case "PUNCTUATE":
-        answer = selectedPunctuation;
-        break;
-      case "TAG_POS":
-        answer = taggedWords;
-        break;
-    }
+    try {
+      let answer;
 
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const response = await fetch(
-      `${env.backendUrl}/api/games/assessment/validate-answer/`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          challengeId: challenge.id,
-          answer: answer,
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (result.correct) {
-      playCorrectSound();
-      setStatus("correct");
-
-      // ✅ Store AI feedback for COMPOSE challenges
-      if (challenge.type === "COMPOSE" && result.ai_feedback) {
-        setAiFeedback(result.ai_feedback);
-        setAiScore(result.score || 100);
+      switch (challenge.type) {
+        case "SPELL":
+        case "COMPOSE":
+          answer = textAnswer;
+          break;
+        case "ARRANGE":
+          answer = arrangedWords;
+          break;
+        case "PUNCTUATE":
+          answer = selectedPunctuation;
+          break;
+        case "TAG_POS":
+          answer = taggedWords;
+          break;
       }
 
-      // Mark as completed
-      await upsertChallengeProgress(challenge.id);
-      setPercentage((prev) => prev + 100 / challenges.length);
-    } else {
-      setStatus("wrong");
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      // ✅ Show AI feedback even for wrong answers
-      if (challenge.type === "COMPOSE" && result.ai_feedback) {
-        setAiFeedback(result.ai_feedback);
-        setAiScore(result.score || 0);
-      }
+      const response = await fetch(
+        `${env.backendUrl}/api/games/assessment/validate-answer/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            challengeId: challenge.id,
+            answer: answer,
+          }),
+        }
+      );
 
-      if (initialPercentage !== 100) {
-        await reduceHearts();
-        setHearts((prev) => Math.max(prev - 1, 0));
+      const result = await response.json();
+
+      if (result.correct) {
+        playCorrectSound();
+        setStatus("correct");
+
+        if (challenge.type === "COMPOSE" && result.ai_feedback) {
+          setAiFeedback(result.ai_feedback);
+          setAiScore(result.score || 100);
+        }
+
+        await upsertChallengeProgress(challenge.id);
+        setPercentage((prev) => prev + 100 / challenges.length);
+      } else {
+        setStatus("wrong");
+
+        // Show AI feedback even for wrong answers
+        if (challenge.type === "COMPOSE" && result.ai_feedback) {
+          setAiFeedback(result.ai_feedback);
+          setAiScore(result.score || 0);
+        }
+
+        if (initialPercentage !== 100) {
+          await reduceHearts();
+          const newHearts = Math.max(hearts - 1, 0);
+          setHearts(newHearts);
+          // localStorage.setItem("currentHearts", newHearts.toString());
+
+          if (newHearts === 0) {
+            const HEART_REFILL_TIME = 5 * 60 * 1000; // 5 minutes
+            const refillTime = Date.now() + HEART_REFILL_TIME;
+            // localStorage.setItem("heartRefillTime", refillTime.toString());
+
+            openHeartsModal();
+          }
+        }
       }
+    } catch (error) {
+      console.error("Validation error:", error);
+      toast.error("Failed to validate answer. Please try again.");
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -467,7 +574,7 @@ export const Quiz = ({
         <Footer
           lessonId={lessonId}
           status="completed"
-          onCheck={() => router.push("/student/challenges")}
+          onCheck={() => router.push("/student/dashboard")}
           resetAssessment={resetAssessment}
         />
       </>
@@ -480,13 +587,13 @@ export const Quiz = ({
       : challenge.type === "SPELL"
       ? "Spell the word depicted by the image shown"
       : challenge.type === "ARRANGE"
-      ? "Arrange the words correctly"
+      ? "Arrange the words correctly" // Arrange the words correctly
       : challenge.type === "PUNCTUATE"
       ? "Add the correct punctuation"
       : challenge.type === "TAG_POS"
-      ? challenge.question
+      ? "" // challenge.question
       : challenge.type === "COMPOSE"
-      ? challenge.question
+      ? "Write a sentence based on the given set of emojis" // challenge.question
       : challenge.question;
 
   return (
@@ -497,14 +604,81 @@ export const Quiz = ({
         hasActiveSubscription={!!userSubscription?.isActive}
       />
 
+      {/* Overlay when hearts are depleted */}
+      {hearts === 0 && initialPercentage !== 100 && (
+        <div className="fixed inset-0 bg-black/60 z-40 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md text-center shadow-2xl">
+            <Image
+              src="/images/character/lila-sad.png"
+              alt="No Hearts"
+              height={120}
+              width={120}
+              className="mx-auto mb-4"
+            />
+            <h2 className="text-2xl font-bold mb-2 text-neutral-800">
+              No Hearts Left!
+            </h2>
+
+            {/* ✅ ADD: Hearts and Timer Display */}
+            <div className="my-6 p-4 bg-rose-50 rounded-lg border-2 border-rose-200">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <Image
+                  src="/images/art/heart.svg"
+                  height={32}
+                  width={32}
+                  alt="Heart"
+                />
+                <span className="text-4xl font-bold text-rose-500">0</span>
+              </div>
+              {overlayTimeLeft > 0 && (
+                <div className="space-y-2">
+                  <div className="text-5xl font-bold text-rose-600">
+                    {formatTime(overlayTimeLeft)}
+                  </div>
+                  <p className="text-sm text-neutral-600">
+                    until hearts refill
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <p className="text-neutral-600 mb-6 text-sm">
+              All 3 hearts will be restored automatically. Take a break and come
+              back!
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="default"
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  router.push("/student/dashboard");
+                }}
+              >
+                Exit to Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => openHeartsModal()}
+              >
+                View Full Details
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1">
         <div className="flex h-full items-center justify-center">
           <div className="flex w-full flex-col gap-y-12 px-6 lg:min-h-[350px] lg:w-[600px] lg:px-0">
-            <div className="flex items-center justify-between">
-              <h1 className="text-center text-lg font-bold text-neutral-700 lg:text-start lg:text-3xl">
-                {title}
-              </h1>
-            </div>
+            {title && (
+              <div className="flex items-center justify-between">
+                <h1 className="text-center text-lg font-bold text-neutral-700 lg:text-start lg:text-3xl">
+                  {title}
+                </h1>
+              </div>
+            )}
 
             <div>
               {challenge.type === "ASSIST" && (
@@ -517,7 +691,6 @@ export const Quiz = ({
                 status={status}
                 selectedOption={selectedOption}
                 disabled={pending}
-                // 👇 NEW: Pass additional handlers
                 textAnswer={textAnswer}
                 onTextChange={setTextAnswer}
                 arrangedWords={arrangedWords}
@@ -534,22 +707,31 @@ export const Quiz = ({
 
       <Footer
         disabled={
+          hearts === 0 ||
           pending ||
-          (challenge.type === "SELECT" || challenge.type === "ASSIST"
-            ? !selectedOption
-            : challenge.type === "SPELL" || challenge.type === "COMPOSE"
-            ? !textAnswer?.trim()
-            : challenge.type === "ARRANGE"
-            ? arrangedWords.length === 0
-            : challenge.type === "PUNCTUATE"
-            ? selectedPunctuation.length === 0
-            : challenge.type === "TAG_POS"
-            ? Object.keys(taggedWords).length !== (challenge.words?.length || 0)
-            : true)
+          isChecking ||
+          (status === "none" &&
+            (challenge.type === "SELECT" || challenge.type === "ASSIST"
+              ? !selectedOption
+              : challenge.type === "SPELL" || challenge.type === "COMPOSE"
+              ? !textAnswer?.trim()
+              : challenge.type === "ARRANGE"
+              ? arrangedWords.length === 0
+              : challenge.type === "PUNCTUATE"
+              ? selectedPunctuation.length === 0
+              : challenge.type === "TAG_POS"
+              ? Object.keys(taggedWords).length !==
+                (challenge.words?.filter(
+                  (w: any) => w.correctTag || w.index !== undefined
+                )?.length || 0)
+              : true))
         }
         status={status}
         onCheck={onContinue}
         resetAssessment={resetAssessment}
+        // aiFeedback={aiFeedback}
+        // aiScore={aiScore}
+        isChecking={isChecking}
       />
     </div>
   );

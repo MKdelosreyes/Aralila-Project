@@ -18,6 +18,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'collected_badges',    
             'is_active',
             'date_joined',
+            'current_hearts', 
+            'next_refill_at',
         ]
         read_only_fields = [
             'supabase_user_id',
@@ -26,4 +28,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'collected_badges',     
             'is_active',
             'date_joined',
+            'current_hearts', 
+            'next_refill_at',
         ]

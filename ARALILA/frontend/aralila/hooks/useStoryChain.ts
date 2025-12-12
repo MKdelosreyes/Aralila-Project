@@ -6,14 +6,14 @@ import type { StoryChainMessage, GameState } from '@/types/games';
 interface UseStoryChainOptions {
   roomName: string;
   playerName: string;
-  turnOrder: string[]; // NEW: Pass turn order from lobby
+  turnOrder: string[]; 
 }
 
 export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChainOptions) {
   const [gameState, setGameState] = useState<GameState>({
-    players: turnOrder, // NEW: Initialize with turn order
+    players: turnOrder,
     story: [],
-    currentTurn: turnOrder[0] || '', // NEW: First player starts
+    currentTurn: turnOrder[0] || '', 
     scores: {},
     imageIndex: 0,
     totalImages: 5,
@@ -83,9 +83,10 @@ export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChain
           ...prev,
           imageIndex: data.image_index ?? prev.imageIndex,
           totalImages: data.total_images ?? prev.totalImages,
-          imageUrl: data.image_url ? `${env.backendUrl}${data.image_url}` : null,
+          // imageUrl: data.image_url ? `${env.backendUrl}${data.image_url}` : null,
+          imageUrl: data.image_url || null,
           imageDescription: data.image_description ?? null,
-          timeLeft: 20, // Reset timer for new image
+          timeLeft: 20, 
         }));
         break;
 

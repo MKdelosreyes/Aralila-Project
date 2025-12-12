@@ -1,11 +1,11 @@
-// /components/punctuation-challenge/intro.tsx
+// Modified version with Help icon beside PlayCircle
 
 "use client";
 
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { PlayCircle, ArrowLeft } from "lucide-react";
+import { PlayCircle, ArrowLeft, HelpCircle } from "lucide-react";
 import Leaderboard from "@/components/games/common/leaderboard";
 
 interface PunctuationChallengeIntroProps {
@@ -15,6 +15,7 @@ interface PunctuationChallengeIntroProps {
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
+  onHelp?: () => void;
 }
 
 export const PunctuationChallengeIntro = ({
@@ -23,6 +24,7 @@ export const PunctuationChallengeIntro = ({
   onSelectDifficulty,
   onStartChallenge,
   onBack,
+  onHelp,
 }: PunctuationChallengeIntroProps) => {
   return (
     <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-center py-12">
@@ -114,7 +116,7 @@ export const PunctuationChallengeIntro = ({
             </motion.div>
 
             <motion.div
-              className="relative group flex items-center justify-center"
+              className="relative group flex items-center justify-center gap-10"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{
@@ -124,26 +126,49 @@ export const PunctuationChallengeIntro = ({
                 delay: 0.5,
               }}
             >
-              {/* Pulsing circle animation */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+              {/* Start Button Wrapper */}
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
+                </div>
+
+                <motion.button
+                  onClick={onStartChallenge}
+                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
+                  <div
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    Start
+                  </div>
+                </motion.button>
               </div>
 
-              <motion.button
-                onClick={onStartChallenge}
-                className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <PlayCircle className="w-36 h-36 text-white cursor-pointer" />
-                {/* Start tooltip */}
-                <div
-                  className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-                  style={{ pointerEvents: "none" }}
-                >
-                  Start
+              {/* Help Button Wrapper */}
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 bg-purple-400 rounded-full animate-pulse-24-7 opacity-50"></div>
                 </div>
-              </motion.button>
+
+                <motion.button
+                  onClick={onHelp}
+                  className="relative z-10 rounded-full text-white shadow-2xl hover:shadow-purple-500/40 transition-shadow duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <HelpCircle className="w-36 h-36 text-white cursor-pointer" />
+                  <div
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    Help
+                  </div>
+                </motion.button>
+              </div>
             </motion.div>
           </div>
         </div>

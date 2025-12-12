@@ -90,10 +90,8 @@ const SpellingChallengePage = () => {
           };
           setUnlocked(mapped);
 
-          // Validate URL difficulty; fallback to highest available or 1
           const requestedRaw = initialDifficulty;
           const requested = toDifficulty(requestedRaw);
-
           const highest: Difficulty = mapped[3] ? 3 : mapped[2] ? 2 : 1;
           setCurrentDifficulty(mapped[requested] ? requested : highest);
           setGameData(spelling);
@@ -122,84 +120,50 @@ const SpellingChallengePage = () => {
         return;
       }
 
-      // 1. Treat incoming param as order_index, resolve real area id
-      const orderIndex = parseInt(rawAreaParam, 10);
-      let actualAreaId = orderIndex;
-
+      let actualAreaId = parseInt(rawAreaParam, 10);
       try {
         const areaResp = await fetch(
-          `${env.backendUrl}/api/games/area/order/${orderIndex}/`,
+          `${env.backendUrl}/api/games/area/order/${actualAreaId}/`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (areaResp.ok) {
           const areaData = await areaResp.json();
           actualAreaId = areaData.area.id;
           setResolvedAreaId(actualAreaId);
-        } else {
-          // fallback: assume param already is an id
-          console.warn("Area-by-order lookup failed, using raw param as id.");
         }
       } catch (e) {
-        console.warn("Area-by-order request error, using raw param as id.");
+        console.warn("Failed to resolve area ID. Using raw param.");
       }
 
-      // 2. Fetch questions with resolved area id
       const response = await fetch(
         `${env.backendUrl}/api/games/questions/${actualAreaId}/spelling-challenge/${difficulty}/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.status === 403) {
-        const data = await response.json();
-        setError(data.error || "Access denied");
-        alert(data.error);
-        router.back();
-        return;
-      }
-
-      if (response.status === 500) {
-        let errorDetails = "Internal server error. Please try again later.";
-        try {
-          const errorData = await response.json();
-          errorDetails = errorData.error || errorDetails;
-        } catch {}
-        setError(errorDetails);
-        return;
-      }
-
       if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        let msg = `HTTP ${response.status}: ${response.statusText}`;
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          msg = errorData.error || msg;
         } catch {}
-        throw new Error(errorMessage);
+        throw new Error(msg);
       }
 
       const data = await response.json();
-
       if (!data.questions || data.questions.length === 0) {
         setError("No questions available for this difficulty level.");
         return;
       }
 
       const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 10);
-
-      setQuestions(selected);
+      setQuestions(shuffled.slice(0, 10));
       setGameData({
         ...data,
         total_pool: data.questions.length,
-        used_count: selected.length,
+        used_count: 10,
       });
-      if (data.skip_message) {
-        console.log("Skip message:", data.skip_message);
-      }
-    } catch (error) {
-      console.error("Failed to fetch questions:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load questions"
-      );
+    } catch (err: any) {
+      setError(err.message || "Failed to load questions");
     } finally {
       setLoading(false);
     }
@@ -243,10 +207,6 @@ const SpellingChallengePage = () => {
           }),
         }
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        console.error("submit-score failed", response.status, err);
-      }
       const data = await response.json().catch(() => ({}));
       setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
     } catch (error) {
@@ -261,22 +221,6 @@ const SpellingChallengePage = () => {
     setFinalScore(0);
     setFinalResults([]);
     fetchQuestions(areaId, currentDifficulty);
-  };
-
-  const handleNextDifficulty = () => {
-    if (gameData?.next_difficulty) {
-      setCurrentDifficulty(gameData.next_difficulty);
-      setGameState("intro");
-      setFinalScore(0);
-      setFinalResults([]);
-    }
-  };
-
-  const handleSkipToHard = () => {
-    setCurrentDifficulty(3);
-    setGameState("intro");
-    setFinalScore(0);
-    setFinalResults([]);
   };
 
   const handleBack = () => {
@@ -369,13 +313,14 @@ const SpellingChallengePage = () => {
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
+            onHelp={() => setShowTutorial(true)} // <-- trigger tutorial modal
           />
         );
     }
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
+    <div className="relative max-h-screen min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
       <AnimatedBackground imagePath={getAreaBGImage()} />
       <div className="w-full flex items-center justify-center overflow-hidden">
         {renderGameState()}

@@ -1,15 +1,36 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Image from "next/image";
 import AnimatedBackground from "@/components/bg/animated-bg";
+import { ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function PlaygroundHome() {
   const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleNavigation = (path: string, key: string) => {
+    setLoading(key);
+    router.push(path);
+  };
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       <AnimatedBackground />
+
+      {/* Back Button */}
+      <motion.button
+        onClick={() => router.push("/student/dashboard")}
+        className="absolute top-6 left-6 z-50 flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/20 transition"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="font-medium">Back</span>
+      </motion.button>
 
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-20">
         <div className="w-full max-w-6xl">
@@ -26,7 +47,10 @@ export default function PlaygroundHome() {
               role="button"
               tabIndex={0}
               onClick={() =>
-                router.push("/student/playground/modes/story-chain")
+                handleNavigation(
+                  "/student/playground/modes/story-chain",
+                  "story-chain"
+                )
               }
               className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-b from-white/80 to-white/70 p-8 shadow-2xl hover:scale-[1.02] transition"
             >
@@ -53,8 +77,11 @@ export default function PlaygroundHome() {
               </div>
 
               <div className="mt-6 flex items-center justify-between">
-                <button className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg hover:brightness-105 transition">
-                  Play
+                <button
+                  disabled={loading === "story-chain"}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg hover:brightness-105 transition disabled:opacity-70"
+                >
+                  {loading === "story-chain" ? "Loading..." : "Play"}
                 </button>
                 <div className="text-sm text-gray-500">2–3 players</div>
               </div>
@@ -65,7 +92,10 @@ export default function PlaygroundHome() {
               role="button"
               tabIndex={0}
               onClick={() =>
-                router.push("/student/playground/modes/filipino-wordle")
+                handleNavigation(
+                  "/student/playground/modes/filipino-wordle",
+                  "filipino-wordle"
+                )
               }
               className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-b from-white/80 to-white/70 p-8 shadow-2xl hover:scale-[1.02] transition"
             >
@@ -91,8 +121,11 @@ export default function PlaygroundHome() {
               </div>
 
               <div className="mt-6 flex items-center justify-between">
-                <button className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg hover:brightness-105 transition">
-                  Play
+                <button
+                  disabled={loading === "filipino-wordle"}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg hover:brightness-105 transition disabled:opacity-70"
+                >
+                  {loading === "filipino-wordle" ? "Loading..." : "Play"}
                 </button>
                 <div className="text-sm text-gray-500">Solo / Practice</div>
               </div>

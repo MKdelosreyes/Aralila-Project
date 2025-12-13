@@ -772,13 +772,9 @@ export const PunctuationChallengeGame = ({
                 <button
                   key={m}
                   onClick={() => handlePickPunctuation(m)}
-                  className={`h-12 w-12 rounded-xl border-2 text-xl font-bold
-                    ${
-                      currentGap && currentGap.correctMark === m
-                        ? "border-purple-500/60"
-                        : "border-slate-400"
-                    }
-                    bg-slate-100 hover:bg-slate-200 active:scale-95 transition`}
+                  className={
+                    "h-12 w-12 rounded-xl border-2 text-xl font-bold border-slate-400 bg-slate-100 hover:bg-slate-200 active:scale-95 transition"
+                  }
                 >
                   {m}
                 </button>

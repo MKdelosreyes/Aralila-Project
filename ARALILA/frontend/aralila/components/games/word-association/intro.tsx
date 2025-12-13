@@ -81,7 +81,7 @@ export const WordAssociationIntro = ({
                 className="mx-auto"
               />
               <h1 className="text-6xl font-bold text-white mb-4">
-                Apat na Larawan, Isang Salita
+                Salitang Konektado
               </h1>
               <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
                 WORD ASSOCIATION

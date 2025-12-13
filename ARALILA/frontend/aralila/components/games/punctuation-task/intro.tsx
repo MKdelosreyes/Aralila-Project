@@ -76,7 +76,7 @@ export const PunctuationChallengeIntro = ({
                 className="mx-auto"
               />
               <h1 className="text-7xl font-bold text-white mb-4">
-                Punctuation Power!
+                Puntuhang Puntos!
               </h1>
               <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
                 GRAMMAR

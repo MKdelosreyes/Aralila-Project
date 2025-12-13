@@ -63,16 +63,16 @@ Example response for mixed language:
 Use Filipino only in explanations. No english if possible.
 """
 
-        response = client.responses.create(
-            model="gpt-4o-mini",  
-            input=[
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
                 {"role": "system", "content": "Respond ONLY in valid JSON."},
                 {"role": "user", "content": prompt}
             ],
-            max_output_tokens=120,  
+            max_tokens=200,
         )
 
-        ai_msg = response.output_text.strip()
+        ai_msg = response.choices[0].message.content.strip()
 
         cleaned = (
             ai_msg.replace("```json", "")
@@ -82,12 +82,20 @@ Use Filipino only in explanations. No english if possible.
 
         result = json.loads(cleaned)
         
+        # Ensure all expected fields exist with defaults
         if "points" not in result:
             result["points"] = 20 if result.get("valid") else 0
         if "english_words_found" not in result:
             result["english_words_found"] = []
         if "filipino_equivalents" not in result:
             result["filipino_equivalents"] = {}
+        if "details" not in result:
+            result["details"] = {
+                "grammar": result.get("points", 0) // 4,
+                "punctuation": result.get("points", 0) // 4,
+                "spelling": result.get("points", 0) // 4,
+                "relevancy": result.get("points", 0) // 4
+            }
             
         return JsonResponse(result)
 
@@ -1450,16 +1458,16 @@ Example response:
 Use Filipino only in explanations.
 """
 
-        response = client.responses.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
-            input=[
+            messages=[
                 {"role": "system", "content": "Respond ONLY in valid JSON."},
                 {"role": "user", "content": prompt}
             ],
-            max_output_tokens=150,
+            max_tokens=150,
         )
 
-        ai_msg = response.output_text.strip()
+        ai_msg = response.choices[0].message.content.strip()
         cleaned = ai_msg.replace("```json", "").replace("```", "").strip()
         result = json.loads(cleaned)
         

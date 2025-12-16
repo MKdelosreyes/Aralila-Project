@@ -14,6 +14,7 @@ interface PunctuationChallengeIntroProps {
   onSelectDifficulty?: (d: number) => void;
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
+  areaId?: number;
   onBack?: () => void;
   onHelp?: () => void;
 }
@@ -23,6 +24,7 @@ export const PunctuationChallengeIntro = ({
   unlocked,
   onSelectDifficulty,
   onStartChallenge,
+  areaId = 4,
   onBack,
   onHelp,
 }: PunctuationChallengeIntroProps) => {
@@ -178,7 +180,7 @@ export const PunctuationChallengeIntro = ({
         <Leaderboard
           gameId={3}
           gameType="punctuation-task"
-          areaId={4}
+          areaId={areaId}
           difficulty={difficulty}
           limit={10}
         />

@@ -42,7 +42,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
       <motion.div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] overflow-hidden relative flex flex-col"
+        className="bg-white border-4 border-purple-400 rounded-xl shadow-2xl w-full max-w-3xl h-[75vh] overflow-hidden relative flex flex-col"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -52,11 +52,11 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
           onClick={onClose}
           className="cursor-pointer absolute top-4 right-4 z-50 p-2 bg-gray-200 rounded-full hover:bg-gray-300 shadow"
         >
-          <X size={28} />
+          <X size={18} />
         </button>
 
         {/* Video */}
-        <div className="flex-1 w-full bg-black flex items-center justify-center">
+        <div className="flex-1 w-full h-[70%] bg-black flex items-center justify-center">
           <video
             ref={videoRef}
             src={videoSrc}
@@ -68,16 +68,16 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
         </div>
 
         {/* Centered Description */}
-        <div className="p-6 border-t flex justify-center items-center">
+        <div className="p-4 border-t flex justify-center items-center">
           <p className="text-gray-800 text-lg text-center">{description}</p>
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center p-6 border-t">
+        <div className="flex justify-between items-center px-6 py-4 border-t">
           <button
             onClick={handleBack}
             disabled={currentStep === 0}
-            className={`flex items-center gap-2 px-5 py-3 rounded bg-gray-200 hover:bg-gray-300 transition ${
+            className={`flex items-center gap-2 px-5 py-2 g-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base border-2 border-purple-400 border-dashed ${
               currentStep === 0
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer"
@@ -91,7 +91,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
           <button
             onClick={handleNext}
             disabled={currentStep === steps.length - 1}
-            className={`flex items-center gap-2 px-5 py-3 rounded bg-gray-200 hover:bg-gray-300 transition ${
+            // className="px-7 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base"
+            className={`flex items-center gap-2 px-5 py-2 g-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-2xl transition-all duration-300 text-base border-2 border-purple-400 border-dashed ${
               currentStep === steps.length - 1
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer"

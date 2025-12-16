@@ -17,7 +17,7 @@ interface LeaderboardEntry {
 interface LeaderboardProps {
   gameId: number | string | null;
   gameType: string | null;
-  areaId: number | string | null;
+  areaId: number;
   difficulty: number;
   limit?: number;
   variant?: "glass" | "light";
@@ -26,7 +26,7 @@ interface LeaderboardProps {
 const Leaderboard = ({
   gameId = null,
   gameType = "",
-  areaId = null,
+  areaId = 4,
   difficulty = 1,
   limit = 10,
   variant = "glass",

@@ -55,18 +55,18 @@ export const PARTS_OF_SPEECH_DIFFICULTY_SETTINGS: Record<
   }
 > = {
   1: { 
-    initialTime: 120,
-    correctBonus: 5,
-    wrongPenalty: 3,
+    initialTime: 180,
+    correctBonus: 20,
+    wrongPenalty: 0,
   },
   2: { 
-    initialTime: 100,
-    correctBonus: 8,
-    wrongPenalty: 5,
+    initialTime: 180,
+    correctBonus: 20,
+    wrongPenalty: 0,
   },
   3: {
-    initialTime: 80,
-    correctBonus: 10,
-    wrongPenalty: 7,
+    initialTime: 180,
+    correctBonus: 20,
+    wrongPenalty: 0,
   },
 };

@@ -24,7 +24,7 @@ interface GameProps {
   difficulty?: number;
   onGameComplete: (summary: {
     score: number;
-    rawPoints?: number;
+    rawPoints: number;
     results: WordAssociationResult[];
     timeTaken: number;
   }) => void;
@@ -32,8 +32,8 @@ interface GameProps {
 }
 
 const TIME_LIMIT = 90;
-const BASE_POINTS = 100;
-const BONUS_TIME = 5;
+const BASE_POINTS = 20;
+const BONUS_TIME = 10;
 const MAX_ASSISTS = 3;
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -89,6 +89,12 @@ export const WordAssociationGame = ({
     }
   }, [currentQuestion]);
 
+  const computePercent = (res: WordAssociationResult[]) => {
+    const total = questions.length || 1;
+    const correct = res.filter((r) => r.isCorrect).length;
+    return Math.round((correct / total) * 100);
+  };
+
   const handleEndGame = useCallback(() => {
     const finalResults = [...results];
     for (let i = currentIndex; i < shuffledQuestions.length; i++) {
@@ -100,12 +106,19 @@ export const WordAssociationGame = ({
     }
     const timeTaken = (Date.now() - startTime) / 1000; // Convert to seconds
     onGameComplete({
-      score,
+      score: computePercent(results),
       rawPoints: score,
       results: finalResults,
       timeTaken,
     });
-  }, [score, results, currentIndex, shuffledQuestions, onGameComplete, startTime]);
+  }, [
+    score,
+    results,
+    currentIndex,
+    shuffledQuestions,
+    onGameComplete,
+    startTime,
+  ]);
 
   useEffect(() => {
     if (timeLeft <= 15 && lilaState === "normal") {
@@ -177,7 +190,7 @@ export const WordAssociationGame = ({
             : score;
           const timeTaken = (Date.now() - startTime) / 1000;
           onGameComplete({
-            score: finalScore,
+            score: computePercent(updatedResults),
             rawPoints: finalScore,
             results: updatedResults,
             timeTaken,
@@ -191,7 +204,6 @@ export const WordAssociationGame = ({
       return updatedResults;
     });
   };
-
 
   const handleUseAssist = () => {
     if (assists <= 0 || feedback) return;

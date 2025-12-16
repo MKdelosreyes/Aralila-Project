@@ -202,13 +202,19 @@ const SpellingChallengePage = () => {
             area_id: resolvedAreaId ?? parseInt(areaId, 10),
             game_type: "spelling-challenge",
             difficulty: currentDifficulty,
-            score: percentScore,
+            percent_score: percentScore,
+            raw_points: rawPoints,
             time_taken: timeTaken,
           }),
         }
       );
       const data = await response.json().catch(() => ({}));
-      setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
+      setGameData((prev: any) => ({
+        ...prev,
+        ...data,
+        raw_points: rawPoints,
+        percent_score: percentScore,
+      }));
     } catch (error) {
       console.error("Failed to submit score:", error);
     }
@@ -297,6 +303,7 @@ const SpellingChallengePage = () => {
             difficultyUnlocked={gameData?.difficulty_unlocked}
             replayMode={gameData?.replay_mode}
             rawPoints={gameData?.raw_points}
+            areaId={resolvedAreaId || parseInt(areaId, 10)}
             onRestart={handleRestart}
             onChangeDifficulty={(d) => {
               setCurrentDifficulty(d);
@@ -310,6 +317,7 @@ const SpellingChallengePage = () => {
           <SpellingChallengeIntro
             difficulty={currentDifficulty}
             unlocked={unlocked}
+            areaId={resolvedAreaId || parseInt(areaId, 10)}
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}

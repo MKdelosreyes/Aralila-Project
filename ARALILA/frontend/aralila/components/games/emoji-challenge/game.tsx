@@ -34,7 +34,7 @@ interface GameProps {
 
 // --- Constants ---
 const TIME_LIMIT = 300; // 3 minutes total
-const BONUS_TIME = 5; // +5 seconds for a correct answer
+const BONUS_TIME = 10; // +10 seconds for a correct answer
 const MAX_MISTAKES = 6;
 
 type LilaState =

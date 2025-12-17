@@ -1,6 +1,6 @@
 import { PunctuationData } from "@/types/games";
 
-export const TIME_LIMIT = 120; // seconds
+export const TIME_LIMIT = 180; // seconds 
 export const BONUS_TIME = 10;  // seconds per correct answer in a sentence
 export const BASE_POINTS = 20;
 

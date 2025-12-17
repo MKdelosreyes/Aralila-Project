@@ -419,11 +419,12 @@ def submit_game_score(request):
         area_id = request.data.get('area_id')
         game_type = request.data.get('game_type')
         difficulty = request.data.get('difficulty')
-        score = request.data.get('score')
-        time_taken = request.data.get('time_taken')  # Time in seconds
+        percent_score = request.data.get('percent_score') 
+        raw_points = request.data.get('raw_points')     
+        time_taken = request.data.get('time_taken')
         
-        # Validation
-        if not all([area_id, game_type, difficulty is not None, score is not None]):
+        # Validation - require both scores
+        if not all([area_id, game_type, difficulty is not None, percent_score is not None, raw_points is not None]):
             return Response({'error': 'Missing required fields'}, status=400)
         
         area = Area.objects.get(id=area_id)
@@ -438,49 +439,47 @@ def submit_game_score(request):
         
         progress.attempts += 1
         
-        passed = score >= UNLOCK_THRESHOLD
+        passed = percent_score >= UNLOCK_THRESHOLD
         next_unlocked_difficulty = None
         unlocked_message = None
         
         if difficulty == 1:
-            if score > progress.difficulty_1_score:
-                progress.difficulty_1_score = score
+            if raw_points > progress.difficulty_1_score:
+                progress.difficulty_1_score = raw_points
                 progress.difficulty_1_time_taken = time_taken
-            elif score == progress.difficulty_1_score:
-                # Update time if it's better (lower) or if no time was recorded yet
+            elif raw_points == progress.difficulty_1_score:
                 if not progress.difficulty_1_time_taken or (time_taken and time_taken < progress.difficulty_1_time_taken):
                     progress.difficulty_1_time_taken = time_taken
             if passed and not progress.difficulty_1_completed:
                 progress.difficulty_1_completed = True
                 unlocked_message = "✅ Medium difficulty unlocked!"
+                
         elif difficulty == 2:
-            if score > progress.difficulty_2_score:
-                progress.difficulty_2_score = score
+            if raw_points > progress.difficulty_2_score:
+                progress.difficulty_2_score = raw_points
                 progress.difficulty_2_time_taken = time_taken
-            elif score == progress.difficulty_2_score:
-                # Update time if it's better (lower) or if no time was recorded yet
+            elif raw_points == progress.difficulty_2_score:
                 if not progress.difficulty_2_time_taken or (time_taken and time_taken < progress.difficulty_2_time_taken):
                     progress.difficulty_2_time_taken = time_taken
             if passed and not progress.difficulty_2_completed:
                 progress.difficulty_2_completed = True
                 unlocked_message = "✅ Hard difficulty unlocked!"
+                
         elif difficulty == 3:
-            if score > progress.difficulty_3_score:
-                progress.difficulty_3_score = score
+            if raw_points > progress.difficulty_3_score:
+                progress.difficulty_3_score = raw_points
                 progress.difficulty_3_time_taken = time_taken
-            elif score == progress.difficulty_3_score:
-                # Update time if it's better (lower) or if no time was recorded yet
+            elif raw_points == progress.difficulty_3_score:
                 if not progress.difficulty_3_time_taken or (time_taken and time_taken < progress.difficulty_3_time_taken):
                     progress.difficulty_3_time_taken = time_taken
             if passed and not progress.difficulty_3_completed:
                 progress.difficulty_3_completed = True
                 unlocked_message = "🏆 Mastered! All difficulties completed."
         
-
         # Update stars & auto-unlocks
         progress.update_stars()
 
-        # Determine next suggested difficulty (first incomplete)
+        # Determine next suggested difficulty
         if not progress.difficulty_1_completed:
             next_unlocked_difficulty = 1
         elif not progress.difficulty_2_completed:
@@ -488,15 +487,15 @@ def submit_game_score(request):
         elif not progress.difficulty_3_completed:
             next_unlocked_difficulty = 3
         else:
-            next_unlocked_difficulty = 1  # cycle back
+            next_unlocked_difficulty = 1
 
-        # ✅ REMOVED: progress.score and progress.completed fields
         progress.save()
         
         return Response({
             'success': True,
             'passed': passed,
-            'score': score,
+            'percent_score': percent_score, 
+            'raw_points': raw_points,       
             'stars_earned': progress.stars_earned,
             'next_difficulty': next_unlocked_difficulty,
             'unlocked_message': unlocked_message,
@@ -519,8 +518,6 @@ def submit_game_score(request):
         return Response({'error': 'Game not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
-
-
 
 
 @api_view(['GET'])

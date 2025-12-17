@@ -145,7 +145,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const resultsRef = useRef<PartsOfSpeechResult[]>([]);
-  
+
   useEffect(() => {
     resultsRef.current = results;
   }, [results]);
@@ -236,7 +236,7 @@ export const PartsOfSpeechGame: React.FC<PartsOfSpeechGameProps> = ({
 
     if (correct) {
       const bonus = currentSettings.correctBonus;
-      const points = streak >= 2 ? bonus * 2 : bonus;
+      const points = streak >= 3 ? bonus * 2 : bonus;
       setScore((prev) => prev + points);
       setStreak((prev) => prev + 1);
       setTimeLeft((prev) =>

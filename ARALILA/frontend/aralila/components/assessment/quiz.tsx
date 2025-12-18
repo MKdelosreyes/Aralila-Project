@@ -72,6 +72,18 @@ export const Quiz = ({
   const [areaId] = useState(initialAreaId);
   const { user, refreshUser } = useAuth();
   const [hearts, setHearts] = useState(initialHearts);
+  // If there's no authenticated user yet, ensure we use the prop initialHearts
+  useEffect(() => {
+    if (user?.current_hearts === undefined && typeof initialHearts === "number") {
+      setHearts(initialHearts);
+      try {
+        localStorage.setItem("currentHearts", String(initialHearts));
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+  }, [initialHearts, user?.current_hearts]);
+
   const [overlayTimeLeft, setOverlayTimeLeft] = useState<number>(0);
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
@@ -114,18 +126,19 @@ export const Quiz = ({
         if (now >= refillTimestamp) {
           // Time expired, refill hearts
           localStorage.removeItem("heartRefillTime");
-          // localStorage.setItem("currentHearts", "3");
+          localStorage.setItem("currentHearts", "3");
           setHearts(3);
           toast.success("Your hearts have been refilled! 💖");
         } else if (hearts === 0) {
-          // Still waiting for refill
+          // Still waiting for refill -> show modal/overlay
           openHeartsModal();
         }
       }
     };
 
+    // Run on mount and when hearts change so UI responds immediately when hearts hit 0
     checkHeartRefill();
-  }, []);
+  }, [hearts, openHeartsModal]);
 
   useEffect(() => {
     if (hearts !== 0) return;
@@ -219,12 +232,52 @@ export const Quiz = ({
       },
     });
 
+    // Parse JSON even on non-OK so we can read server-provided fields
+    let data: any;
+    try {
+      data = await response.json();
+    } catch (e) {
+      throw new Error("Failed to parse reduce hearts response");
+    }
+
     if (!response.ok) {
+      // Handle explicit server error (e.g., no hearts)
+      if (data?.error) {
+        // If server included next_refill_at, persist it
+        if (data.next_refill_at) {
+          const ts = Date.parse(data.next_refill_at);
+          if (!Number.isNaN(ts)) {
+            localStorage.setItem("heartRefillTime", String(ts));
+          }
+        }
+
+        if (data.error === "No hearts available") {
+          setHearts(0);
+          localStorage.setItem("currentHearts", "0");
+          openHeartsModal();
+        }
+
+        throw new Error(data.error);
+      }
+
       throw new Error("Failed to reduce hearts");
     }
 
-    const data = await response.json();
-    setHearts(data.current_hearts);
+    // Success path
+    // Ensure we update local state from authoritative server value
+    if (typeof data.current_hearts === "number") {
+      setHearts(data.current_hearts);
+      localStorage.setItem("currentHearts", String(data.current_hearts));
+    }
+
+    // If server returned next_refill_at (ISO string), persist as ms
+    if (data?.next_refill_at) {
+      const ts = Date.parse(data.next_refill_at);
+      if (!Number.isNaN(ts)) {
+        localStorage.setItem("heartRefillTime", String(ts));
+      }
+    }
+
     await refreshUser();
 
     return data;
@@ -289,38 +342,57 @@ export const Quiz = ({
         setStatus("wrong");
 
         if (initialPercentage !== 100) {
-          startTransition(() => {
-            reduceHearts()
-              .then((response) => {
-                if (response?.error === "hearts") {
-                  openHeartsModal();
-                  return;
-                }
+          // Immediately decrement locally to prevent race where user can continue
+          setHearts((prev) => {
+            const newHearts = Math.max(prev - 1, 0);
+            localStorage.setItem("currentHearts", String(newHearts));
 
-                if (!response?.error) {
-                  const newHearts = Math.max(hearts - 1, 0);
-                  setHearts(newHearts);
-                  // localStorage.setItem("currentHearts", newHearts.toString());
+            if (newHearts === 0) {
+              const HEART_REFILL_TIME = 5 * 60 * 1000;
+              const refillTime = Date.now() + HEART_REFILL_TIME;
+              localStorage.setItem("heartRefillTime", refillTime.toString());
+              // show modal right away
+              openHeartsModal();
+            }
 
-                  if (newHearts === 0) {
-                    const HEART_REFILL_TIME = 5 * 60 * 1000;
-                    const refillTime = Date.now() + HEART_REFILL_TIME;
-                    // localStorage.setItem(
-                    //   "heartRefillTime",
-                    //   refillTime.toString()
-                    // );
-
-                    openHeartsModal();
-                  }
-                }
-              })
-              .catch(() =>
-                toast.error("Something went wrong. Please try again.")
-              )
-              .finally(() => {
-                setIsChecking(false);
-              });
+            return newHearts;
           });
+
+           startTransition(() => {
+             // Use server response to update hearts (avoid stale state)
+             reduceHearts()
+               .then((response) => {
+                 if (response?.error === "hearts") {
+                   openHeartsModal();
+                   return;
+                 }
+
+                 const serverHearts = typeof response?.current_hearts === "number" ? response.current_hearts : null;
+
+                 if (serverHearts !== null) {
+                   // persisted by reduceHearts already, but ensure refill timer is set when it hits 0
+                   if (serverHearts === 0) {
+                     // Prefer server-provided next_refill_at if available
+                     const serverNext = response?.next_refill_at || null;
+                     if (serverNext) {
+                       const ts = Date.parse(serverNext);
+                       if (!Number.isNaN(ts)) {
+                         localStorage.setItem("heartRefillTime", String(ts));
+                       }
+                     } else {
+                       const HEART_REFILL_TIME = 5 * 60 * 1000;
+                       const refillTime = Date.now() + HEART_REFILL_TIME;
+                       localStorage.setItem("heartRefillTime", refillTime.toString());
+                     }
+                     openHeartsModal();
+                   }
+                 }
+               })
+               .catch(() => toast.error("Something went wrong. Please try again."))
+               .finally(() => {
+                 setIsChecking(false);
+               });
+           });
         } else {
           setIsChecking(false);
         }
@@ -415,17 +487,29 @@ export const Quiz = ({
         }
 
         if (initialPercentage !== 100) {
-          await reduceHearts();
-          const newHearts = Math.max(hearts - 1, 0);
-          setHearts(newHearts);
-          // localStorage.setItem("currentHearts", newHearts.toString());
+          // Immediately decrement locally to block interaction while server call completes
+          setHearts((prev) => {
+            const newHearts = Math.max(prev - 1, 0);
+            localStorage.setItem("currentHearts", String(newHearts));
+            if (newHearts === 0) {
+              const HEART_REFILL_TIME = 5 * 60 * 1000; // 5 minutes
+              const refillTime = Date.now() + HEART_REFILL_TIME;
+              localStorage.setItem("heartRefillTime", refillTime.toString());
+              openHeartsModal();
+            }
+            return newHearts;
+          });
 
-          if (newHearts === 0) {
-            const HEART_REFILL_TIME = 5 * 60 * 1000; // 5 minutes
-            const refillTime = Date.now() + HEART_REFILL_TIME;
-            // localStorage.setItem("heartRefillTime", refillTime.toString());
-
-            openHeartsModal();
+          const data = await reduceHearts();
+          const serverHearts = typeof data?.current_hearts === "number" ? data.current_hearts : null;
+          // reconcile with server authoritative value
+          if (serverHearts !== null) {
+            setHearts(serverHearts);
+            localStorage.setItem("currentHearts", String(serverHearts));
+            if (serverHearts === 0 && data?.next_refill_at) {
+              const ts = Date.parse(data.next_refill_at);
+              if (!Number.isNaN(ts)) localStorage.setItem("heartRefillTime", String(ts));
+            }
           }
         }
       }
@@ -690,7 +774,12 @@ export const Quiz = ({
                 onSelect={onSelect}
                 status={status}
                 selectedOption={selectedOption}
-                disabled={pending}
+                disabled={
+                  pending ||
+                  isChecking ||
+                  hearts === 0 ||
+                  status !== "none"
+                }
                 textAnswer={textAnswer}
                 onTextChange={setTextAnswer}
                 arrangedWords={arrangedWords}

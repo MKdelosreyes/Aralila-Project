@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { env } from "@/lib/env";
 import { Quiz } from "@/components/assessment/quiz";
 import { ChallengeType } from "@/types/games";
+import { useAuth } from "@/contexts/AuthContext";
 
 type LessonData = {
   id: number;
@@ -26,6 +27,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 export default function AssessmentPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const [lessonData, setLessonData] = useState<LessonData | null>(null);
   const [hearts, setHearts] = useState(() => {
     if (typeof window !== "undefined") {
@@ -43,6 +45,29 @@ export default function AssessmentPage() {
     }
     return 3;
   });
+
+  // Keep hearts in sync with server profile when available
+  useEffect(() => {
+    if (user?.current_hearts !== undefined) {
+      setHearts(user.current_hearts);
+      localStorage.setItem("currentHearts", String(user.current_hearts));
+
+      // If server provides next_refill_at, persist it so the client timer works
+      if (user.next_refill_at) {
+        try {
+          const ts = new Date(user.next_refill_at).getTime();
+          if (!Number.isNaN(ts)) {
+            localStorage.setItem("heartRefillTime", String(ts));
+          }
+        } catch (e) {
+          // ignore
+        }
+      } else {
+        localStorage.removeItem("heartRefillTime");
+      }
+    }
+  }, [user?.current_hearts, user?.next_refill_at]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

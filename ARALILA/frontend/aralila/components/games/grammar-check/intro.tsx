@@ -9,20 +9,22 @@ import Leaderboard from "@/components/games/common/leaderboard";
 interface GrammarCheckIntroProps {
   difficulty: number;
   unlocked?: { [k: number]: boolean };
+  areaId?: number;
   onSelectDifficulty?: (d: number) => void;
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
   onBack?: () => void;
-  onHelp?: () => void; // ✅ Added
+  onHelp?: () => void;
 }
 
 export const GrammarCheckIntro = ({
   difficulty,
   unlocked,
+  areaId = 4,
   onSelectDifficulty,
   onStartChallenge,
   onBack,
-  onHelp, // ✅ Added
+  onHelp,
 }: GrammarCheckIntroProps) => {
   return (
     <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-center py-12">
@@ -178,7 +180,7 @@ export const GrammarCheckIntro = ({
         <Leaderboard
           gameId={6}
           gameType="grammar-check"
-          areaId={4}
+          areaId={areaId}
           difficulty={difficulty}
           limit={10}
         />

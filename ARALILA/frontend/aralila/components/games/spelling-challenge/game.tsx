@@ -195,7 +195,7 @@ export const SpellingChallengeGame = ({
 
   // Spawn falling letters
   useEffect(() => {
-    if (feedback) return;
+    if (feedback || completedRef.current || isCompleting) return;
 
     const spawnOnce = () => {
       setFallingLetters((prev) => {
@@ -237,7 +237,13 @@ export const SpellingChallengeGame = ({
       clearInterval(spawnInterval);
       cancelAnimationFrame(rafId);
     };
-  }, [currentWordData.word, builtWord.length, feedback, gameWidth]);
+  }, [
+    currentWordData.word,
+    builtWord.length,
+    feedback,
+    gameWidth,
+    isCompleting,
+  ]); // ✅ Added isCompleting
 
   // Keyboard controls
   useEffect(() => {
@@ -335,7 +341,14 @@ export const SpellingChallengeGame = ({
       const timeTaken = (Date.now() - gameStartTime) / 1000;
       onGameComplete({ percentScore: percent, rawPoints, results, timeTaken });
     }
-  }, [currentWordIndex, words.length, onGameComplete, rawPoints, results]);
+  }, [
+    currentWordIndex,
+    words.length,
+    onGameComplete,
+    rawPoints,
+    results,
+    gameStartTime,
+  ]);
 
   const calculatePercent = (res: SpellingResult[]) => {
     const correct = res.filter((r) => r.isCorrect).length;
@@ -376,16 +389,14 @@ export const SpellingChallengeGame = ({
 
       const isLast = currentWordIndex === words.length - 1;
 
-      setTimeout(() => {
-        setFallingLetters([]);
-        setBuiltWord("");
-        setCatcherPosition(gameWidth / 2);
-        setFeedback(null);
-        setLilaState("normal");
+      if (isLast) {
+        completedRef.current = true;
+        setIsCompleting(true);
+      }
 
-        if (isLast && !completedRef.current) {
-          completedRef.current = true;
-          setIsCompleting(true);
+      setTimeout(() => {
+        if (isLast) {
+          // ✅ Complete immediately for last question
           const timeTaken = (Date.now() - gameStartTime) / 1000;
           onGameComplete({
             percentScore: calculatePercent(updatedResults),
@@ -394,7 +405,14 @@ export const SpellingChallengeGame = ({
             timeTaken,
           });
         } else {
-          advanceToNext();
+          // ✅ Only advance if NOT last question
+          setFallingLetters([]);
+          setBuiltWord("");
+          setCatcherPosition(gameWidth / 2);
+          setFeedback(null);
+          setLilaState("normal");
+          setCurrentWordIndex((prev) => prev + 1);
+          setAnimationKey((prev) => prev + 1);
         }
       }, 2500);
     },
@@ -402,13 +420,14 @@ export const SpellingChallengeGame = ({
       feedback,
       currentWordData,
       streak,
-      advanceToNext,
       gameWidth,
       results,
       currentWordIndex,
       words.length,
       rawPoints,
-    ]
+      gameStartTime,
+      onGameComplete,
+    ] // ✅ Removed advanceToNext from dependencies
   );
 
   const handleCatch = useCallback(
@@ -429,7 +448,8 @@ export const SpellingChallengeGame = ({
 
   // Game loop with requestAnimationFrame
   useEffect(() => {
-    if (feedback || timeLeft <= 0) return;
+    if (feedback || timeLeft <= 0 || completedRef.current || isCompleting)
+      return; // ✅ Added checks
 
     let animationId: number;
     let lastTime = performance.now();
@@ -467,7 +487,8 @@ export const SpellingChallengeGame = ({
             }
           }
 
-          if (caughtLetter) {
+          if (caughtLetter && !completedRef.current) {
+            // ✅ Added check
             handleCatch(caughtLetter);
           }
 
@@ -480,24 +501,59 @@ export const SpellingChallengeGame = ({
 
     animationId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationId);
-  }, [feedback, timeLeft, catcherPosition, handleCatch, softDropActive]);
+  }, [
+    feedback,
+    timeLeft,
+    catcherPosition,
+    handleCatch,
+    softDropActive,
+    isCompleting,
+  ]); // ✅ Added isCompleting
 
   // Skip word
   const handleSkip = () => {
-    if (feedback) return;
+    if (feedback || completedRef.current) return; // ✅ Early exit if already completed
     setStreak(0);
     setFeedback({ type: "skipped" });
     setLilaState("sad");
-    setResults((prev) => [
-      ...prev,
-      { wordData: currentWordData, userAnswer: "", isCorrect: false },
-    ]);
+
+    const newResult: SpellingResult = {
+      wordData: currentWordData,
+      userAnswer: "",
+      isCorrect: false,
+    };
+
+    const updatedResults = [...results, newResult];
+    setResults(updatedResults);
+
+    const isLast = currentWordIndex === words.length - 1;
+
+    // ✅ Mark as completing IMMEDIATELY for last question
+    if (isLast) {
+      completedRef.current = true;
+      setIsCompleting(true);
+    }
 
     setTimeout(() => {
-      setFallingLetters([]);
-      setBuiltWord("");
-      setCatcherPosition(gameWidth / 2);
-      advanceToNext();
+      if (isLast) {
+        // ✅ Complete immediately for last question
+        const timeTaken = (Date.now() - gameStartTime) / 1000;
+        onGameComplete({
+          percentScore: calculatePercent(updatedResults),
+          rawPoints,
+          results: updatedResults,
+          timeTaken,
+        });
+      } else {
+        // ✅ Only advance if NOT last question
+        setFallingLetters([]);
+        setBuiltWord("");
+        setCatcherPosition(gameWidth / 2);
+        setFeedback(null);
+        setLilaState("normal");
+        setCurrentWordIndex((prev) => prev + 1);
+        setAnimationKey((prev) => prev + 1);
+      }
     }, 2500);
   };
 
@@ -727,9 +783,6 @@ export const SpellingChallengeGame = ({
                         </div> */}
                         <div className="text-green-600 font-bold text-6xl">
                           Tama!
-                        </div>
-                        <div className="text-green-700 text-lg">
-                          +{streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS} puntos
                         </div>
                       </div>
                     )}

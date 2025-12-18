@@ -14,6 +14,7 @@ interface PunctuationChallengeIntroProps {
   onSelectDifficulty?: (d: number) => void;
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
+  areaId?: number;
   onBack?: () => void;
   onHelp?: () => void;
 }
@@ -23,6 +24,7 @@ export const PunctuationChallengeIntro = ({
   unlocked,
   onSelectDifficulty,
   onStartChallenge,
+  areaId = 4,
   onBack,
   onHelp,
 }: PunctuationChallengeIntroProps) => {
@@ -76,7 +78,7 @@ export const PunctuationChallengeIntro = ({
                 className="mx-auto"
               />
               <h1 className="text-7xl font-bold text-white mb-4">
-                Punctuation Power!
+                Puntuhang Puntos!
               </h1>
               <div className="inline-block bg-purple-200 text-purple-800 text-base font-bold px-8 py-3 rounded-full mb-2 shadow-md">
                 GRAMMAR
@@ -178,7 +180,7 @@ export const PunctuationChallengeIntro = ({
         <Leaderboard
           gameId={3}
           gameType="punctuation-task"
-          areaId={4}
+          areaId={areaId}
           difficulty={difficulty}
           limit={10}
         />

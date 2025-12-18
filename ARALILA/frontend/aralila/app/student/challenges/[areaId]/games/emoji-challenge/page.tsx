@@ -213,13 +213,19 @@ const EmojiChallengePage = () => {
             area_id: resolvedAreaId ?? parseInt(areaId, 10),
             game_type: "emoji-challenge",
             difficulty: currentDifficulty,
-            score: percentScore,
+            percent_score: percentScore,
+            raw_points: rawPoints,
             time_taken: timeTaken,
           }),
         }
       );
       const data = await response.json().catch(() => ({}));
-      setGameData((prev: any) => ({ ...prev, ...data, raw_points: rawPoints }));
+      setGameData((prev: any) => ({
+        ...prev,
+        ...data,
+        raw_points: rawPoints,
+        percent_score: percentScore,
+      }));
 
       // Update unlocked difficulties from backend response
       if (data.difficulty_unlocked) {
@@ -311,7 +317,7 @@ const EmojiChallengePage = () => {
       case "summary":
         return (
           <EmojiChallengeSummary
-            score={finalScore}
+            score={gameData?.percent_score}
             results={finalResults}
             difficulty={currentDifficulty}
             starsEarned={gameData?.stars_earned || 0}
@@ -319,6 +325,7 @@ const EmojiChallengePage = () => {
             difficultyUnlocked={gameData?.difficulty_unlocked}
             replayMode={gameData?.replay_mode}
             rawPoints={gameData?.raw_points}
+            areaId={resolvedAreaId || parseInt(areaId, 10)}
             onRestart={handleRestart}
           />
         );
@@ -328,10 +335,11 @@ const EmojiChallengePage = () => {
           <EmojiChallengeIntro
             difficulty={currentDifficulty}
             unlocked={unlocked}
+            areaId={resolvedAreaId || parseInt(areaId, 10)}
             onSelectDifficulty={(d) => setCurrentDifficulty(d)}
             onStartChallenge={handleStart}
             onBack={handleBack}
-            onHelp={() => setShowTutorial(true)} // <-- tutorial trigger
+            onHelp={() => setShowTutorial(true)}
           />
         );
     }

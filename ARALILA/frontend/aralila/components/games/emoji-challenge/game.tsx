@@ -34,7 +34,7 @@ interface GameProps {
 
 // --- Constants ---
 const TIME_LIMIT = 300; // 3 minutes total
-const BONUS_TIME = 5; // +5 seconds for a correct answer
+const BONUS_TIME = 10; // +10 seconds for a correct answer
 const MAX_MISTAKES = 6;
 
 type LilaState =
@@ -372,67 +372,27 @@ export const EmojiHulaSalitaGame = ({
           </div>
         </div>
 
-        {/* Main Game Area */}
-        <div className="flex-grow w-full flex flex-col items-center justify-center gap-2 px-15">
-          {/* Lila and Content Container */}
-          <div className="w-full flex flex-row items-stretch gap-6 mb-6">
-            {/* Lila Character */}
-            <div className="flex items-center justify-center">
-              <motion.div
-                key={lilaState}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              >
-                <Image
-                  src={lilaImage}
-                  alt="Lila"
-                  width={180}
-                  height={180}
-                  priority
-                />
-              </motion.div>
-            </div>
-
-            {/* Dialogue and Emojis Container */}
-            <div className="flex-1 flex flex-col justify-between gap-4 min-h-[180px]">
-              {/* Dialogue */}
-              <motion.div
-                key={dialogue}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative bg-purple-50 border border-purple-200 rounded-xl shadow-md py-3 flex items-center justify-center"
-              >
-                <p className="text-base text-slate-800 text-center px-4 whitespace-pre-line">
-                  {dialogue}
-                </p>
-                {/* Speech bubble pointer */}
-                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-r-[12px] border-r-purple-200"></div>
-                <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-r-[10px] border-r-purple-50"></div>
-              </motion.div>
-
-              {/* Emojis */}
-              <div className="flex justify-center items-center w-full">
-                <div className="bg-gradient-to-br from-yellow-50 to-purple-50 rounded-2xl shadow-lg px-8 py-6 flex gap-4 border-4 border-dashed border-purple-300 w-full items-center justify-center">
-                  {currentQuestion.emojis.map((emoji, index) => (
-                    <motion.div
-                      key={index}
-                      className="text-5xl md:text-6xl"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1, type: "spring" }}
-                    >
-                      {emoji}
-                    </motion.div>
-                  ))}
-                </div>
+        {/* Main Game Area: left (emojis + answer) and right (dialogue above mascot) */}
+        <div className="flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: emojis (top) and answer board (bottom) — split 50/50 */}
+          <div className="lg:col-span-2 flex flex-col gap-4 h-full">
+            <div className="bg-gradient-to-br from-yellow-50 to-purple-50 rounded-2xl shadow-lg p-6 flex-1 flex items-center justify-center border-4 border-dashed border-purple-300">
+              <div className="flex gap-4 items-center justify-center">
+                {currentQuestion.emojis.map((emoji, index) => (
+                  <motion.div
+                    key={index}
+                    className="text-5xl md:text-6xl"
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1, type: "spring" }}
+                  >
+                    {emoji}
+                  </motion.div>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Text Answer Input */}
-          <div className="w-full">
-            <div className="w-full bg-gradient-to-br from-purple-50 to-white border-4 border-dashed border-purple-400 rounded-2xl shadow-lg p-6">
+            <div className="w-full bg-gradient-to-br from-purple-50 to-white border-4 border-dashed border-purple-400 rounded-2xl shadow-lg p-6 flex-1 flex flex-col">
               <label className="block text-sm font-semibold text-purple-700 mb-2">
                 I-type ang buong pangungusap:
               </label>
@@ -441,11 +401,50 @@ export const EmojiHulaSalitaGame = ({
                 onChange={(e) => setStudentAnswer(e.target.value)}
                 placeholder="Isulat dito ang iyong sagot..."
                 disabled={status !== "playing"}
-                className="w-full min-h-[90px] bg-white border border-purple-200 rounded-xl p-4 outline-none resize-none text-lg font-mono text-purple-800 placeholder:text-purple-300 focus:ring-2 focus:ring-purple-400 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
+                className="w-full h-full bg-white border border-purple-200 rounded-xl p-4 outline-none resize-none text-lg font-mono text-purple-800 placeholder:text-purple-300 focus:ring-2 focus:ring-purple-400 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400 flex-1"
                 style={{
                   fontFamily: `'Fira Mono', 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'monospace'`,
                 }}
               />
+            </div>
+          </div>
+
+          {/* Right: message bubble above mascot (narrower column) */}
+          <div className="lg:col-span-1 flex flex-col items-center justify-between">
+            <motion.div
+              key={dialogue}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative bg-purple-50 border border-purple-200 rounded-xl shadow-md flex items-center justify-center w-full h-48 md:h-64 p-4"
+            >
+              <p className="text-base text-slate-800 text-center px-4 whitespace-pre-line">
+                {dialogue}
+              </p>
+
+              {/* Pointer: centered and pointing down */}
+              <div className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[12px] border-b-purple-200"></div>
+              <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[10px] border-b-purple-50"></div>
+            </motion.div>
+
+            <div className="flex items-center justify-center mt-6 w-full">
+              <motion.div
+                key={lilaState}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                className="w-full flex items-center justify-center"
+              >
+                <div className="w-full max-w-[420px] md:max-w-[520px]">
+                  <Image
+                    src={lilaImage}
+                    alt="Lila"
+                    width={800}
+                    height={800}
+                    priority
+                    className="w-full h-auto"
+                  />
+                </div>
+              </motion.div>
             </div>
           </div>
         </div>

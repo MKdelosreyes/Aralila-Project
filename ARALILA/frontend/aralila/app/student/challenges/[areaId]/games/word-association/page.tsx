@@ -183,10 +183,12 @@ const WordAssociationPage = () => {
   //
   const handleGameComplete = async ({
     score,
+    rawPoints,
     results,
     timeTaken,
   }: {
     score: number;
+    rawPoints: number;
     results: WordAssociationResult[];
     timeTaken: number;
   }) => {
@@ -212,7 +214,8 @@ const WordAssociationPage = () => {
             area_id: resolvedAreaId ?? parseInt(rawAreaParam, 10),
             game_type: "word-association",
             difficulty: currentDifficulty,
-            score: percentScore,
+            percent_score: score,
+            raw_points: rawPoints,
             time_taken: timeTaken,
           }),
         }
@@ -225,7 +228,12 @@ const WordAssociationPage = () => {
 
       const data = await response.json().catch(() => ({}));
       // server should return stars_earned, difficulty_unlocked, next_difficulty etc.
-      setGameData((prev: any) => ({ ...prev, ...data, raw_points: score }));
+      setGameData((prev: any) => ({
+        ...prev,
+        ...data,
+        raw_points: rawPoints,
+        score: score,
+      }));
     } catch (error) {
       console.error("Failed to submit score:", error);
     }
@@ -325,6 +333,7 @@ const WordAssociationPage = () => {
             replayMode={gameData?.replay_mode}
             rawPoints={gameData?.raw_points}
             onRestart={handleRestart}
+            areaId={resolvedAreaId}
           />
         );
 

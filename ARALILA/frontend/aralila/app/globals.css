@@ -221,3 +221,33 @@
   height: 0;
   width: 0;
 }
+
+
+.scrollbar-yellow {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(233, 233, 153) transparent;
+}
+
+.scrollbar-yellow::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-yellow::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
+}
+
+.scrollbar-yellow::-webkit-scrollbar-thumb {
+  background: rgb(255, 246, 119);
+  border-radius: 8px;
+}
+
+.scrollbar-yellow::-webkit-scrollbar-thumb:hover {
+  background: rgb(255, 246, 119);
+}
+
+.scrollbar-yellow::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}

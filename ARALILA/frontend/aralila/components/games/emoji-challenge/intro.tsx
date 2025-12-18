@@ -9,6 +9,7 @@ import Leaderboard from "@/components/games/common/leaderboard";
 interface EmojiChallengeIntroProps {
   difficulty: number;
   unlocked?: { [k: number]: boolean };
+  areaId?: number;
   onSelectDifficulty?: (d: number) => void;
   onStartChallenge: () => void;
   onReviewLessons?: () => void;
@@ -19,10 +20,11 @@ interface EmojiChallengeIntroProps {
 export const EmojiChallengeIntro = ({
   difficulty,
   unlocked,
+  areaId = 4,
   onSelectDifficulty,
   onStartChallenge,
   onBack,
-  onHelp, // ✅ added
+  onHelp,
 }: EmojiChallengeIntroProps) => {
   return (
     <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-center py-12">
@@ -179,7 +181,7 @@ export const EmojiChallengeIntro = ({
         <Leaderboard
           gameId={7}
           gameType="emoji-challenge"
-          areaId={4}
+          areaId={areaId}
           difficulty={difficulty}
           limit={10}
         />

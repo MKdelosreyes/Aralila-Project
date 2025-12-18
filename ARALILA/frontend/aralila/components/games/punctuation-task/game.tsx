@@ -23,7 +23,7 @@ import {
 import { ConfirmationModal } from "../confirmation-modal";
 import { MarioBridge } from "../../ui/marioBridge";
 
-const TIME_LIMIT = 120; //120
+const TIME_LIMIT = 180; //120
 const MAX_ASSISTS = 3;
 type LilaState = "normal" | "happy" | "sad" | "worried";
 
@@ -321,7 +321,8 @@ export const PunctuationChallengeGame = ({
     setResults((prev) => [...prev, result]);
 
     if (isAllCorrect) {
-      setScore((s) => s + BASE_POINTS + streak * 5);
+      const points = streak >= 3 ? BASE_POINTS * 2 : BASE_POINTS;
+      setScore((s) => s + points);
       setStreak((st) => st + 1);
       setTimeLeft((t) => Math.min(t + BONUS_TIME, TIME_LIMIT));
     } else {
@@ -402,8 +403,8 @@ export const PunctuationChallengeGame = ({
       setFilledGaps(answers);
       setLilaState("sad");
       setStreak(0);
-      setScore((s) => Math.max(0, s - 2));
-      setTimeLeft((t) => Math.max(0, t - 3));
+      // setScore((s) => Math.max(0, s - 2));
+      // setTimeLeft((t) => Math.max(0, t - 3));
 
       // Move Lila to the gap (visual) and center it, then trigger fall
       setLilaAtGap(true);
@@ -772,13 +773,9 @@ export const PunctuationChallengeGame = ({
                 <button
                   key={m}
                   onClick={() => handlePickPunctuation(m)}
-                  className={`h-12 w-12 rounded-xl border-2 text-xl font-bold
-                    ${
-                      currentGap && currentGap.correctMark === m
-                        ? "border-purple-500/60"
-                        : "border-slate-400"
-                    }
-                    bg-slate-100 hover:bg-slate-200 active:scale-95 transition`}
+                  className={
+                    "h-12 w-12 rounded-xl border-2 text-xl font-bold border-slate-400 bg-slate-100 hover:bg-slate-200 active:scale-95 transition"
+                  }
                 >
                   {m}
                 </button>

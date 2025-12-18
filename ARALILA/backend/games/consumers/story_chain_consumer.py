@@ -21,6 +21,7 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"].replace(" ", "_")
         self.room_group_name = f"story_{self.room_name}"
         self.player_name = None
+        self.timer_task = None 
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
@@ -29,6 +30,10 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
         print(f"✅ Player connected to room: {self.room_name}")
 
     async def disconnect(self, close_code):
+        # NEW: Cancel timer on disconnect
+        if self.timer_task and not self.timer_task.done():
+            self.timer_task.cancel()
+        
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         print(f"🔌 Player disconnected from room: {self.room_name}")
 
@@ -85,8 +90,8 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
                 "scores": {},
                 "current_image_index": 0,
                 "total_images": len(story_images),
-                "current_sentence": [],  # Stores word contributions for current image
-                "timer_task_id": None,
+                "current_sentence": [],
+                "game_started": False,
             }
 
         # Add player if not already in
@@ -103,21 +108,31 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
                 {"type": "players_update", "players": state["players"]},
             )
 
-        # If first player or all 3 players present, start the game
-        if len(state["players"]) == 1 or len(state["players"]) == 3:
-            # Send first image
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    "type": "new_image",
-                    "image_index": 0,
-                    "total_images": len(story_images),
-                    "image_url": story_images[0]["url"],
-                    "image_description": story_images[0]["description"],
-                },
-            )
+        # NEW: Send current image immediately to this player
+        current_image = story_images[state["current_image_index"]]
+        await self.send(text_data=json.dumps({
+            "type": "new_image",
+            "image_index": state["current_image_index"],
+            "total_images": len(story_images),
+            "image_url": current_image["url"],
+            "image_description": current_image["description"],
+        }))
 
-            # Start first turn
+        # NEW: Send current game state to joining player
+        if state.get("game_started"):
+            current_turn_index = state.get("current_turn_index", 0)
+            if current_turn_index < len(state["players"]):
+                current_player = state["players"][current_turn_index]
+                await self.send(text_data=json.dumps({
+                    "type": "turn_update",
+                    "next_player": current_player,
+                    "time_limit": 20,
+                }))
+
+        # Start game if first player or all 3 players present
+        if not state.get("game_started") and (len(state["players"]) == 1 or len(state["players"]) == 3):
+            state["game_started"] = True
+            await self.save_state(state)
             await self.start_turn(state)
 
     async def handle_submit_sentence(self, player, text):
@@ -127,12 +142,10 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
 
         state = await self.get_state()
         
-        # ✅ FIX: Validate state and players list
         if not state or not state.get("players") or len(state["players"]) == 0:
             print(f"⚠️ Invalid state: {state}")
             return
 
-        # ✅ FIX: Validate current_turn_index is within bounds
         current_turn_index = state.get("current_turn_index", 0)
         if current_turn_index >= len(state["players"]):
             print(f"⚠️ Invalid turn index {current_turn_index}, resetting to 0")
@@ -149,11 +162,14 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
         # Add word to current sentence
         state["current_sentence"].append({"player": player, "text": text})
         state["scores"][player] = state["scores"].get(player, 0) + 2
+        
+        # NEW: Move to next turn immediately
+        state["current_turn_index"] = (current_turn_index + 1) % len(state["players"])
         await self.save_state(state)
 
         print(f"✅ {player} submitted: {text}")
 
-        # Broadcast update
+        # NEW: Broadcast story update first
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -163,18 +179,24 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
             },
         )
 
-        # Check if round is complete (all players have contributed)
+        # Small delay to ensure state sync
+        await asyncio.sleep(0.1)
+
+        # Check if round is complete
         if len(state["current_sentence"]) >= len(state["players"]):
             print(f"🔍 All players contributed, evaluating sentence...")
             await self.evaluate_sentence()
         else:
-            await self.next_turn()
+            # NEW: Start next player's turn with fresh timer
+            next_player = state["players"][state["current_turn_index"]]
+            await self.broadcast_turn_update(next_player, 20)
+            # NEW: Start timer for next player
+            asyncio.create_task(self.player_timer(next_player, 20, state["current_turn_index"]))
 
     # -------------------- Turn Management --------------------
 
     async def start_turn(self, state):
         """Start a player's turn with timer."""
-        # ✅ FIX: Validate players list before accessing
         if not state.get("players") or len(state["players"]) == 0:
             print("⚠️ Cannot start turn: no players")
             return
@@ -190,27 +212,8 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
 
         await self.broadcast_turn_update(current_player, 20)
         
-        # Start timer task
-        asyncio.create_task(self.player_timer(current_player, 20))
-
-    async def next_turn(self):
-        """Move to next player's turn."""
-        state = await self.get_state()
-        
-        # ✅ FIX: Validate state and players
-        if not state or not state.get("players") or len(state["players"]) == 0:
-            print("⚠️ Cannot advance turn: invalid state")
-            return
-
-        current_turn_index = state.get("current_turn_index", 0)
-        state["current_turn_index"] = (current_turn_index + 1) % len(state["players"])
-        await self.save_state(state)
-
-        next_player = state["players"][state["current_turn_index"]]
-        print(f"➡️ Next turn: {next_player}")
-
-        await self.broadcast_turn_update(next_player, 15)
-        asyncio.create_task(self.player_timer(next_player, 15))
+        # NEW: Start timer with turn index tracking
+        asyncio.create_task(self.player_timer(current_player, 20, current_turn_index))
 
     async def broadcast_turn_update(self, player, time_limit):
         """Broadcast whose turn it is."""
@@ -219,30 +222,36 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
             {"type": "turn_update", "next_player": player, "time_limit": time_limit},
         )
 
-    async def player_timer(self, player, seconds):
-        """Timeout handler - penalize and skip."""
+    async def player_timer(self, player, seconds, turn_index):
+        """Timeout handler - penalize and skip. NEW: Track turn index."""
         await asyncio.sleep(seconds)
         
         state = await self.get_state()
         
-        # ✅ FIX: Validate state before accessing
         if not state or not state.get("players") or len(state["players"]) == 0:
+            return
+
+        # NEW: Check if turn has already changed
+        if state.get("current_turn_index") != turn_index:
+            print(f"⏭️ Turn already advanced for {player}, skipping timeout")
             return
 
         current_turn_index = state.get("current_turn_index", 0)
         if current_turn_index >= len(state["players"]):
             return
 
-        # Check if it's still this player's turn
         current_player = state["players"][current_turn_index]
         if current_player != player:
-            return  # Turn already changed
+            return
 
         # Penalize
         state["scores"][player] = state["scores"].get(player, 0) - 2
         
-        # Add empty contribution to keep sentence formation moving
+        # Add missed turn marker
         state["current_sentence"].append({"player": player, "text": "[missed turn]"})
+        
+        # NEW: Move to next turn
+        state["current_turn_index"] = (current_turn_index + 1) % len(state["players"])
         await self.save_state(state)
 
         print(f"⏰ {player} timed out!")
@@ -260,7 +269,10 @@ class StoryChainConsumer(AsyncWebsocketConsumer):
         if len(state["current_sentence"]) >= len(state["players"]):
             await self.evaluate_sentence()
         else:
-            await self.next_turn()
+            # NEW: Start next player's turn
+            next_player = state["players"][state["current_turn_index"]]
+            await self.broadcast_turn_update(next_player, 20)
+            asyncio.create_task(self.player_timer(next_player, 20, state["current_turn_index"]))
 
     # -------------------- Sentence Evaluation --------------------
 
@@ -300,7 +312,6 @@ Give a total score from 1 to 20 (just the number, no explanation).
         """Evaluate the completed sentence."""
         state = await self.get_state()
         
-        # ✅ FIX: Validate state exists
         if not state:
             print("⚠️ Cannot evaluate: no state")
             return
@@ -316,7 +327,6 @@ Give a total score from 1 to 20 (just the number, no explanation).
         # Get current image metadata
         current_index = state.get("current_image_index", 0)
         
-        # ✅ FIX: Validate image index
         if current_index >= len(story_images):
             print(f"⚠️ Invalid image index: {current_index}")
             current_index = 0
@@ -338,8 +348,6 @@ Give a total score from 1 to 20 (just the number, no explanation).
                 if part["text"] != "[missed turn]":
                     player_name = part["player"]
                     state["scores"][player_name] = state["scores"].get(player_name, 0) + points_per_player
-
-        await self.save_state(state)
 
         # Broadcast evaluation
         await self.channel_layer.group_send(
@@ -380,6 +388,9 @@ Give a total score from 1 to 20 (just the number, no explanation).
                     "image_description": next_image["description"],
                 },
             )
+            
+            # Small delay before starting next turn
+            await asyncio.sleep(0.5)
             await self.start_turn(state)
 
     # -------------------- WebSocket Broadcasts --------------------

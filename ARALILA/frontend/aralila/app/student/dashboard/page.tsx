@@ -351,11 +351,7 @@ export default function DashboardPage() {
                           ? `w-40 h-40 md:w-52 md:h-52 ${
                               locked ? "cursor-not-allowed" : "cursor-pointer"
                             }`
-                          : `w-24 h-24 md:w-28 md:h-28 rounded-full border-4 shadow-xl cursor-pointer ${
-                              isComplete
-                                ? "bg-gradient-to-br from-purple-400 to-fuchsia-500 border-purple-500 shadow-purple-500/50"
-                                : "bg-gradient-to-br from-indigo-400 to-purple-600 border-purple-600 shadow-purple-500/50"
-                            }`
+                          : `w-24 h-24 md:w-44 md:h-44 shadow-xl cursor-pointer`
                       }`}
                     >
                       {locked ? (
@@ -379,6 +375,27 @@ export default function DashboardPage() {
                           />
                         </motion.div>
                       ) : area.order_index === 0 ? (
+                        <motion.div
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                            ease: "easeInOut",
+                          }}
+                          className="relative flex items-center justify-center"
+                        >
+                          <div className="absolute inset-0 rounded-3xl" />
+                          <Image
+                            src="/images/overlays/assessment-area-book-1.png"
+                            alt="Assessment area 1"
+                            width={192}
+                            height={192}
+                            className="relative w-32 h-32 md:w-44 md:h-44 object-contain"
+                            priority
+                          />
+                        </motion.div>
+                      ) : area.order_index === 1 ? (
                         <motion.div
                           animate={{ y: [0, -10, 0] }}
                           transition={{

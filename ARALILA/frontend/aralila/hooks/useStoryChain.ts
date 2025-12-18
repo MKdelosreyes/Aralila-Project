@@ -24,6 +24,7 @@ export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChain
   });
 
   const hasJoinedRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null); // NEW: Track timer
 
   const handleMessage = useCallback((data: StoryChainMessage) => {
     console.log('🎮 Game message:', data);
@@ -37,15 +38,26 @@ export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChain
 
       case 'story_update':
         if (data.player && data.text) {
-          setGameState((prev) => ({
-            ...prev,
-            story: [...prev.story, { player: data.player!, text: data.text! }],
-          }));
+          // NEW: Force immediate UI update
+          setGameState((prev) => {
+            const newStory = [...prev.story, { player: data.player!, text: data.text! }];
+            console.log('📝 Story updated:', newStory);
+            return {
+              ...prev,
+              story: newStory,
+            };
+          });
         }
         break;
 
       case 'turn_update':
         console.log('🔄 Turn update:', data.next_player);
+        
+        // NEW: Clear existing timer
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+        
         setGameState((prev) => ({
           ...prev,
           currentTurn: data.next_player || '',
@@ -79,11 +91,16 @@ export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChain
 
       case 'new_image':
         console.log('🖼️ New image:', data);
+        
+        // NEW: Clear timer when image changes
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+        
         setGameState((prev) => ({
           ...prev,
           imageIndex: data.image_index ?? prev.imageIndex,
           totalImages: data.total_images ?? prev.totalImages,
-          // imageUrl: data.image_url ? `${env.backendUrl}${data.image_url}` : null,
           imageUrl: data.image_url || null,
           imageDescription: data.image_description ?? null,
           timeLeft: 20, 
@@ -92,6 +109,12 @@ export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChain
 
       case 'game_complete':
         console.log('🏁 Game complete:', data.scores);
+        
+        // NEW: Clear timer on game end
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+        
         setGameState((prev) => ({
           ...prev,
           gameOver: true,
@@ -115,7 +138,7 @@ export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChain
     }, []),
   });
 
-  // NEW: Auto-join game when connected
+  // Auto-join game when connected
   useEffect(() => {
     if (isConnected && !hasJoinedRef.current) {
       console.log('🎮 Joining game as:', playerName);
@@ -126,26 +149,39 @@ export function useStoryChain({ roomName, playerName, turnOrder }: UseStoryChain
 
   const submitSentence = useCallback((text: string) => {
     if (text.trim() && gameState.currentTurn === playerName) {
+      console.log('📤 Submitting:', text);
       sendMessage({ type: 'submit_sentence', player: playerName, text: text.trim() });
     }
   }, [sendMessage, playerName, gameState.currentTurn]);
 
-  // Timer countdown
+  // NEW: Timer countdown - only runs when it's someone's turn
   useEffect(() => {
-    if (gameState.timeLeft <= 0 || gameState.gameOver) return;
+    if (gameState.gameOver) return;
     
-    const timer = setInterval(() => {
-      setGameState((prev) => {
-        const newTime = Math.max(0, prev.timeLeft - 1);
-        if (newTime === 0) {
-          console.log('⏰ Time expired for:', prev.currentTurn);
-        }
-        return { ...prev, timeLeft: newTime };
-      });
-    }, 1000);
+    // Clear existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
 
-    return () => clearInterval(timer);
-  }, [gameState.timeLeft, gameState.gameOver]);
+    // Only start timer if game has started (currentTurn is set)
+    if (gameState.currentTurn && gameState.timeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setGameState((prev) => {
+          const newTime = Math.max(0, prev.timeLeft - 1);
+          if (newTime === 0) {
+            console.log('⏰ Time expired for:', prev.currentTurn);
+          }
+          return { ...prev, timeLeft: newTime };
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [gameState.currentTurn, gameState.gameOver]); 
 
   return {
     gameState,

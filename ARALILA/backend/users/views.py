@@ -14,7 +14,8 @@ from .serializers import CustomUserSerializer
 def profile_view(request):
     """Get current user profile"""
     user = request.user
-    user.refill_hearts_if_needed()  # Auto-refill before returning data
+    user.refill_hearts_if_needed()  
+    user.update_streak()
     serializer = CustomUserSerializer(user)
     return Response(serializer.data)
 

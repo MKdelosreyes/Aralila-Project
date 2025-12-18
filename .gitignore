@@ -36,3 +36,8 @@ media/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Supabase
+supabase.sql
+supabase/
+.supabase/

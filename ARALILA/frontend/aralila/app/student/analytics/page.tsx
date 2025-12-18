@@ -2,6 +2,6 @@
 
 import { AnalyticsModal } from "@/components/analytics/AnalyticsModal";
 
-export default function CLassroomPage() {
+export default function AnalyticsPage() {
   return <AnalyticsModal />;
 }

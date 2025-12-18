@@ -1,12 +1,13 @@
 import SidebarIcon from "./sidebar-icon";
-import { Home, Swords, Settings, Play, BookOpen } from "lucide-react";
+import { Home, Swords, Settings, Play, BookOpen, ChartBar } from "lucide-react";
 
 const sidebarItems = [
   { icon: Home, text: "Home", href: "/student/dashboard" },
   // { icon: BookOpen, text: "Classroom", href: "/student/classroom" },
   { icon: Play, text: "Playground", href: "/student/playground" },
   { icon: Swords, text: "Challenges", href: "/student/challenges" },
-  { icon: BookOpen, text: "Flashcards", href: "/student/review" },
+  // { icon: BookOpen, text: "Flashcards", href: "/student/review" },
+  { icon: ChartBar, text: "Analytics", href: "/student/analytics" },
   { icon: Settings, text: "Settings", href: "#" },
   //{ icon: BookOpen, text: "Classroom", href: "/student/classroom" },
   //{ icon: ListTodo, text: "Assignments", href: "#" },

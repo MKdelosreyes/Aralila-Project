@@ -29,6 +29,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login_date = models.DateField(null=True, blank=True)
+    login_streak = models.IntegerField(default=0)
+    longest_streak = models.IntegerField(default=0)
+    last_active_date = models.DateField(null=True, blank=True)
 
     groups = models.ManyToManyField(
         'auth.Group',
@@ -82,3 +85,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
                 self.next_refill_at = None
             
             self.save()
+    
+    def update_streak(self):
+        from datetime import date, timedelta
+        today = date.today()
+        
+        if self.last_active_date == today:
+            return 
+        
+        if self.last_active_date == today - timedelta(days=1):
+            self.login_streak += 1 
+        else:
+            self.login_streak = 1  
+        
+        self.longest_streak = max(self.longest_streak, self.login_streak)
+        self.last_active_date = today
+        self.save()
